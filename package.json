@@ -1,0 +1,36 @@
+{
+  "name": "http-supervisor",
+  "version": "1.0.0",
+  "description": "Monitor HTTP requests and identifies duplicate requests in a time period",
+  "scripts": {
+    "build": "webpack && webpack -p"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.8.4",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@babel/plugin-proposal-decorators": "^7.8.3",
+    "@babel/plugin-transform-classes": "^7.8.3",
+    "@babel/plugin-transform-runtime": "^7.11.5",
+    "@babel/preset-env": "^7.8.4",
+    "@babel/register": "^7.8.3",
+    "babel-eslint": "^10.0.3",
+    "babel-loader": "^8.0.6",
+    "cors": "^2.8.5",
+    "eslint": "^6.8.0",
+    "eslint-loader": "^3.0.3",
+    "express": "^4.17.1",
+    "html-webpack-banner-plugin": "^2.0.0",
+    "html-webpack-plugin": "^3.2.0",
+    "json-loader": "^0.5.7",
+    "raw-loader": "^4.0.0",
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11",
+    "webpack-dev-server": "^3.10.3",
+    "yargs": "^15.1.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.11.2",
+    "reflect-metadata": "^0.1.13"
+  }
+}
