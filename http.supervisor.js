@@ -3,9 +3,9 @@
  */
 Array.prototype.groupBy = function(key) {
   return this.reduce(function(rv, x) {
-    (rv[x[key]] = rv[x[key]] || []).push(x);
+    rv.set(x[key], [...(rv.has(x[key]) ? rv.get(x[key]) : []), x]);
     return rv;
-  }, {});
+  }, new Map());
 };
 
 /**
@@ -17,10 +17,12 @@ class HttpRequestInfo {
   path = null;
   method = null;
   payload = null;
-  timeStart = Date.now();
-  timeEnd = null;
+  timeStart = performance.now();
+  timeEnd = performance.now();
+  duration = 0;
   response = null;
   responseStatus = null;
+  responseSize = 0;
   error = false;
   errorDescription = null;
 
@@ -38,6 +40,8 @@ class Node {
   _items = [];
   _groups = [];
   _groupArgs = [];
+  _groupedBy = null;
+  _childrenGroupedBy = null;
   _sortArgs = [];
 
   get name() {
@@ -64,13 +68,22 @@ class Node {
     return this._groupArgs;
   }
 
+  get groupedBy() {
+    return this._groupedBy;
+  }
+
   get sortArgs() {
     return this._sortArgs;
   }
 
-  constructor(name, items) {
+  get count() {
+    return this.hasItems ? this._items.length : 0;
+  }
+
+  constructor(name, items, groupedBy) {
     this._name = name;
     this._items = items;
+    this._groupedBy = groupedBy;
   }
 
   groupBy(...args) {
@@ -80,18 +93,22 @@ class Node {
 
     this._groupArgs = args;
     this._groups = [];
-    const obj = this._items.groupBy(args.shift());
+    this._childrenGroupedBy = args.shift();
+    const obj = this._items.groupBy(this._childrenGroupedBy);
 
-    Object.entries(obj).forEach(([key, value]) => {
-      const group = new Node(key, value);
+    obj.forEach((key, value) => {
+      const group = new Node(value, key, this._childrenGroupedBy);
       this._groups.push(group);
       group.groupBy(...args);
     });
+
+    return this;
   }
 
   ungroup() {
     this._groupArgs = [];
     this._groups = [];
+    this._groupedBy = null;
   }
 }
 
@@ -111,7 +128,14 @@ const Messages = {
   SLEEP: `${HTTP_SUPERVISOR_EMOJI}‍ HTTP SUPERVISOR STOPPED`,
   LOG_START: `------------------------ LOG STARTS ------------------------`,
   LOG_END: `------------------------- LOG ENDS -------------------------`,
-  NO_REQUESTS: `No Requests Found`
+  NO_REQUESTS: `No Requests Found`,
+  GENERAL_INFO: 'Metrics Summary',
+  TOTAL_REQUESTS: 'Total Requests',
+  REQUESTS_INFO: 'Requests Details',
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE'
 };
 
 /**
@@ -134,11 +158,6 @@ const SupervisorStatus = {
   NotReady: 'not-ready',
   Retired: 'retired'
 };
-
-/**
- * The request id prefix.
- */
-const ID_PREFIX = 'HTTP-REQUEST-COUNT';
 
 /**
  * Different events fired by supervisor.
@@ -216,7 +235,7 @@ class HttpSupervisor {
   /**
    * The id generator function.
    */
-  _id = idGenerator(ID_PREFIX, 1);
+  _id = idGenerator(1);
 
   /**
    * The events and their associated handlers store.
@@ -239,13 +258,6 @@ class HttpSupervisor {
    */
   get busy() {
     return this._status === SupervisorStatus.Busy;
-  }
-
-  /**
-   * Returns the captured requests.
-   */
-  get requests() {
-    return new Collection([...this._requests]);
   }
 
   /**
@@ -335,6 +347,13 @@ class HttpSupervisor {
     const collection = new Collection([...this._requests]);
     collection.groupBy('path', 'method', 'payload')
     this._reporter.print(Messages.LOG_START, Colors.INFO, true);
+    this._reporter.break();
+    this._reporter.print(Messages.GENERAL_INFO, Colors.INFO, true);
+    this._reporter.print(Array(Messages.GENERAL_INFO.length).fill('-').join(''), Colors.INFO, true);
+    this._reporter.print(`${Messages.TOTAL_REQUESTS}: ${this.totalRequests} | GET: ${this.requestsByType('GET').count} | POST: ${this.requestsByType('POST').count} | PUT: ${this.requestsByType('PUT').count} | DELETE: ${this.requestsByType('DELETE').count}`, Colors.INFO);
+    this._reporter.break();
+    this._reporter.print(Messages.REQUESTS_INFO, Colors.INFO, true);
+    this._reporter.print(Array(Messages.REQUESTS_INFO.length).fill('-').join(''), Colors.INFO, true);
     this._reporter.report(collection);
     this._reporter.print(Messages.LOG_END, Colors.INFO, true);
   }
@@ -377,6 +396,21 @@ class HttpSupervisor {
     this._triggerEvent(SupervisorEvents.RETIRE);
     this._eventsHandlersMap = {};
     this._status = SupervisorStatus.Retired;
+  }
+
+  report(collection) {
+    this._reporter.report(collection);
+  }
+
+  /**
+   * Returns the captured requests.
+   */
+  requests() {
+    return new Collection([...this._requests]);
+  }
+
+  requestsByType(method) {
+    return new Collection([...this._requests].filter(r => r.method === method));
   }
 
   _monkeyPatch() {
@@ -466,11 +500,16 @@ class HttpSupervisor {
 
       this._decrement();
       requestInfo.responseStatus = statusCode;
-      requestInfo.response = xhr.response;
+      try {
+        requestInfo.response = JSON.parse(xhr.response);
+      } catch {
+        requestInfo.response = xhr.response;
+      }
       requestInfo.error = error;
       error && (requestInfo.error = xhr.response);
-      requestInfo.timeEnd = Date.now();
-      requestInfo.duration = (requestInfo.timeEnd - requestInfo.timeStart) / 1000;
+      requestInfo.timeEnd = performance.now();
+      requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
+      requestInfo.responseSize = xhr.responseText.length;
       this._triggerEvent(error ? SupervisorEvents.REQUEST_ERROR : SupervisorEvents.REQUEST_END, xhr, requestInfo);
     });
     this._nativeSend.call(xhr, ...parameters);
@@ -624,6 +663,12 @@ class HttpSupervisorWidget {
  */
 class ConsoleReporter {
 
+  _fieldsToDisplay = null;
+
+  constructor(fieldsConfig) {
+    fieldsConfig && (this._fieldsToDisplay = new Map(Object.entries(fieldsConfig)));
+  }
+
   success(message) {
     this.print(message, Colors.SUCCESS);
   }
@@ -653,7 +698,16 @@ class ConsoleReporter {
 
     if (collection.hasGroups) {
       collection.groups.forEach(group => {
-        this.groupStart(group.name === 'undefined' ? 'empty' : group.name);
+        const { name, groupedBy, items } = group;
+
+        if (typeof name === 'undefined') {
+          this.groupStart('-', `[${items.length}]`);
+        } else if (typeof name === 'object') {
+          this.groupStart(`${groupedBy}: [${items.length}]`, name);
+        } else {
+          this.groupStart(name, `[${items.length}]`);
+        }
+
         this.report(group);
         this.groupEnd();
       });
@@ -661,7 +715,22 @@ class ConsoleReporter {
       return;
     }
 
-    this.table(collection.items);
+    const items = collection.items.map(item => {
+      const displayObj = {};
+      this._fieldsToDisplay.forEach((value, key) => {
+        let v;
+        if (typeof item[key] === 'undefined') {
+          v = null;
+        } else if (typeof item[key] === 'object' || Array.isArray(item[key])) {
+          v = JSON.stringify(item[key]);
+        } else {
+          v = item[key];
+        }
+        displayObj[value] = v;
+      });
+      return displayObj;
+    });
+    this.table(items);
     return;
   }
 
@@ -669,8 +738,8 @@ class ConsoleReporter {
     array.length && console.table(array, displayFields);
   }
 
-  groupStart(group) {
-    console.group(group);
+  groupStart(group, ...args) {
+    console.group(group, ...args);
   }
 
   groupEnd() {
@@ -681,15 +750,31 @@ class ConsoleReporter {
     console.clear();
   }
 
+  break() {
+    console.log(`\n`);
+  }
+
   destroy() {
   }
 }
 
-function idGenerator(prefix, seed = 0) {
+function idGenerator(seed = 0) {
   return function() {
-    return `${prefix}-${seed++}`;
+    return seed++;
   }
 }
 
-const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter());
+const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter({
+    id: 'Request No',
+    url: 'URL',
+    path: 'Path',
+    method: 'Type',
+    payload: 'Payload',
+    duration: 'Duration (ms)',
+    response: 'Response',
+    responseStatus: 'Status',
+    responseSize: 'Size (bytes)',
+    error: 'Is Error?',
+    errorDescription: 'Error Description'
+  }));
 export default httpSupervisor;
