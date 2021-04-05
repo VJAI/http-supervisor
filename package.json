@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Monitor HTTP requests and identifies duplicate requests in a time period",
   "scripts": {
+    "start": "opener http://localhost:8080/index.html && webpack-dev-server --config webpack.dev.config.babel.js",
     "build": "webpack && webpack -p"
   },
   "devDependencies": {

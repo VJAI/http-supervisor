@@ -1,7 +1,182 @@
 /**
- * Supervises HTTP Network Traffic and helps to identify duplicate requests.
+ * Polyfills
+ */
+Array.prototype.groupBy = function(key) {
+  return this.reduce(function(rv, x) {
+    (rv[x[key]] = rv[x[key]] || []).push(x);
+    return rv;
+  }, {});
+};
+
+/**
+ * Holds the http request information.
+ */
+class HttpRequestInfo {
+  id = null;
+  url = null;
+  path = null;
+  method = null;
+  payload = null;
+  timeStart = Date.now();
+  timeEnd = null;
+  response = null;
+  responseStatus = null;
+  error = false;
+  errorDescription = null;
+
+  constructor(id, url, method, payload) {
+    this.id = id;
+    this.url = url;
+    this.path = new URL(url).pathname;
+    this.method = method;
+    this.payload = payload;
+  }
+}
+
+class Node {
+  _name = null;
+  _items = [];
+  _groups = [];
+  _groupArgs = [];
+  _sortArgs = [];
+
+  get name() {
+    return this._name;
+  }
+
+  get hasItems() {
+    return this._items && this._items.length;
+  }
+
+  get hasGroups() {
+    return this._groups && this._groups.length;
+  }
+
+  get items() {
+    return this.hasItems ? [...this._items] : null;
+  }
+
+  get groups() {
+    return this.hasGroups ? [...this._groups] : null;
+  }
+
+  get groupArgs() {
+    return this._groupArgs;
+  }
+
+  get sortArgs() {
+    return this._sortArgs;
+  }
+
+  constructor(name, items) {
+    this._name = name;
+    this._items = items;
+  }
+
+  groupBy(...args) {
+    if (!args.length) {
+      return;
+    }
+
+    this._groupArgs = args;
+    this._groups = [];
+    const obj = this._items.groupBy(args.shift());
+
+    Object.entries(obj).forEach(([key, value]) => {
+      const group = new Node(key, value);
+      this._groups.push(group);
+      group.groupBy(...args);
+    });
+  }
+
+  ungroup() {
+    this._groupArgs = [];
+    this._groups = [];
+  }
+}
+
+class Collection extends Node {
+  constructor(items) {
+    super('root', items);
+  }
+}
+
+const HTTP_SUPERVISOR_EMOJI = '💂';
+
+/**
+ * Collection of messages used by supervisor.
+ */
+const Messages = {
+  ACTIVE: `‍${HTTP_SUPERVISOR_EMOJI} HTTP SUPERVISOR STARTED`,
+  SLEEP: `${HTTP_SUPERVISOR_EMOJI}‍ HTTP SUPERVISOR STOPPED`,
+  LOG_START: `------------------------ LOG STARTS ------------------------`,
+  LOG_END: `------------------------- LOG ENDS -------------------------`,
+  NO_REQUESTS: `No Requests Found`
+};
+
+/**
+ * The different color codes by supervisor.
+ */
+const Colors = {
+  BRAND: '#f54284',
+  SUCCESS: '#09b809',
+  ERROR: '#e62e5c',
+  INFO: '#4d4b46',
+  WARN: '#e6b225'
+};
+
+/**
+ * The different statuses of supervisor.
+ */
+const SupervisorStatus = {
+  Busy: 'busy',
+  Idle: 'idle',
+  NotReady: 'not-ready',
+  Retired: 'retired'
+};
+
+/**
+ * The request id prefix.
+ */
+const ID_PREFIX = 'HTTP-REQUEST-COUNT';
+
+/**
+ * Different events fired by supervisor.
+ */
+const SupervisorEvents = {
+  START: 'start',
+  STOP: 'stop',
+  CLEAR: 'clear',
+  RETIRE: 'retire',
+  REQUEST_START: 'request-start',
+  REQUEST_END: 'request-end',
+  REQUEST_ERROR: 'request-error'
+};
+
+/**
+ * HTTP Error status codes.
+ */
+const ERROR_STATUS_CODES = new Set([500, 401, 404]);
+
+/**
+ * Proxy object that allows to call any method in an object that not even exists.
+ */
+const CALL_ME_ANYTHING = new Proxy({}, { get : function() { return function()  { }; } });
+
+/**
+ * Supervises HTTP Network Traffic. Helps to identify duplicate requests, analyze payload and much more.
  */
 class HttpSupervisor {
+
+  /**
+   * The UI widget through which user can interact with supervisor.
+   */
+  _widget = null;
+
+  /**
+   * The reporter that displays the metrics and requests info captured in a particular period.
+   */
+  _reporter = null;
 
   /**
    * Array of domains to monitor.
@@ -11,107 +186,200 @@ class HttpSupervisor {
   _domains = null;
 
   /**
+   * True to render UI.
+   * @type {boolean}
+   * @private
+   */
+  _renderUI = true;
+
+  /**
    * Collection of captured requests.
    * @type {Array}
    * @private
    */
-  _requests = [];
+  _requests = new Set();
 
   /**
-   * Status of the supervisor. It can be either "busy" or "idle".
+   * Current status of the supervisor.
    * @type {string}
    * @private
    */
-  _status = 'idle';
+  _status = SupervisorStatus.NotReady;
 
   /**
-   * The id count value.
-   * @type {number}
-   * @private
-   */
-  _idCount = 0;
-
-  /**
-   * Call count.
+   * Requests count.
    * @type {number}
    * @private
    */
   _callsCount = 0;
 
   /**
-   * Native XHR `open` method.
-   * @type {function}
-   * @private
+   * The id generator function.
+   */
+  _id = idGenerator(ID_PREFIX, 1);
+
+  /**
+   * The events and their associated handlers store.
+   */
+  _eventsHandlersMap = new Map();
+
+  /**
+   * XMLHttpRequest native open method.
    */
   _nativeOpen = XMLHttpRequest.prototype.open;
 
-  /**
-   * Native XHR `send` method.
-   * @type {function}
-   * @private
+    /**
+   * XMLHttpRequest native send method.
    */
   _nativeSend = XMLHttpRequest.prototype.send;
-
-  /**
-   * Container element.
-   * @type {HTMLDivElement}
-   * @private
-   */
-  _container = null;
-
-  /**
-   * The start button.
-   * @type {HTMLButtonElement}
-   * @private
-   */
-  _startButton = null;
-
-  /**
-   * The stop button.
-   * @type {HTMLButtonElement}
-   * @private
-   */
-  _stopButton = null;
-
-  /**
-   * The clear button.
-   * @type {HTMLButtonElement}
-   * @private
-   */
-  _clearButton = null;
-
-  /**
-   * The clear button.
-   * @type {HTMLButtonElement}
-   * @private
-   */
-  _printButton = null;
-
-  /**
-   * The span element.
-   * @type {HTMLSpanElement}
-   * @private
-   */
-  _callsCountLabel = null;
 
   /**
    * Returns `true` if busy.
    * @return {boolean}
    */
   get busy() {
-    return this._status === 'busy';
+    return this._status === SupervisorStatus.Busy;
   }
 
-  init(config) {
-    console.log('%c 💂‍ HTTP SUPERVISOR STARTED 💂‍', 'color: green; font-weight: bold;');
+  /**
+   * Returns the captured requests.
+   */
+  get requests() {
+    return new Collection([...this._requests]);
+  }
 
-    if (typeof config === 'object') {
-      const {domains} = config;
-      Array.isArray(domains) && (this._domains = domains);
+  /**
+   * Returns the total no. of requests of the current session.
+   * @return {number}
+   */
+  get totalRequests() {
+    return this._requests.size;
+  }
+
+  /**
+   * Constructor.
+   * @param {object} widget
+   * @param {object} reporter
+   */
+  constructor(widget, reporter) {
+    this._widget = widget || CALL_ME_ANYTHING;
+    this._reporter = reporter || CALL_ME_ANYTHING;
+  }
+
+  /**
+   * Initialize the supervisor.
+   * @param {object} [config] The configuration parameters.
+   */
+  init(config = {}) {
+    if (this._status !== SupervisorStatus.NotReady) {
+      throw new Error(`Supervisor is already configured!`)
     }
 
-    this._renderUI();
+    const {
+      domains,
+      renderUI
+    } = config;
 
+    Array.isArray(domains) && (this._domains = new Set(domains));
+    typeof renderUI === 'boolean' && (this._renderUI = renderUI);
+
+    this._render();
+    this._monkeyPatch();
+    this._status = SupervisorStatus.Idle;
+    this.start();
+  }
+
+  /**
+   * Starts network monitoring.
+   */
+  start() {
+    if (this._status === SupervisorStatus.NotReady) {
+      this.init();
+      return;
+    }
+
+    this._status = SupervisorStatus.Busy;
+    this._widget.start();
+    this._reporter.print(Messages.ACTIVE, Colors.BRAND, true);
+    this._triggerEvent(SupervisorEvents.START);
+  }
+
+  /**
+   * Stops network monitoring.
+   */
+  stop() {
+    this._status = SupervisorStatus.Idle;
+    this._widget.stop();
+    this._reporter.print(Messages.SLEEP, Colors.BRAND, true);
+    this._triggerEvent(SupervisorEvents.STOP);
+  }
+
+  /**
+   * Clears the requests log.
+   */
+  clear() {
+    this._reporter.clear();
+    this._requests.clear();
+    this._triggerEvent(SupervisorEvents.CLEAR);
+  }
+
+  /**
+   * Prints the log to the passed reporter.
+   */
+  print() {
+    if (!this._requests.size) {
+      this._reporter.print(Messages.NO_REQUESTS, Colors.INFO, true);
+      return;
+    }
+
+    const collection = new Collection([...this._requests]);
+    collection.groupBy('path', 'method', 'payload')
+    this._reporter.print(Messages.LOG_START, Colors.INFO, true);
+    this._reporter.report(collection);
+    this._reporter.print(Messages.LOG_END, Colors.INFO, true);
+  }
+
+  /**
+   * Subscribes to the passed event.
+   * @param {string} eventName
+   * @param {function} handler
+   */
+  on(eventName, handler) {
+    if (!this._supportEvent(eventName)) {
+      return;
+    }
+
+    if (!this._eventsHandlersMap.has(eventName)) {
+      this._eventsHandlersMap.add(eventName, new Set());
+    }
+
+    this._eventsHandlersMap.get(eventName).add(handler);
+  }
+
+  /**
+   * Un-subscribes from the passed event.
+   * @param {string} eventName
+   * @param {function} handler
+   */
+  off(eventName, handler) {
+    if (!this._eventsHandlersMap.has(eventName)) {
+      return;
+    }
+
+    const handlers = this._eventsHandlersMap.get(eventName);
+    handlers && handlers.remove(handler);
+  }
+
+  retire() {
+    this._undoMonkeyPatch();
+    this._widget.destroy();
+    this._reporter.destroy &&  this._reporter.destroy();
+    this._triggerEvent(SupervisorEvents.RETIRE);
+    this._eventsHandlersMap = {};
+    this._status = SupervisorStatus.Retired;
+  }
+
+  _monkeyPatch() {
     const open = this._open.bind(this),
       send = this._send.bind(this);
 
@@ -122,118 +390,23 @@ class HttpSupervisor {
     XMLHttpRequest.prototype.send = function () {
       send(this, ...arguments);
     };
-
-    this.start();
   }
 
-  /**
-   * Starts monitoring.
-   */
-  start() {
-    this._status = 'busy';
-    this._startButton.disabled = true;
-    this._stopButton.disabled = false;
+  _undoMonkeyPatch() {
+    XMLHttpRequest.prototype.open = this._nativeOpen;
+    XMLHttpRequest.prototype.send = this._nativeSend;
   }
 
-  /**
-   * Stops monitoring.
-   */
-  stop() {
-    this._status = 'idle';
-    this._startButton.disabled = false;
-    this._stopButton.disabled = true;
-  }
-
-  /**
-   * Clears the log.
-   */
-  clear() {
-    console.clear();
-    this._requests = [];
-  }
-
-  /**
-   * Prints the log to console.
-   */
-  print() {
-    if (this._requests.length === 0) {
-      console.log('Log is empty!');
+  _render() {
+    if (!this._renderUI) {
       return;
     }
 
-    const requestsGroupedByPath = {},
-      distinctUrls = [...new Set(this._requests.map(r => r.path))];
-
-    distinctUrls.forEach(url => {
-      requestsGroupedByPath[url] = {
-        GET: this._getRequests(url, 'GET'),
-        POST: this._getRequests(url, 'POST'),
-        PUT: this._getRequests(url, 'PUT'),
-        DELETE: this._getRequests(url, 'DELETE')
-      };
-    });
-
-    console.log('%c ------------------------ LOG STARTS ------------------------', 'color: green; font-weight: bold;');
-
-    console.group('General Observation');
-    console.log(`Total Requests: ${this._requests.length}`);
-    console.groupEnd();
-
-    for (const group in requestsGroupedByPath) {
-      const o = requestsGroupedByPath[group];
-      const hasDuplicate = Object.values(o.GET).find(arr => arr.length > 1) || Object.values(o.POST)
-                                                                                     .find(
-                                                                                       arr => arr.length > 1) || Object.values(
-        o.PUT).find(arr => arr.length > 1) || Object.values(o.DELETE).find(arr => arr.length > 1);
-      hasDuplicate ? console.group(`%c ${group}`, 'color:red;') : console.group(group);
-      this._logGroup('GET', o.GET);
-      this._logGroup('POST', o.POST);
-      this._logGroup('PUT', o.PUT);
-      this._logGroup('DELETE', o.DELETE);
-      console.groupEnd();
-    }
-
-    console.log('%c ------------------------ LOG ENDS ------------------------', 'color: green; font-weight: bold;');
-  }
-
-  /**
-   * Renders the UI.
-   * @private
-   */
-  _renderUI() {
-    const template = document.createRange()
-                             .createContextualFragment(`<div id="http-supervisor" style="position: fixed;z-index: 20000;top: 0;right: 0;text-align: center;display: flex;width: 100%;justify-content: center;align-items:center;">
-                                          <button id="start">
-                                            Start
-                                          </button>
-                                          <button id="stop">
-                                            Stop
-                                          </button>
-                                          <button id="clear">
-                                            Clear
-                                          </button>
-                                          <button id="print">
-                                            Print
-                                          </button>
-                                          <span id="calls-count" style="width: 20px;">
-                                            0
-                                          <span>
-                                    </div>`);
-
-    document.body.appendChild(template);
-
-    const $ = document.querySelector.bind(document);
-    this._container = $('#http-supervisor');
-    this._startButton = $('#start');
-    this._stopButton = $('#stop');
-    this._clearButton = $('#clear');
-    this._printButton = $('#print');
-    this._callsCountLabel = $('#calls-count');
-
-    this._startButton.addEventListener('click', () => this.start());
-    this._stopButton.addEventListener('click', () => this.stop());
-    this._clearButton.addEventListener('click', () => this.clear());
-    this._printButton.addEventListener('click', () => this.print());
+    this._widget.render();
+    this._widget.subscribe('start', () => this.start());
+    this._widget.subscribe('stop', () => this.stop());
+    this._widget.subscribe('clear', () => this.clear());
+    this._widget.subscribe('print', () => this.print());
   }
 
   /**
@@ -245,14 +418,18 @@ class HttpSupervisor {
       return;
     }
 
-    const [xhr, method, url] = arguments;
+    const parameters = [...arguments],
+      [xhr, method, url] = parameters;
 
-    xhr['id'] = this._id();
-    xhr['method'] = method;
-    xhr['url'] = url;
+    parameters.shift();
 
-    [].shift.apply(arguments);
-    this._nativeOpen.call(xhr, ...arguments);
+    Object.assign(xhr, {
+      id: this._id(),
+      method: method,
+      url: url
+    });
+
+    this._nativeOpen.call(xhr, ...parameters);
   }
 
   /**
@@ -264,68 +441,40 @@ class HttpSupervisor {
       return;
     }
 
-    const [xhr, payload] = arguments,
+    const parameters = [...arguments],
+      [xhr, payload] = parameters,
       url = new URL(xhr.url);
 
-    if (Array.isArray(this._domains) && this._domains.indexOf(url.origin) === -1) {
-      this._nativeSend.call(...arguments);
+    xhr.payload = payload;
+    parameters.shift();
+
+    if (this._domains !== null && this._domains.has(url.origin) === -1) {
+      this._nativeSend.call(...parameters);
       return;
     }
 
+    // Increment the call counter.
     this._increment();
 
-    const requestInfo = {
-      id: xhr.id,
-      url: xhr.url,
-      path: url.pathname,
-      method: xhr.method,
-      payload: payload,
-      timeStart: Date.now(),
-      timeEnd: null,
-      error: false
-    };
+    // Capture the request.
+    const requestInfo = this._createRequest(xhr);
+    this._requests.add(requestInfo);
 
-    this._requests.push(requestInfo);
+    xhr.addEventListener('load', () => {
+      const statusCode = xhr.status,
+        error = ERROR_STATUS_CODES.has(statusCode);
 
-    const handleComplete = () => {
-        this._decrement();
-      },
-      onLoadEnd = () => {
-        handleComplete();
-        requestInfo.timeEnd = Date.now();
-      },
-      onAbort = () => {
-        handleComplete();
-        requestInfo.error = true;
-        requestInfo.timeEnd = Date.now();
-      },
-      onError = () => {
-        handleComplete();
-        requestInfo.error = true;
-        requestInfo.timeEnd = Date.now();
-      },
-      onTimeout = () => {
-        handleComplete();
-        requestInfo.error = true;
-        requestInfo.timeEnd = Date.now();
-      };
-
-    xhr.addEventListener('loadend', onLoadEnd);
-    xhr.addEventListener('abort', onAbort);
-    xhr.addEventListener('error', onError);
-    xhr.addEventListener('timeout', onTimeout);
-
-    const args = [].shift.apply(arguments);
-    this._nativeSend.call(xhr, ...arguments);
-  }
-
-  /**
-   * Generates and returns unique id.
-   * @return {string}
-   * @private
-   */
-  _id() {
-    return `REQ-COUNT-${this._idCount++}`;
+      this._decrement();
+      requestInfo.responseStatus = statusCode;
+      requestInfo.response = xhr.response;
+      requestInfo.error = error;
+      error && (requestInfo.error = xhr.response);
+      requestInfo.timeEnd = Date.now();
+      requestInfo.duration = (requestInfo.timeEnd - requestInfo.timeStart) / 1000;
+      this._triggerEvent(error ? SupervisorEvents.REQUEST_ERROR : SupervisorEvents.REQUEST_END, xhr, requestInfo);
+    });
+    this._nativeSend.call(xhr, ...parameters);
+    this._triggerEvent(SupervisorEvents.REQUEST_START, xhr, requestInfo);
   }
 
   /**
@@ -334,7 +483,7 @@ class HttpSupervisor {
    */
   _increment() {
     this._callsCount++;
-    this._updateCallsLabel();
+    this._widget.updateCalls(this._callsCount);
   }
 
   /**
@@ -347,79 +496,200 @@ class HttpSupervisor {
     }
 
     this._callsCount--;
-    this._updateCallsLabel();
+    this._widget.updateCalls(this._callsCount);
   }
 
   /**
-   * Updates the call count label.
+   * Creates request object from the XHR object.
    * @private
    */
-  _updateCallsLabel() {
-    this._callsCountLabel.innerText = this._callsCount.toString();
+  _createRequest(xhr) {
+    const {
+      id,
+      url,
+      method,
+      payload
+    } = xhr;
+
+    return new HttpRequestInfo(id, url, method, payload);
   }
 
   /**
-   * Group the requests by payload for the passed url and type.
-   * @param url
-   * @param type
-   * @private
+   * Returns `true` is the passed event is supported.
    */
-  _getRequests(url, type) {
-    const requestedGroupedByPayload = {},
-      requests = this._requests.filter(r => r.path === url && r.method === type);
-
-    requests.forEach(r => {
-      let {payload} = r;
-      payload = payload || 'empty';
-
-      if (!requestedGroupedByPayload[payload]) {
-        requestedGroupedByPayload[payload] = [];
-      }
-
-      requestedGroupedByPayload[payload].push(r);
-    });
-
-    return requestedGroupedByPayload;
+  _supportEvent(eventName) {
+    return SupervisorEvents.hasOwnProperty(eventName);
   }
 
   /**
-   * Log the requests of the passed group.
-   * @param name
-   * @param requestsGroup
-   * @private
+   * Invokes the handlers registered for the event.
    */
-  _logGroup(name, requestsGroup) {
-    if (!Object.keys(requestsGroup).length) {
+  _triggerEvent(eventName, ...args) {
+    const handlers = this._eventsHandlersMap.get(eventName);
+    if (!handlers) {
       return;
     }
-
-    const hasDuplicate = Object.values(requestsGroup).find(arr => arr.length > 1);
-
-    hasDuplicate ? console.group(`%c ${name}`, 'color:red;') : console.group(name);
-
-    const hasMoreThanOne = Object.keys(requestsGroup).length > 1;
-
-    Object.entries(requestsGroup).forEach(([key, value]) => {
-      const payload = key.length > 50 ? `${key.substring(0, 50)}... }` : key;
-
-      if (hasMoreThanOne) {
-        value.length > 1 ? console.group(`%c paylod: ${payload}`, 'color: red;') : console.group(`paylod: ${payload}`);
-      }
-
-      value.forEach(x => {
-        const duration = (x.timeEnd - x.timeStart) / 1000;
-        x.duration = `${duration} s`;
-        delete x.timeStart;
-        delete x.timeEnd;
-      });
-
-      console.table(value);
-      hasMoreThanOne && console.groupEnd();
-    });
-
-    console.groupEnd();
+    [...handlers].forEach(handler => handler(this, ...args));
   }
 }
 
-const httpSupervisor = new HttpSupervisor();
+/**
+ * Represents the widget that helps to control the supervisor.
+ */
+class HttpSupervisorWidget {
+
+  el = null;
+
+  _startButton = null;
+
+  _stopButton = null;
+
+  _clearButton = null;
+
+  _printButton = null;
+
+  _callsCountLabel = null;
+
+  _eventsAndButtons = null;
+
+  render() {
+    if (this.el) {
+      return;
+    }
+
+    const template = document.createRange()
+      .createContextualFragment(`<div id="http-supervisor" style="position: fixed;z-index: 20000;top: 0;right: 0;text-align: center;display: flex;width: 100%;justify-content: center;align-items:center;">
+                 <button id="start">
+                   Start
+                 </button>
+                 <button id="stop">
+                   Stop
+                 </button>
+                 <button id="clear">
+                   Clear
+                 </button>
+                 <button id="print">
+                   Print
+                 </button>
+                 <span id="calls-count" style="width: 20px;border: solid 2px;display: block;">
+                   0
+                 <span>
+           </div>`);
+
+    document.body.appendChild(template);
+
+    this.el = document.querySelector('#http-supervisor');
+    [this._startButton, this._stopButton, this._clearButton, this._printButton, this._callsCountLabel] = this.el.children;
+    this._eventsAndButtons = {
+      start: this._startButton,
+      stop: this._stopButton,
+      clear: this._clearButton,
+      print: this._printButton
+    };
+  }
+
+  start() {
+    this._startButton.disabled = true;
+    this._stopButton.disabled = false;
+  }
+
+  stop() {
+    this._stopButton.disabled = true;
+    this._startButton.disabled = false;
+  }
+
+  updateCalls(count) {
+    this._callsCountLabel.innerText = count.toString();
+  }
+
+  show() {
+    this.el.style.display = 'none';
+  }
+
+  hide() {
+    this.el.style.display = 'flex';
+  }
+
+  subscribe(evt, handler) {
+    this._eventsAndButtons[evt].addEventListener('click', handler);
+  }
+
+  destroy() {
+    this.el.remove();
+  }
+}
+
+/**
+ * Class that is responsible for displaying the requests info to console.
+ */
+class ConsoleReporter {
+
+  success(message) {
+    this.print(message, Colors.SUCCESS);
+  }
+
+  error(message) {
+    this.print(message, Colors.ERROR);
+  }
+
+  info(message) {
+    this.print(message, Colors.INFO);
+  }
+
+  warn(message) {
+    this.print(message, Colors.WARN);
+  }
+
+  print(message, color, bold = false) {
+    const styles = [`color: ${color}`];
+    bold && styles.push(`font-weight: bold`);
+    console.log(`%c ${message}`, styles.join(';'));
+  }
+
+  report(collection) {
+    if (!collection.hasItems && !collection.hasGroups) {
+      return;
+    }
+
+    if (collection.hasGroups) {
+      collection.groups.forEach(group => {
+        this.groupStart(group.name === 'undefined' ? 'empty' : group.name);
+        this.report(group);
+        this.groupEnd();
+      });
+
+      return;
+    }
+
+    this.table(collection.items);
+    return;
+  }
+
+  table(array, displayFields) {
+    array.length && console.table(array, displayFields);
+  }
+
+  groupStart(group) {
+    console.group(group);
+  }
+
+  groupEnd() {
+    console.groupEnd();
+  }
+
+  clear() {
+    console.clear();
+  }
+
+  destroy() {
+  }
+}
+
+function idGenerator(prefix, seed = 0) {
+  return function() {
+    return `${prefix}-${seed++}`;
+  }
+}
+
+const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter());
 export default httpSupervisor;
