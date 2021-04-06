@@ -287,7 +287,7 @@ class HttpSupervisor {
    * Display each completed request.
    * @private
    */
-  _printEachRequest = false;
+  _traceEachRequest = true;
 
   /**
    * Display failed request.
@@ -358,6 +358,22 @@ class HttpSupervisor {
     return this._requests.size;
   }
 
+  set traceEachRequest(value) {
+    this._traceEachRequest = value;
+  }
+
+  set alertOnError(value) {
+    this._alertOnError = value;
+  }
+
+  set alertOnExceedQuota(value) {
+    this._alertOnExceedQuota = value;
+  }
+
+  set quota(value) {
+    this._quota = {...this._quota, ...value};
+  }
+
   /**
    * Constructor.
    * @param {object} widget
@@ -380,7 +396,7 @@ class HttpSupervisor {
     const {
       domains,
       renderUI,
-      printEachRequest,
+      traceEachRequest,
       alertOnError,
       alertOnExceedQuota,
       quota
@@ -388,24 +404,24 @@ class HttpSupervisor {
 
     Array.isArray(domains) && (this._domains = new Set(domains));
     typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-    typeof printEachRequest === 'boolean' && (this._printEachRequest = printEachRequest);
+    typeof printEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
     typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
     typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
     typeof quota === 'object' && (this._quota = {...this._quota, ...quota});
 
-    this.on(SupervisorEvents.REQUEST_END, (xhr, request) => {
-      if (this._printEachRequest) {
-        this._reporter.print(request);
+    this.on(SupervisorEvents.REQUEST_END, (supervisor, xhr, request) => {
+      if (this._traceEachRequest) {
+        this._reporter.report(request);
         return;
       }
 
       if (this._alertOnError && request.error) {
-        this._reporter.print(request);
+        this._reporter.report(request);
         return;
       }
 
-      if (this._isExceededQuota(request)) {
-        this._reporter.print(request);
+      if (this._alertOnExceedQuota && this._isExceededQuota(request)) {
+        this._reporter.report(request);
         return;
       }
     });
@@ -491,7 +507,7 @@ class HttpSupervisor {
     }
 
     if (!this._eventsHandlersMap.has(eventName)) {
-      this._eventsHandlersMap.add(eventName, new Set());
+      this._eventsHandlersMap.set(eventName, new Set());
     }
 
     this._eventsHandlersMap.get(eventName).add(handler);
@@ -787,7 +803,7 @@ class HttpSupervisor {
    * Returns `true` is the passed event is supported.
    */
   _supportEvent(eventName) {
-    return SupervisorEvents.hasOwnProperty(eventName);
+    return Object.values(SupervisorEvents).indexOf(eventName) > -1;
   }
 
   /**
