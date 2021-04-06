@@ -8,6 +8,107 @@ Array.prototype.groupBy = function(key) {
   }, new Map());
 };
 
+function formatBytes(bytes, decimals) {
+  if(bytes == 0) {
+    return '0 bytes';
+  }
+
+  const k = 1024,
+    dm = decimals || 2,
+    sizes = ['bytes', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'],
+    i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+function formatTime(ms) {
+  return ms < 500 ? `${ms} ms` : `${ms/1000} s`;
+}
+
+const HTTP_SUPERVISOR_EMOJI = '💂';
+
+/**
+ * Collection of messages used by supervisor.
+ */
+const Messages = {
+  ACTIVE: `‍${HTTP_SUPERVISOR_EMOJI} HTTP SUPERVISOR STARTED`,
+  SLEEP: `${HTTP_SUPERVISOR_EMOJI}‍ HTTP SUPERVISOR STOPPED`,
+  LOG_START: `------------------------ LOG STARTS ------------------------`,
+  LOG_END: `------------------------- LOG ENDS -------------------------`,
+  NO_REQUESTS: `No Requests Found`,
+  GENERAL_INFO: 'Metrics Summary',
+  TOTAL_REQUESTS: 'Total Requests',
+  FAILED_REQUESTS: 'Failed Requests',
+  REQUESTS_EXCEEDED_QUOTA: 'Requests Exceeded Quota',
+  REQUESTS_INFO: 'Requests Details',
+  REQUEST_INFO: 'Request Details',
+  MAX_PAYLOAD_SIZE: 'Max Payload Size',
+  MAX_RESPONSE_SIZE: 'Max Response Size',
+  MAX_DURATION: 'Max Duration',
+  TOTAL_PAYLOAD_SIZE: 'Total Payload Size',
+  TOTAL_RESPONSE_SIZE: 'Total Response Size',
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE',
+  ID: 'Id',
+  URL: 'Url',
+  PATH: 'Path',
+  METHOD: 'Type',
+  PAYLOAD: 'Payload',
+  PAYLOAD_SIZE: 'Payload Size',
+  DURATION: 'Duration',
+  RESPONSE: 'Response',
+  RESPONSE_SIZE: 'Response Size',
+  RESPONSE_STATUS: 'Status',
+  IS_ERROR: 'Is Error?',
+  ERROR_DESC: 'Error Description'
+};
+
+/**
+ * The different color codes by supervisor.
+ */
+const Colors = {
+  BRAND: '#f54284',
+  SUCCESS: '#09b809',
+  ERROR: '#e62e5c',
+  INFO: '#4d4b46',
+  WARN: '#e6b225'
+};
+
+/**
+ * The different statuses of supervisor.
+ */
+const SupervisorStatus = {
+  Busy: 'busy',
+  Idle: 'idle',
+  NotReady: 'not-ready',
+  Retired: 'retired'
+};
+
+/**
+ * Different events fired by supervisor.
+ */
+const SupervisorEvents = {
+  START: 'start',
+  STOP: 'stop',
+  CLEAR: 'clear',
+  RETIRE: 'retire',
+  REQUEST_START: 'request-start',
+  REQUEST_END: 'request-end',
+  REQUEST_ERROR: 'request-error'
+};
+
+/**
+ * HTTP Error status codes.
+ */
+const ERROR_STATUS_CODES = new Set([500, 401, 404]);
+
+/**
+ * Proxy object that allows to call any method in an object that not even exists.
+ */
+const CALL_ME_ANYTHING = new Proxy({}, { get : function() { return function()  { }; } });
+
 /**
  * Holds the http request information.
  */
@@ -142,77 +243,6 @@ class Collection extends Node {
     super('root', items);
   }
 }
-
-const HTTP_SUPERVISOR_EMOJI = '💂';
-
-/**
- * Collection of messages used by supervisor.
- */
-const Messages = {
-  ACTIVE: `‍${HTTP_SUPERVISOR_EMOJI} HTTP SUPERVISOR STARTED`,
-  SLEEP: `${HTTP_SUPERVISOR_EMOJI}‍ HTTP SUPERVISOR STOPPED`,
-  LOG_START: `------------------------ LOG STARTS ------------------------`,
-  LOG_END: `------------------------- LOG ENDS -------------------------`,
-  NO_REQUESTS: `No Requests Found`,
-  GENERAL_INFO: 'Metrics Summary',
-  TOTAL_REQUESTS: 'Total Requests',
-  FAILED_REQUESTS: 'Failed Requests',
-  REQUESTS_EXCEEDED_QUOTA: 'Requests Exceeded Quota',
-  REQUESTS_INFO: 'Requests Details',
-  MAX_PAYLOAD_SIZE: 'Max Payload Size',
-  MAX_RESPONSE_SIZE: 'Max Response Size',
-  MAX_DURATION: 'Max Duration',
-  TOTAL_PAYLOAD_SIZE: 'Total Payload Size',
-  TOTAL_RESPONSE_SIZE: 'Total Response Size',
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  DELETE: 'DELETE'
-};
-
-/**
- * The different color codes by supervisor.
- */
-const Colors = {
-  BRAND: '#f54284',
-  SUCCESS: '#09b809',
-  ERROR: '#e62e5c',
-  INFO: '#4d4b46',
-  WARN: '#e6b225'
-};
-
-/**
- * The different statuses of supervisor.
- */
-const SupervisorStatus = {
-  Busy: 'busy',
-  Idle: 'idle',
-  NotReady: 'not-ready',
-  Retired: 'retired'
-};
-
-/**
- * Different events fired by supervisor.
- */
-const SupervisorEvents = {
-  START: 'start',
-  STOP: 'stop',
-  CLEAR: 'clear',
-  RETIRE: 'retire',
-  REQUEST_START: 'request-start',
-  REQUEST_END: 'request-end',
-  REQUEST_ERROR: 'request-error'
-};
-
-/**
- * HTTP Error status codes.
- */
-const ERROR_STATUS_CODES = new Set([500, 401, 404]);
-
-/**
- * Proxy object that allows to call any method in an object that not even exists.
- */
-const CALL_ME_ANYTHING = new Proxy({}, { get : function() { return function()  { }; } });
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify duplicate requests, analyze payload and much more.
@@ -438,11 +468,11 @@ class HttpSupervisor {
     this._reporter.print(`${Messages.TOTAL_REQUESTS}: ${this.totalRequests} | GET: ${this.getRequestsByType('GET').count} | POST: ${this.getRequestsByType('POST').count} | PUT: ${this.getRequestsByType('PUT').count} | DELETE: ${this.getRequestsByType('DELETE').count}`, Colors.INFO);
     this._reporter.print(`${Messages.FAILED_REQUESTS}: ${this.getFailedRequests().length}`, Colors.INFO);
     this._reporter.print(`${Messages.REQUESTS_EXCEEDED_QUOTA}: ${this.getRequestsExceededQuota().length}`, Colors.INFO);
-    this._reporter.print(`${Messages.MAX_PAYLOAD_SIZE}: ${this.maxPayloadSize()}`, Colors.INFO);
-    this._reporter.print(`${Messages.MAX_RESPONSE_SIZE}: ${this.maxResponseSize()}`, Colors.INFO);
-    this._reporter.print(`${Messages.MAX_DURATION}: ${this.maxDuration()}`, Colors.INFO);
-    this._reporter.print(`${Messages.TOTAL_PAYLOAD_SIZE}: ${this.getTotalPayloadSize()}`, Colors.INFO);
-    this._reporter.print(`${Messages.TOTAL_RESPONSE_SIZE}: ${this.getTotalResponseSize()}`, Colors.INFO);
+    this._reporter.print(`${Messages.MAX_PAYLOAD_SIZE}: ${formatBytes(this.maxPayloadSize())}`, Colors.INFO);
+    this._reporter.print(`${Messages.MAX_RESPONSE_SIZE}: ${formatBytes(this.maxResponseSize())}`, Colors.INFO);
+    this._reporter.print(`${Messages.MAX_DURATION}: ${formatTime(this.maxDuration())}`, Colors.INFO);
+    this._reporter.print(`${Messages.TOTAL_PAYLOAD_SIZE}: ${formatBytes(this.getTotalPayloadSize())}`, Colors.INFO);
+    this._reporter.print(`${Messages.TOTAL_RESPONSE_SIZE}: ${formatBytes(this.getTotalResponseSize())}`, Colors.INFO);
     this._reporter.break();
     this._reporter.print(Messages.REQUESTS_INFO, Colors.INFO, true);
     this._reporter.print(Array(Messages.REQUESTS_INFO.length).fill('-').join(''), Colors.INFO, true);
@@ -531,7 +561,11 @@ class HttpSupervisor {
   }
 
   arrangeRequests(groupArgs, sortArgs) {
-    return this.groupRequests(groupArgs).sortBy(...sortArgs);
+    return this.groupRequests(...groupArgs).sortBy(...sortArgs);
+  }
+
+  getRequestsBy(query, groupArgs, sortArgs) {
+    return this.searchRequests(query).groupBy(...groupArgs).sortBy(...sortArgs);
   }
 
   searchRequests(query) {
@@ -571,11 +605,38 @@ class HttpSupervisor {
   }
 
   printLastFailedRequest() {
+    this._printHeader(Messages.REQUEST_INFO);
     this._reporter.report(this.getLastFailedRequest());
   }
 
   printLastRequest() {
+    this._printHeader(Messages.REQUEST_INFO);
     this._reporter.report(this.getLastRequest());
+  }
+
+  groupAndPrintRequests(groupArgs) {
+    this._printHeader(Messages.REQUESTS_INFO);
+    this._reporter.report(this.groupRequests(...groupArgs));
+  }
+
+  sortAndPrintRequests(sortArgs) {
+    this._printHeader(Messages.REQUESTS_INFO);
+    this._reporter.report(this.sortRequests(...sortArgs));
+  }
+
+  arrangeAndPrintRequests(groupArgs, sortArgs) {
+    this._printHeader(Messages.REQUESTS_INFO);
+    this._reporter.report(this.arrangeRequests(...groupArgs, ...sortArgs));
+  }
+
+  searchAndPrintRequests(query) {
+    this._printHeader(Messages.REQUESTS_INFO);
+    this._reporter.report(this.searchRequests(query));
+  }
+
+  searchArrangeAndPrintRequests(query, groupArgs, sortArgs) {
+    this._printHeader(Messages.REQUESTS_INFO);
+    this._reporter.report(this.getRequestsBy(query, groupArgs, sortArgs));
   }
 
   _monkeyPatch() {
@@ -747,6 +808,11 @@ class HttpSupervisor {
   _isExceededQuota(request) {
     return request.payloadSize > this._quota.payloadSize || request.responseSize > this._quota.responseSize || request.duration > this._quota.duration;
   }
+
+  _printHeader(title) {
+    this.print(title, Colors.INFO, true);
+    this.print(Array(title.length).fill('-').join(''), Colors.INFO, true);
+  }
 }
 
 /**
@@ -868,13 +934,33 @@ class ConsoleReporter {
     console.log(`%c ${message}`, styles.join(';'));
   }
 
-  report(collection) {
-    if (!collection.hasItems && !collection.hasGroups) {
+  printMultiple(...messages) {
+    console.log(...messages);
+  }
+
+  report(requestOrCollection) {
+    if (requestOrCollection instanceof HttpRequestInfo) {
+      this.print(`${Messages.ID}: ${requestOrCollection.id}`, Colors.INFO);
+      this.print(`${Messages.URL}: ${requestOrCollection.url}`, Colors.INFO);
+      this.print(`${Messages.PATH}: ${requestOrCollection.path}`, Colors.INFO);
+      this.print(`${Messages.METHOD}: ${requestOrCollection.method}`, Colors.INFO);
+      this.printMultiple(`${Messages.PAYLOAD}:`, requestOrCollection.payload);
+      this.print(`${Messages.PAYLOAD_SIZE}: ${formatBytes(requestOrCollection.payloadSize)}`, Colors.INFO);
+      this.print(`${Messages.DURATION}: ${formatTime(requestOrCollection.duration)}`, Colors.INFO);
+      this.printMultiple(`${Messages.RESPONSE}:`, requestOrCollection.response);
+      this.print(`${Messages.RESPONSE_SIZE}: ${formatBytes(requestOrCollection.responseSize)}`, Colors.INFO);
+      this.print(`${Messages.RESPONSE_STATUS}: ${requestOrCollection.responseStatus}`);
+      this.print(`${Messages.IS_ERROR}: ${requestOrCollection.error ? 'Yes' : 'No'}`);
+      this.print(`${Messages.ERROR_DESC}: ${requestOrCollection.errorDescription}`);
       return;
     }
 
-    if (collection.hasGroups) {
-      collection.groups.forEach(group => {
+    if (!requestOrCollection.hasItems && !requestOrCollection.hasGroups) {
+      return;
+    }
+
+    if (requestOrCollection.hasGroups) {
+      requestOrCollection.groups.forEach(group => {
         const { name, groupedBy, items } = group;
 
         if (typeof name === 'undefined') {
@@ -892,7 +978,7 @@ class ConsoleReporter {
       return;
     }
 
-    const items = collection.items.map(item => {
+    const items = requestOrCollection.items.map(item => {
       const displayObj = {};
       this._fieldsToDisplay.forEach((value, key) => {
         let v;
