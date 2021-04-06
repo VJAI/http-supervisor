@@ -17,6 +17,7 @@ class HttpRequestInfo {
   path = null;
   method = null;
   payload = null;
+  payloadSize = null;
   timeStart = performance.now();
   timeEnd = performance.now();
   duration = 0;
@@ -80,6 +81,14 @@ class Node {
     return this.hasItems ? this._items.length : 0;
   }
 
+  get first() {
+    return this.hasItems ? this._items[0] : null;
+  }
+
+  get last() {
+    return this.hasItems ? this._items[this.count - 1] : null;
+  }
+
   constructor(name, items, groupedBy) {
     this._name = name;
     this._items = items;
@@ -110,6 +119,22 @@ class Node {
     this._groups = [];
     this._groupedBy = null;
   }
+
+  sortBy(...args) {
+    if (!args.length) {
+      return;
+    }
+
+    if (this.hasGroups) {
+      return;
+    }
+
+    //this._items.sortBy()
+  }
+
+  search(args) {
+
+  }
 }
 
 class Collection extends Node {
@@ -131,7 +156,14 @@ const Messages = {
   NO_REQUESTS: `No Requests Found`,
   GENERAL_INFO: 'Metrics Summary',
   TOTAL_REQUESTS: 'Total Requests',
+  FAILED_REQUESTS: 'Failed Requests',
+  REQUESTS_EXCEEDED_QUOTA: 'Requests Exceeded Quota',
   REQUESTS_INFO: 'Requests Details',
+  MAX_PAYLOAD_SIZE: 'Max Payload Size',
+  MAX_RESPONSE_SIZE: 'Max Response Size',
+  MAX_DURATION: 'Max Duration',
+  TOTAL_PAYLOAD_SIZE: 'Total Payload Size',
+  TOTAL_RESPONSE_SIZE: 'Total Response Size',
   GET: 'GET',
   POST: 'POST',
   PUT: 'PUT',
@@ -212,6 +244,34 @@ class HttpSupervisor {
   _renderUI = true;
 
   /**
+   * Request Quota.
+   * @private
+   */
+  _quota = {
+    maxPayloadSize: Infinity,
+    maxResponseSize: Infinity,
+    maxDuration: Infinity
+  };
+
+  /**
+   * Display each completed request.
+   * @private
+   */
+  _printEachRequest = false;
+
+  /**
+   * Display failed request.
+   * @private
+   */
+  _alertOnError = true;
+
+  /**
+   * Display request that exceeded quota.
+   * @private
+   */
+  _alertOnExceedQuota = true;
+
+  /**
    * Collection of captured requests.
    * @type {Array}
    * @private
@@ -289,11 +349,36 @@ class HttpSupervisor {
 
     const {
       domains,
-      renderUI
+      renderUI,
+      printEachRequest,
+      alertOnError,
+      alertOnExceedQuota,
+      quota
     } = config;
 
     Array.isArray(domains) && (this._domains = new Set(domains));
     typeof renderUI === 'boolean' && (this._renderUI = renderUI);
+    typeof printEachRequest === 'boolean' && (this._printEachRequest = printEachRequest);
+    typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
+    typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
+    typeof quota === 'object' && (this._quota = {...this._quota, ...quota});
+
+    this.on(SupervisorEvents.REQUEST_END, (xhr, request) => {
+      if (this._printEachRequest) {
+        this._reporter.print(request);
+        return;
+      }
+
+      if (this._alertOnError && request.error) {
+        this._reporter.print(request);
+        return;
+      }
+
+      if (this._isExceededQuota(request)) {
+        this._reporter.print(request);
+        return;
+      }
+    });
 
     this._render();
     this._monkeyPatch();
@@ -345,12 +430,19 @@ class HttpSupervisor {
     }
 
     const collection = new Collection([...this._requests]);
-    collection.groupBy('path', 'method', 'payload')
+    collection.groupBy('path', 'method')
     this._reporter.print(Messages.LOG_START, Colors.INFO, true);
     this._reporter.break();
     this._reporter.print(Messages.GENERAL_INFO, Colors.INFO, true);
     this._reporter.print(Array(Messages.GENERAL_INFO.length).fill('-').join(''), Colors.INFO, true);
-    this._reporter.print(`${Messages.TOTAL_REQUESTS}: ${this.totalRequests} | GET: ${this.requestsByType('GET').count} | POST: ${this.requestsByType('POST').count} | PUT: ${this.requestsByType('PUT').count} | DELETE: ${this.requestsByType('DELETE').count}`, Colors.INFO);
+    this._reporter.print(`${Messages.TOTAL_REQUESTS}: ${this.totalRequests} | GET: ${this.getRequestsByType('GET').count} | POST: ${this.getRequestsByType('POST').count} | PUT: ${this.getRequestsByType('PUT').count} | DELETE: ${this.getRequestsByType('DELETE').count}`, Colors.INFO);
+    this._reporter.print(`${Messages.FAILED_REQUESTS}: ${this.getFailedRequests().length}`, Colors.INFO);
+    this._reporter.print(`${Messages.REQUESTS_EXCEEDED_QUOTA}: ${this.getRequestsExceededQuota().length}`, Colors.INFO);
+    this._reporter.print(`${Messages.MAX_PAYLOAD_SIZE}: ${this.maxPayloadSize()}`, Colors.INFO);
+    this._reporter.print(`${Messages.MAX_RESPONSE_SIZE}: ${this.maxResponseSize()}`, Colors.INFO);
+    this._reporter.print(`${Messages.MAX_DURATION}: ${this.maxDuration()}`, Colors.INFO);
+    this._reporter.print(`${Messages.TOTAL_PAYLOAD_SIZE}: ${this.getTotalPayloadSize()}`, Colors.INFO);
+    this._reporter.print(`${Messages.TOTAL_RESPONSE_SIZE}: ${this.getTotalResponseSize()}`, Colors.INFO);
     this._reporter.break();
     this._reporter.print(Messages.REQUESTS_INFO, Colors.INFO, true);
     this._reporter.print(Array(Messages.REQUESTS_INFO.length).fill('-').join(''), Colors.INFO, true);
@@ -409,8 +501,81 @@ class HttpSupervisor {
     return new Collection([...this._requests]);
   }
 
-  requestsByType(method) {
+  getRequestsByType(method) {
     return new Collection([...this._requests].filter(r => r.method === method));
+  }
+
+  getFailedRequests() {
+    const failedRequests = [...this._requests].filter(r => r.error === true);
+    return new Collection(failedRequests);
+  }
+
+  getLastFailedRequest() {
+    return this.getFailedRequests().last;
+  }
+
+  getLastRequest() {
+    return this.requests().last;
+  }
+
+  getRequestsExceededQuota() {
+    return [...this._requests].filter(r => this._isExceededQuota(r));
+  }
+
+  groupRequests(...groupArgs) {
+    return this.requests().groupBy(...groupArgs);
+  }
+
+  sortRequests(...sortArgs) {
+    return this.requests().sortBy(...sortArgs);
+  }
+
+  arrangeRequests(groupArgs, sortArgs) {
+    return this.groupRequests(groupArgs).sortBy(...sortArgs);
+  }
+
+  searchRequests(query) {
+    return this.requests.search(query);
+  }
+
+  getTotalPayloadSize() {
+    return [...this._requests].reduce((a, b) => a + b.payloadSize, 0);
+  }
+
+  getTotalResponseSize() {
+    return [...this._requests].reduce((a, b) => a + b.responseSize, 0);
+  }
+
+  maxPayloadSize() {
+    return Math.max(...[...this._requests].map(r => r.payloadSize));
+  }
+
+  maxResponseSize() {
+    return Math.max(...[...this._requests].map(r => r.responseSize));
+  }
+
+  maxDuration() {
+    return Math.max(...[...this._requests].map(r => r.duration));
+  }
+
+  printRequests() {
+    this._reporter.report(this.requests());
+  }
+
+  printRequestsByType(method) {
+    this._reporter.report(this.getRequestsByType(method));
+  }
+
+  printFailedRequests() {
+    this._reporter.report(this.getFailedRequests());
+  }
+
+  printLastFailedRequest() {
+    this._reporter.report(this.getLastFailedRequest());
+  }
+
+  printLastRequest() {
+    this._reporter.report(this.getLastRequest());
   }
 
   _monkeyPatch() {
@@ -509,8 +674,9 @@ class HttpSupervisor {
       error && (requestInfo.error = xhr.response);
       requestInfo.timeEnd = performance.now();
       requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
-      requestInfo.responseSize = xhr.responseText.length;
-      this._triggerEvent(error ? SupervisorEvents.REQUEST_ERROR : SupervisorEvents.REQUEST_END, xhr, requestInfo);
+      requestInfo.responseSize = this._byteSize(xhr.responseText);
+      error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, xhr, requestInfo);
+      this._triggerEvent(SupervisorEvents.REQUEST_END, xhr, requestInfo);
     });
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, xhr, requestInfo);
@@ -550,7 +716,10 @@ class HttpSupervisor {
       payload
     } = xhr;
 
-    return new HttpRequestInfo(id, url, method, payload);
+    const httpRequestInfo = new HttpRequestInfo(id, url, method, payload);
+    httpRequestInfo.payloadSize = this._byteSize(payload);
+
+    return httpRequestInfo;
   }
 
   /**
@@ -569,6 +738,14 @@ class HttpSupervisor {
       return;
     }
     [...handlers].forEach(handler => handler(this, ...args));
+  }
+
+  _byteSize(str) {
+    return str ? new Blob([str]).size : 0;
+  }
+
+  _isExceededQuota(request) {
+    return request.payloadSize > this._quota.payloadSize || request.responseSize > this._quota.responseSize || request.duration > this._quota.duration;
   }
 }
 
@@ -770,6 +947,7 @@ const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new Consol
     path: 'Path',
     method: 'Type',
     payload: 'Payload',
+    payloadSize: 'Payload Size (bytes)',
     duration: 'Duration (ms)',
     response: 'Response',
     responseStatus: 'Status',
