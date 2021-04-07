@@ -637,16 +637,16 @@ class HttpSupervisor {
     this._reporter.reportObject(this.getLastRequest());
   }
 
-  groupAndPrintRequests(groupArgs) {
+  groupAndPrintRequests(...groupArgs) {
     this._reporter.reportObject(this.groupRequests(...groupArgs));
   }
 
-  sortAndPrintRequests(sortArgs) {
+  sortAndPrintRequests(...sortArgs) {
     this._reporter.reportObject(this.sortRequests(...sortArgs));
   }
 
   arrangeAndPrintRequests(groupArgs, sortArgs) {
-    this._reporter.reportObject(this.arrangeRequests(...groupArgs, ...sortArgs));
+    this._reporter.reportObject(this.arrangeRequests(groupArgs, sortArgs));
   }
 
   searchAndPrintRequests(query) {
