@@ -47,5 +47,8 @@ function sendCall4() {
 }
 
 window.httpSupervisor = httpSupervisor;
-httpSupervisor.init();
+httpSupervisor.init({
+  domains: ['https://jsonplaceholder.typicode.com'],
+  traceEachRequest: false
+});
 makeAjaxCalls();

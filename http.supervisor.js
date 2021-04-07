@@ -8,8 +8,11 @@ Array.prototype.groupBy = function(key) {
   }, new Map());
 };
 
+/**
+ * Return bytes in human readable format.
+ */
 function formatBytes(bytes, decimals) {
-  if(bytes == 0) {
+  if(bytes === 0) {
     return '0 bytes';
   }
 
@@ -21,6 +24,9 @@ function formatBytes(bytes, decimals) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
+/**
+ * Formats time in seconds.
+ */
 function formatTime(ms) {
   return ms < 500 ? `${ms} ms` : `${ms/1000} s`;
 }
@@ -36,7 +42,7 @@ const Messages = {
   LOG_START: `------------------------ LOG STARTS ------------------------`,
   LOG_END: `------------------------- LOG ENDS -------------------------`,
   NO_REQUESTS: `No Requests Found`,
-  GENERAL_INFO: 'Metrics Summary',
+  METRICS_SUMMARY: 'Metrics Summary',
   TOTAL_REQUESTS: 'Total Requests',
   FAILED_REQUESTS: 'Failed Requests',
   REQUESTS_EXCEEDED_QUOTA: 'Requests Exceeded Quota',
@@ -137,6 +143,9 @@ class HttpRequestInfo {
   }
 }
 
+/**
+ * Represents a collection of records that can be groupable, sortable etc.
+ */
 class Node {
   _name = null;
   _items = [];
@@ -238,6 +247,9 @@ class Node {
   }
 }
 
+/**
+ * Represents a collection of records.
+ */
 class Collection extends Node {
   constructor(items) {
     super('root', items);
@@ -261,7 +273,7 @@ class HttpSupervisor {
 
   /**
    * Array of domains to monitor.
-   * @type {null|Array<string>}
+   * @type {Set}
    * @private
    */
   _domains = null;
@@ -404,25 +416,24 @@ class HttpSupervisor {
 
     Array.isArray(domains) && (this._domains = new Set(domains));
     typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-    typeof printEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
+    typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
     typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
     typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
     typeof quota === 'object' && (this._quota = {...this._quota, ...quota});
 
     this.on(SupervisorEvents.REQUEST_END, (supervisor, xhr, request) => {
       if (this._traceEachRequest) {
-        this._reporter.report(request);
+        this._reporter.reportObject(request);
         return;
       }
 
       if (this._alertOnError && request.error) {
-        this._reporter.report(request);
+        this._reporter.reportObject(request);
         return;
       }
 
       if (this._alertOnExceedQuota && this._isExceededQuota(request)) {
-        this._reporter.report(request);
-        return;
+        this._reporter.reportObject(request);
       }
     });
 
@@ -476,24 +487,22 @@ class HttpSupervisor {
     }
 
     const collection = new Collection([...this._requests]);
-    collection.groupBy('path', 'method')
-    this._reporter.print(Messages.LOG_START, Colors.INFO, true);
-    this._reporter.break();
-    this._reporter.print(Messages.GENERAL_INFO, Colors.INFO, true);
-    this._reporter.print(Array(Messages.GENERAL_INFO.length).fill('-').join(''), Colors.INFO, true);
-    this._reporter.print(`${Messages.TOTAL_REQUESTS}: ${this.totalRequests} | GET: ${this.getRequestsByType('GET').count} | POST: ${this.getRequestsByType('POST').count} | PUT: ${this.getRequestsByType('PUT').count} | DELETE: ${this.getRequestsByType('DELETE').count}`, Colors.INFO);
-    this._reporter.print(`${Messages.FAILED_REQUESTS}: ${this.getFailedRequests().length}`, Colors.INFO);
-    this._reporter.print(`${Messages.REQUESTS_EXCEEDED_QUOTA}: ${this.getRequestsExceededQuota().length}`, Colors.INFO);
-    this._reporter.print(`${Messages.MAX_PAYLOAD_SIZE}: ${formatBytes(this.maxPayloadSize())}`, Colors.INFO);
-    this._reporter.print(`${Messages.MAX_RESPONSE_SIZE}: ${formatBytes(this.maxResponseSize())}`, Colors.INFO);
-    this._reporter.print(`${Messages.MAX_DURATION}: ${formatTime(this.maxDuration())}`, Colors.INFO);
-    this._reporter.print(`${Messages.TOTAL_PAYLOAD_SIZE}: ${formatBytes(this.getTotalPayloadSize())}`, Colors.INFO);
-    this._reporter.print(`${Messages.TOTAL_RESPONSE_SIZE}: ${formatBytes(this.getTotalResponseSize())}`, Colors.INFO);
-    this._reporter.break();
-    this._reporter.print(Messages.REQUESTS_INFO, Colors.INFO, true);
-    this._reporter.print(Array(Messages.REQUESTS_INFO.length).fill('-').join(''), Colors.INFO, true);
-    this._reporter.report(collection);
-    this._reporter.print(Messages.LOG_END, Colors.INFO, true);
+    collection.groupBy('path', 'method', 'payload');
+
+    this._reporter.report({
+      totalRequests: this.totalRequests,
+      getRequestsCount: this.getRequestsByType('GET').count,
+      postRequestsCount: this.getRequestsByType('POST').count,
+      putRequestsCount: this.getRequestsByType('PUT').count,
+      deleteRequestsCount: this.getRequestsByType('DELETE').count,
+      failedRequests: this.getFailedRequests().count,
+      requestsExceededQuota: this.getRequestsExceededQuota().count,
+      maxPayloadSize: this.maxPayloadSize(),
+      maxResponseSize: this.maxResponseSize(),
+      maxDuration: this.maxDuration(),
+      totalPayloadSize: this.getTotalPayloadSize(),
+      totalResponseSize: this.getTotalResponseSize()
+    }, collection);
   }
 
   /**
@@ -565,7 +574,7 @@ class HttpSupervisor {
   }
 
   getRequestsExceededQuota() {
-    return [...this._requests].filter(r => this._isExceededQuota(r));
+    return new Collection([...this._requests].filter(r => this._isExceededQuota(r)));
   }
 
   groupRequests(...groupArgs) {
@@ -609,50 +618,43 @@ class HttpSupervisor {
   }
 
   printRequests() {
-    this._reporter.report(this.requests());
+    this._reporter.reportObject(this.requests());
   }
 
   printRequestsByType(method) {
-    this._reporter.report(this.getRequestsByType(method));
+    this._reporter.reportObject(this.getRequestsByType(method));
   }
 
   printFailedRequests() {
-    this._reporter.report(this.getFailedRequests());
+    this._reporter.reportObject(this.getFailedRequests());
   }
 
   printLastFailedRequest() {
-    this._printHeader(Messages.REQUEST_INFO);
-    this._reporter.report(this.getLastFailedRequest());
+    this._reporter.reportObject(this.getLastFailedRequest());
   }
 
   printLastRequest() {
-    this._printHeader(Messages.REQUEST_INFO);
-    this._reporter.report(this.getLastRequest());
+    this._reporter.reportObject(this.getLastRequest());
   }
 
   groupAndPrintRequests(groupArgs) {
-    this._printHeader(Messages.REQUESTS_INFO);
-    this._reporter.report(this.groupRequests(...groupArgs));
+    this._reporter.reportObject(this.groupRequests(...groupArgs));
   }
 
   sortAndPrintRequests(sortArgs) {
-    this._printHeader(Messages.REQUESTS_INFO);
-    this._reporter.report(this.sortRequests(...sortArgs));
+    this._reporter.reportObject(this.sortRequests(...sortArgs));
   }
 
   arrangeAndPrintRequests(groupArgs, sortArgs) {
-    this._printHeader(Messages.REQUESTS_INFO);
-    this._reporter.report(this.arrangeRequests(...groupArgs, ...sortArgs));
+    this._reporter.reportObject(this.arrangeRequests(...groupArgs, ...sortArgs));
   }
 
   searchAndPrintRequests(query) {
-    this._printHeader(Messages.REQUESTS_INFO);
-    this._reporter.report(this.searchRequests(query));
+    this._reporter.reportObject(this.searchRequests(query));
   }
 
   searchArrangeAndPrintRequests(query, groupArgs, sortArgs) {
-    this._printHeader(Messages.REQUESTS_INFO);
-    this._reporter.report(this.getRequestsBy(query, groupArgs, sortArgs));
+    this._reporter.reportObject(this.getRequestsBy(query, groupArgs, sortArgs));
   }
 
   _monkeyPatch() {
@@ -944,30 +946,89 @@ class ConsoleReporter {
     this.print(message, Colors.WARN);
   }
 
-  print(message, color, bold = false) {
+  print(message, color, bold = false, otherStyles) {
     const styles = [`color: ${color}`];
     bold && styles.push(`font-weight: bold`);
-    console.log(`%c ${message}`, styles.join(';'));
+    otherStyles && styles.push(otherStyles);
+    console.log(`%c${message}`, styles.join(';'));
+  }
+
+  printTitle(message) {
+    this.print(message, Colors.INFO, true, `padding: 5px 250px; background-color: #aaa; color: #fff;margin-bottom: 10px;`);
+  }
+
+  printRow(message) {
+    this.print(message, Colors.INFO);
+  }
+
+  printKeyValue(head, value) {
+    console.log(`%c${this._getTileWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO}; border-bottom: dashed 2px #aaa;`);
+  }
+
+  _getTileWithSpaces(title) {
+    return `${title}${Array(30 - title.length).fill(' ').join('')}`;
+  }
+
+  printKeyValueMany(obj) {
+    let msgs = [];
+    let styles = [];
+    Object.entries(obj).forEach(([title, value], index) => {
+      msgs.push(`%c${index === 0 ? this._getTileWithSpaces(title) : title}: %c${value}`);
+      styles.push(`font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO}; border-bottom: dashed 2px #aaa;`);
+      index < Object.keys(obj).length - 1 && styles.push(`color: #ccc`);
+    });
+
+    console.log(msgs.join('%c | '), ...styles);
   }
 
   printMultiple(...messages) {
     console.log(...messages);
   }
 
-  report(requestOrCollection) {
+  reportStats({
+    totalRequests,
+    getRequestsCount,
+    postRequestsCount,
+    putRequestsCount,
+    deleteRequestsCount,
+    failedRequests,
+    requestsExceededQuota,
+    maxPayloadSize,
+    maxResponseSize,
+    maxDuration,
+    totalPayloadSize,
+    totalResponseSize
+  }) {
+    this.printKeyValueMany({
+      [Messages.TOTAL_REQUESTS]: totalRequests,
+      GET: getRequestsCount,
+      POST: postRequestsCount,
+      PUT: putRequestsCount,
+      DELETE: deleteRequestsCount
+    });
+    this.printKeyValue(Messages.FAILED_REQUESTS, failedRequests);
+    this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, requestsExceededQuota);
+    this.printKeyValue(Messages.MAX_PAYLOAD_SIZE, formatBytes(maxPayloadSize));
+    this.printKeyValue(Messages.MAX_RESPONSE_SIZE, formatBytes(maxResponseSize));
+    this.printKeyValue(Messages.MAX_DURATION, formatTime(maxDuration));
+    this.printKeyValue(Messages.TOTAL_PAYLOAD_SIZE, formatBytes(totalPayloadSize));
+    this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
+  }
+
+  reportObject(requestOrCollection) {
     if (requestOrCollection instanceof HttpRequestInfo) {
-      this.print(`${Messages.ID}: ${requestOrCollection.id}`, Colors.INFO);
-      this.print(`${Messages.URL}: ${requestOrCollection.url}`, Colors.INFO);
-      this.print(`${Messages.PATH}: ${requestOrCollection.path}`, Colors.INFO);
-      this.print(`${Messages.METHOD}: ${requestOrCollection.method}`, Colors.INFO);
+      this.printKeyValue(Messages.ID, requestOrCollection.id);
+      this.printKeyValue(Messages.URL, requestOrCollection.url);
+      this.printKeyValue(Messages.PATH, requestOrCollection.path);
+      this.printKeyValue(Messages.METHOD, requestOrCollection.method);
       this.printMultiple(`${Messages.PAYLOAD}:`, requestOrCollection.payload);
-      this.print(`${Messages.PAYLOAD_SIZE}: ${formatBytes(requestOrCollection.payloadSize)}`, Colors.INFO);
-      this.print(`${Messages.DURATION}: ${formatTime(requestOrCollection.duration)}`, Colors.INFO);
+      this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));
+      this.printKeyValue(Messages.DURATION, formatTime(requestOrCollection.duration));
       this.printMultiple(`${Messages.RESPONSE}:`, requestOrCollection.response);
-      this.print(`${Messages.RESPONSE_SIZE}: ${formatBytes(requestOrCollection.responseSize)}`, Colors.INFO);
-      this.print(`${Messages.RESPONSE_STATUS}: ${requestOrCollection.responseStatus}`);
-      this.print(`${Messages.IS_ERROR}: ${requestOrCollection.error ? 'Yes' : 'No'}`);
-      this.print(`${Messages.ERROR_DESC}: ${requestOrCollection.errorDescription}`);
+      this.printKeyValue(Messages.RESPONSE_SIZE, formatBytes(requestOrCollection.responseSize));
+      this.printKeyValue(Messages.RESPONSE_STATUS, requestOrCollection.responseStatus);
+      this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
+      this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription);
       return;
     }
 
@@ -980,14 +1041,14 @@ class ConsoleReporter {
         const { name, groupedBy, items } = group;
 
         if (typeof name === 'undefined') {
-          this.groupStart('-', `[${items.length}]`);
+          this.groupStart(`- %c[${items.length}]`, 'font-size: 0.6rem; color: #aaa;');
         } else if (typeof name === 'object') {
-          this.groupStart(`${groupedBy}: [${items.length}]`, name);
+          this.groupStart(`${groupedBy}: %c[${items.length}]`, 'font-size: 0.6rem; color: #aaa;', name);
         } else {
-          this.groupStart(name, `[${items.length}]`);
+          this.groupStart(`${name} %c- [${items.length}]`, 'font-size: 0.6rem; color: #aaa;');
         }
 
-        this.report(group);
+        this.reportObject(group);
         this.groupEnd();
       });
 
@@ -1011,6 +1072,14 @@ class ConsoleReporter {
     });
     this.table(items);
     return;
+  }
+
+  report(stats, collection) {
+    this.printTitle(Messages.METRICS_SUMMARY);
+    this.reportStats(stats);
+    this.break();
+    this.printTitle(Messages.REQUESTS_INFO);
+    this.reportObject(collection);
   }
 
   table(array, displayFields) {
