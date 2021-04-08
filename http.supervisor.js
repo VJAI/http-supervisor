@@ -25,10 +25,24 @@ function formatBytes(bytes, decimals) {
 }
 
 /**
+ * Converts human-readable payload size to bytes.
+ */
+function convertBytes(bytes) {
+  return bytes;
+}
+
+/**
  * Formats time in seconds.
  */
-function formatTime(ms) {
-  return ms < 500 ? `${ms} ms` : `${ms/1000} s`;
+function formatTime(time) {
+  return time < 500 ? `${time} ms` : `${time/1000} s`;
+}
+
+/**
+ * Converts human-readable time to milliseconds.
+ */
+function convertTime(time) {
+  return time;
 }
 
 /**
@@ -1005,9 +1019,9 @@ class HttpSupervisor {
       }
 
       if (['payloadSize', 'responseSize'].indexOf(field) > -1) {
-
+        x.value = convertBytes(value);
       } else if (field === 'duration') {
-
+        x.value = convertTime(value);
       }
     });
 
