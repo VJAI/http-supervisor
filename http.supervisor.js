@@ -86,7 +86,8 @@ const Messages = {
   RESPONSE_SIZE: 'Response Size',
   RESPONSE_STATUS: 'Status',
   IS_ERROR: 'Is Error?',
-  ERROR_DESC: 'Error Description'
+  ERROR_DESC: 'Error Description',
+  EXCEEDS_QUOTA: 'Exceeds Quota?'
 };
 
 /**
@@ -97,7 +98,11 @@ const Colors = {
   SUCCESS: '#09b809',
   ERROR: '#e62e5c',
   INFO: '#4d4b46',
-  WARN: '#e6b225'
+  WARN: '#e6b225',
+  WHITE: '#fff',
+  BLACK: '#000',
+  GRAY: '#aaa',
+  MEDIUM_GRAY: '#ccc'
 };
 
 /**
@@ -120,7 +125,8 @@ const SupervisorEvents = {
   RETIRE: 'retire',
   REQUEST_START: 'request-start',
   REQUEST_END: 'request-end',
-  REQUEST_ERROR: 'request-error'
+  REQUEST_ERROR: 'request-error',
+  EXCEEDS_QUOTA: 'exceeds-quota'
 };
 
 /**
@@ -499,18 +505,24 @@ class Collection {
     this._items = this._items.filter(r => {
       const results = [];
       args.forEach(({ field, operator, value }) => {
+        const v = r[field];
+
         if (operator === '=') {
-          results.push(r[field] === value);
+          results.push(v === value);
         } else if (operator === '!=') {
-          results.push(r[field] !== value);
+          results.push(v !== value);
         } else if (operator === '<') {
-          results.push(r[field] < value);
+          results.push(v < value);
         } else if (operator === '>') {
-          results.push(r[field] > value);
+          results.push(v > value);
         } else if (operator === '<=') {
-          results.push(r[field] <= value);
+          results.push(v <= value);
         } else if (operator === '>=') {
-          results.push(r[field] >= value);
+          results.push(v >= value);
+        } else if (operator === '~') {
+          results.push(typeof r[field] === 'string' && v.startsWith(value));
+        } else if (operator === '^') {
+          results.push(typeof r[field] === 'string' && v.endsWith(value));
         }
       });
       return results.filter(r => !r).length === 0;
@@ -984,6 +996,21 @@ class HttpSupervisor {
    * @returns {Collection}
    */
   searchRequests(...query) {
+    const q = [...query];
+    q.forEach(x => {
+      const { field, value } = x;
+
+      if (typeof value !== 'string') {
+        return;
+      }
+
+      if (['payloadSize', 'responseSize'].indexOf(field) > -1) {
+
+      } else if (field === 'duration') {
+
+      }
+    });
+
     return this.requests().search(...query);
   }
 
@@ -1226,7 +1253,9 @@ class HttpSupervisor {
       requestInfo.timeEnd = performance.now();
       requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
       requestInfo.responseSize = byteSize(xhr.responseText);
+      requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
       error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, xhr, requestInfo);
+      requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo);
       this._triggerEvent(SupervisorEvents.REQUEST_END, xhr, requestInfo);
     });
     this._nativeSend.call(xhr, ...parameters);
@@ -1439,28 +1468,85 @@ class HttpSupervisorWidget {
  */
 class ConsoleReporter {
 
+  /**
+   * Fields to display.
+   * @type {Map}
+   * @private
+   */
   _fieldsToDisplay = null;
 
+  /**
+   * Ctor.
+   * @param {Object} fieldsConfig
+   */
   constructor(fieldsConfig) {
     fieldsConfig && (this._fieldsToDisplay = new Map(Object.entries(fieldsConfig)));
   }
 
+  /**
+   * Prints the metrics summary and the requests information in console.
+   * @param statsOrObj
+   * @param collection
+   */
+  report(statsOrObj, collection) {
+    if (arguments.length === 1) {
+      if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
+        this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO);
+        this._reportObject(statsOrObj);
+      } else {
+        this.printTitle(Messages.METRICS_SUMMARY);
+        this._reportStats(statsOrObj);
+      }
+
+      return;
+    }
+
+    this.printTitle(Messages.METRICS_SUMMARY);
+    this._reportStats(statsOrObj);
+    this.break();
+    this.printTitle(Messages.REQUESTS_INFO);
+    this._reportObject(collection);
+  }
+
+  /**
+   * Prints success message.
+   * @param message
+   */
   success(message) {
     this.print(message, Colors.SUCCESS);
   }
 
+  /**
+   * Prints error message.
+   * @param message
+   */
   error(message) {
     this.print(message, Colors.ERROR);
   }
 
+  /**
+   * Prints info message.
+   * @param message
+   */
   info(message) {
     this.print(message, Colors.INFO);
   }
 
+  /**
+   * Prints warning message.
+   * @param message
+   */
   warn(message) {
     this.print(message, Colors.WARN);
   }
 
+  /**
+   * Prints message with the passed color and styles.
+   * @param message
+   * @param color
+   * @param bold
+   * @param otherStyles
+   */
   print(message, color, bold = false, otherStyles) {
     const styles = [`color: ${color}`];
     bold && styles.push(`font-weight: bold`);
@@ -1468,14 +1554,27 @@ class ConsoleReporter {
     console.log(`%c${message}`, styles.join(';'));
   }
 
+  /**
+   * Prints section title.
+   * @param message
+   */
   printTitle(message) {
-    this.print(message, Colors.INFO, true, `padding: 5px 250px; background-color: #aaa; color: #fff;margin-bottom: 10px;`);
+    this.print(message, Colors.INFO, true, `padding: 5px 250px; background-color: ${Colors.GRAY}; color: ${Colors.WHITE};margin-bottom: 10px;`);
   }
 
+  /**
+   * Prints row.
+   * @param message
+   */
   printRow(message) {
     this.print(message, Colors.INFO);
   }
 
+  /**
+   * Prints field name and value.
+   * @param head
+   * @param value
+   */
   printKeyValue(head, value) {
     if (typeof value === 'object') {
       console.log(`%c${this._getTitleWithSpaces(head)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
@@ -1485,24 +1584,75 @@ class ConsoleReporter {
     console.log(`%c${this._getTitleWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
   }
 
-  _getTitleWithSpaces(title) {
-    return `${title}${Array(30 - title.length).fill(' ').join('')}`;
-  }
-
+  /**
+   * Prints many fields and values in single row.
+   * @param obj
+   */
   printKeyValueMany(obj) {
     let msgs = [];
     let styles = [];
     Object.entries(obj).forEach(([title, value], index) => {
       msgs.push(`%c${index === 0 ? this._getTitleWithSpaces(title) : title}: %c${value}`);
       styles.push(`font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
-      index < Object.keys(obj).length - 1 && styles.push(`color: #ccc`);
+      index < Object.keys(obj).length - 1 && styles.push(`color: ${Colors.MEDIUM_GRAY}`);
     });
 
     console.log(msgs.join('%c | '), ...styles);
   }
 
+  /**
+   * Prints multiple messages.
+   * @param messages
+   */
   printMultiple(...messages) {
     console.log(...messages);
+  }
+
+  /**
+   * Prints table.
+   * @param array
+   * @param displayFields
+   */
+  table(array, displayFields) {
+    array.length && console.table(array, displayFields);
+  }
+
+  /**
+   * Starts a group.
+   * @param group
+   * @param args
+   */
+  groupStart(group, ...args) {
+    console.group(group, ...args);
+  }
+
+  /**
+   * Ends the active group.
+   */
+  groupEnd() {
+    console.groupEnd();
+  }
+
+  /**
+   * Clears the console.
+   */
+  clear() {
+    console.clear();
+  }
+
+  /**
+   * Creates empty line.
+   */
+  break() {
+    console.log(`\n`);
+  }
+
+  destroy() {
+    return 0;
+  }
+
+  _getTitleWithSpaces(title) {
+    return `${title}${Array(30 - title.length).fill(' ').join('')}`;
   }
 
   _reportStats({
@@ -1549,6 +1699,7 @@ class ConsoleReporter {
       this.printKeyValue(Messages.RESPONSE_STATUS, requestOrCollection.responseStatus);
       this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
       this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription || '-');
+      this.printKeyValue(Messages.EXCEEDS_QUOTA, requestOrCollection.exceedsQuota ? 'Yes' : 'No');
       return;
     }
 
@@ -1561,11 +1712,11 @@ class ConsoleReporter {
         const { name, groupedBy, items } = group;
 
         if (typeof name === 'undefined') {
-          this.groupStart(`- %c[${items.length}]`, 'font-size: 0.6rem; color: #aaa;');
+          this.groupStart(`- %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         } else if (typeof name === 'object') {
-          this.groupStart(`${groupedBy}: %c[${items.length}]`, 'font-size: 0.6rem; color: #aaa;', name);
+          this.groupStart(`${groupedBy}: %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
         } else {
-          this.groupStart(`${name} %c- [${items.length}]`, 'font-size: 0.6rem; color: #aaa;');
+          this.groupStart(`${name} %c- [${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         }
 
         this._reportObject(group);
@@ -1593,52 +1744,9 @@ class ConsoleReporter {
 
     this.table(items);
   }
-
-  report(statsOrObj, collection) {
-    if (arguments.length === 1) {
-      if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
-        this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO);
-        this._reportObject(statsOrObj);
-      } else {
-        this.printTitle(Messages.METRICS_SUMMARY);
-        this._reportStats(statsOrObj);
-      }
-
-      return;
-    }
-
-    this.printTitle(Messages.METRICS_SUMMARY);
-    this._reportStats(statsOrObj);
-    this.break();
-    this.printTitle(Messages.REQUESTS_INFO);
-    this._reportObject(collection);
-  }
-
-  table(array, displayFields) {
-    array.length && console.table(array, displayFields);
-  }
-
-  groupStart(group, ...args) {
-    console.group(group, ...args);
-  }
-
-  groupEnd() {
-    console.groupEnd();
-  }
-
-  clear() {
-    console.clear();
-  }
-
-  break() {
-    console.log(`\n`);
-  }
-
-  destroy() {
-  }
 }
 
-const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter({
+const httpSupervisor = window.httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter({
     id: 'Request No',
     url: 'URL',
     path: 'Path',
@@ -1650,6 +1758,7 @@ const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new Consol
     responseStatus: 'Status',
     responseSize: 'Size (bytes)',
     error: 'Is Error?',
-    errorDescription: 'Error Description'
+    errorDescription: 'Error Description',
+    exceedsQuota: 'Exceeds Quota?'
   }));
 export default httpSupervisor;

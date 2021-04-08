@@ -46,7 +46,6 @@ function sendCall4() {
   });
 }
 
-window.httpSupervisor = httpSupervisor;
 httpSupervisor.init({
   domains: ['https://jsonplaceholder.typicode.com'],
   traceEachRequest: false
