@@ -501,10 +501,16 @@ class Collection {
       args.forEach(({ field, operator, value }) => {
         if (operator === '=') {
           results.push(r[field] === value);
+        } else if (operator === '!=') {
+          results.push(r[field] !== value);
         } else if (operator === '<') {
           results.push(r[field] < value);
         } else if (operator === '>') {
           results.push(r[field] > value);
+        } else if (operator === '<=') {
+          results.push(r[field] <= value);
+        } else if (operator === '>=') {
+          results.push(r[field] >= value);
         }
       });
       return results.filter(r => !r).length === 0;
