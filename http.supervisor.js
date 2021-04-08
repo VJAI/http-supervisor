@@ -243,21 +243,28 @@ class HttpRequestInfo {
 /**
  * Represents a collection of records that can be groupable, sortable etc.
  */
-class Node {
+class Collection {
 
   /**
-   * The name of the node.
-   * @type {any}
+   * The name of the collection.
+   * @type {*}
    * @private
    */
   _name = null;
 
   /**
-   * The items belongs to the node.
+   * The items belongs to the collection.
    * @type {Array}
    * @private
    */
   _items = [];
+
+  /**
+   * Original items passed in ctor.
+   * @type {Array}
+   * @private
+   */
+  _originalItems = [];
 
   /**
    * Array of sub-groups.
@@ -295,8 +302,15 @@ class Node {
   _sortArgs = [];
 
   /**
-   * Returns the name of the node.
-   * @returns {any}
+   * Search query;
+   * @type {object}
+   * @private
+   */
+  _query = null;
+
+  /**
+   * Returns the name of the collection.
+   * @returns {*}
    */
   get name() {
     return this._name;
@@ -328,7 +342,7 @@ class Node {
 
   /**
    * Returns the sub-groups.
-   * @returns {Array<Node>}
+   * @returns {Array<Collection>}
    */
   get groups() {
     return this.hasGroups ? [...this._groups] : null;
@@ -385,20 +399,21 @@ class Node {
   /**
    * Constructor.
    */
-  constructor(name, items, groupedBy) {
-    this._name = name;
+  constructor(items, name = 'root', groupedBy) {
     this._items = items;
+    this._name = name;
+    this._originalItems = [...items];
     this._groupedBy = groupedBy;
   }
 
   /**
-   * Groups the node and sub-nodes by the passed arguments.
+   * Groups the collection and sub-collections by the passed arguments.
    * @param args
-   * @returns {Node}
+   * @returns {Collection}
    */
   groupBy(...args) {
     if (!args.length) {
-      return;
+      return this;
     }
 
     this._groupArgs = args;
@@ -407,7 +422,7 @@ class Node {
     const obj = this._items.groupBy(this._childrenGroupedBy);
 
     obj.forEach((key, value) => {
-      const group = new Node(value, key, this._childrenGroupedBy);
+      const group = new Collection(key, value, this._childrenGroupedBy);
       this._groups.push(group);
       group.groupBy(...args);
     });
@@ -418,18 +433,31 @@ class Node {
   }
 
   /**
-   * Sorts the node and sub-nodes by the passed arguments.
+   * Removes the grouping.
+   * @returns {Collection}
+   */
+  ungroup() {
+    this._groupArgs = [];
+    this._groups = [];
+    this._groupedBy = null;
+    this._childrenGroupedBy = null;
+    this._resetItems();
+    return this;
+  }
+
+  /**
+   * Sorts the collection and sub-collections by the passed arguments.
    * @param args
-   * @returns {*}
+   * @returns {Collection}
    */
   sortBy(...args) {
     if (!args.length) {
-      return;
+      return this;
     }
 
     if (this.hasGroups) {
       this._groups.forEach(group => group.sortBy(...args));
-      return;
+      return this;
     }
 
     this._items.sort((r1, r2) => {
@@ -445,17 +473,65 @@ class Node {
     return this;
   }
 
-  search(args) {
-
+  /**
+   * Removes the applied sort.
+   * @returns {Collection}
+   */
+  removeSort() {
+    this._sortArgs = [];
+    this._resetItems();
+    this._groups.forEach(group => group.removeSort());
+    return this;
   }
-}
 
-/**
- * Represents a collection of records.
- */
-class Collection extends Node {
-  constructor(items) {
-    super('root', items);
+  /**
+   * Search the items based on the passed query.
+   * @param args
+   * @returns {Collection}
+   */
+  search(...args) {
+    if (!args.length) {
+      return this;
+    }
+
+    this._query = args;
+
+    this._items = this._items.filter(r => {
+      const results = [];
+      args.forEach(({ field, operator, value }) => {
+        if (operator === '=') {
+          results.push(r[field] === value);
+        } else if (operator === '<') {
+          results.push(r[field] < value);
+        } else if (operator === '>') {
+          results.push(r[field] > value);
+        }
+      });
+      return results.filter(r => !r).length === 0;
+    });
+
+    this._groups.forEach(group => group.search(...args));
+
+    return this;
+  }
+
+  /**
+   * Reset the search.
+   * @returns {Collection}
+   */
+  reset() {
+    this._query = null;
+    this._resetItems();
+    this._groups.forEach(group => group.reset());
+    return this;
+  }
+
+  /**
+   * Reset the items.
+   * @private
+   */
+  _resetItems() {
+    this._items = [...this._originalItems];
   }
 }
 
@@ -828,22 +904,19 @@ class HttpSupervisor {
 
   /**
    * Filters the requests based on the passed type and returns as collection.
-   * TODO: Need refactoring
    * @param method
    * @returns {Collection}
    */
   getRequestsByType(method) {
-    return new Collection([...this._requests].filter(r => r.method === method));
+    return this.requests().search({ field: 'method', operator: '=', value: method });
   }
 
   /**
    * Returns the failed requests.
-   * TODO: Need refactoring
    * @returns {Collection}
    */
   getFailedRequests() {
-    const failedRequests = [...this._requests].filter(r => r.error === true);
-    return new Collection(failedRequests);
+    return this.requests().search({ field: 'error', operator: '=', value: true });
   }
 
   /**
@@ -904,8 +977,8 @@ class HttpSupervisor {
    * @param {string} query
    * @returns {Collection}
    */
-  searchRequests(query) {
-    return this.requests.search(query);
+  searchRequests(...query) {
+    return this.requests().search(...query);
   }
 
   /**
@@ -1024,8 +1097,8 @@ class HttpSupervisor {
    * Searches and prints the requests matches the search query.
    * @param {*} query
    */
-  searchAndPrintRequests(query) {
-    this._reporter.report(this.searchRequests(query));
+  searchAndPrintRequests(...query) {
+    this._reporter.report(this.searchRequests(...query));
   }
 
   /**
@@ -1035,7 +1108,7 @@ class HttpSupervisor {
    * @param {Array<string>} sortArgs
    */
   searchArrangeAndPrintRequests(query, groupArgs, sortArgs) {
-    this._reporter.report(this.getRequestsBy(query, groupArgs, sortArgs));
+    this._reporter.report(this.getRequestsBy(...query, ...groupArgs, ...sortArgs));
   }
 
   /**
