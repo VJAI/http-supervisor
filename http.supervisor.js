@@ -31,6 +31,24 @@ function formatTime(ms) {
   return ms < 500 ? `${ms} ms` : `${ms/1000} s`;
 }
 
+/**
+ * Returns the byte size of the passed string.
+ */
+function byteSize(str) {
+  return str ? new Blob([str]).size : 0;
+}
+
+/**
+ * Id generator function.
+ * @param seed
+ * @returns {function(): number}
+ */
+function idGenerator(seed = 0) {
+  return function() {
+    return seed++;
+  }
+}
+
 const HTTP_SUPERVISOR_EMOJI = '💂';
 
 /**
@@ -113,27 +131,106 @@ const ERROR_STATUS_CODES = new Set([500, 401, 404]);
 /**
  * Proxy object that allows to call any method in an object that not even exists.
  */
-const CALL_ME_ANYTHING = new Proxy({}, { get : function() { return function()  { }; } });
+const FAKE = new Proxy({}, { get : function() { return function()  { }; } });
 
 /**
  * Holds the http request information.
  */
 class HttpRequestInfo {
-  id = null;
+
+  /**
+   * The request no.
+   * @type {number}
+   */
+  id = -1;
+
+  /**
+   * The full url of the request.
+   * @type {string}
+   */
   url = null;
+
+  /**
+   * The path in the url excluding domain.
+   * @type {string}
+   */
   path = null;
-  method = null;
+
+  /**
+   * The request type (GET, POST etc.)
+   * @type {string}
+   */
+  method = 'GET';
+
+  /**
+   * The request payload.
+   * @type {any}
+   */
   payload = null;
-  payloadSize = null;
+
+  /**
+   * The request payload size.
+   * @type {number}
+   */
+  payloadSize = 0;
+
+  /**
+   * The request start time.
+   * @type {number}
+   */
   timeStart = performance.now();
+
+  /**
+   * The request end time.
+   * @type {number}
+   */
   timeEnd = performance.now();
+
+  /**
+   * The request duration.
+   * @type {number}
+   */
   duration = 0;
+
+  /**
+   * The response data.
+   * @type {any}
+   */
   response = null;
+
+  /**
+   * The response status.
+   * @type {number}
+   */
   responseStatus = null;
+
+  /**
+   * The response size.
+   * @type {number}
+   */
   responseSize = 0;
+
+  /**
+   * True if the request error-ed out.
+   * @type {boolean}
+   */
   error = false;
+
+  /**
+   * The error description.
+   * @type {string}
+   */
   errorDescription = null;
 
+  /**
+   * True if the request exceeds quota.
+   * @type {boolean}
+   */
+  exceedsQuota = false;
+
+  /**
+   * Constructor.
+   */
   constructor(id, url, method, payload) {
     this.id = id;
     this.url = url;
@@ -147,64 +244,158 @@ class HttpRequestInfo {
  * Represents a collection of records that can be groupable, sortable etc.
  */
 class Node {
+
+  /**
+   * The name of the node.
+   * @type {any}
+   * @private
+   */
   _name = null;
+
+  /**
+   * The items belongs to the node.
+   * @type {Array}
+   * @private
+   */
   _items = [];
+
+  /**
+   * Array of sub-groups.
+   * @type {Array}
+   * @private
+   */
   _groups = [];
+
+  /**
+   * The group arguments.
+   * @type {Array}
+   * @private
+   */
   _groupArgs = [];
+
+  /**
+   * The field by which the collection's items are grouped by.
+   * @type {string}
+   * @private
+   */
   _groupedBy = null;
+
+  /**
+   * The field by which the collection's groups are grouped by.
+   * @type {null}
+   * @private
+   */
   _childrenGroupedBy = null;
+
+  /**
+   * The sort arguments.
+   * @type {Array}
+   * @private
+   */
   _sortArgs = [];
 
+  /**
+   * Returns the name of the node.
+   * @returns {any}
+   */
   get name() {
     return this._name;
   }
 
+  /**
+   * Returns true if there are items.
+   * @returns {boolean}
+   */
   get hasItems() {
-    return this._items && this._items.length;
+    return !!(this._items && this._items.length);
   }
 
+  /**
+   * Returns true if there are sub groups.
+   * @returns {boolean}
+   */
   get hasGroups() {
-    return this._groups && this._groups.length;
+    return !!(this._groups && this._groups.length);
   }
 
+  /**
+   * Returns the items.
+   * @returns {Array<object>}
+   */
   get items() {
     return this.hasItems ? [...this._items] : null;
   }
 
+  /**
+   * Returns the sub-groups.
+   * @returns {Array<Node>}
+   */
   get groups() {
     return this.hasGroups ? [...this._groups] : null;
   }
 
+  /**
+   * Returns the group arguments.
+   * @returns {Array}
+   */
   get groupArgs() {
     return this._groupArgs;
   }
 
+  /**
+   * Returns the field by which the collection's items are grouped by.
+   * @returns {string}
+   */
   get groupedBy() {
     return this._groupedBy;
   }
 
+  /**
+   * Returns the sort arguments.
+   * @returns {Array}
+   */
   get sortArgs() {
     return this._sortArgs;
   }
 
+  /**
+   * Returns the items count.
+   * @returns {number}
+   */
   get count() {
     return this.hasItems ? this._items.length : 0;
   }
 
+  /**
+   * Returns the first item from the collection.
+   * @returns {object}
+   */
   get first() {
     return this.hasItems ? this._items[0] : null;
   }
 
+  /**
+   * Returns the last item from the collection.
+   * @returns {object}
+   */
   get last() {
     return this.hasItems ? this._items[this.count - 1] : null;
   }
 
+  /**
+   * Constructor.
+   */
   constructor(name, items, groupedBy) {
     this._name = name;
     this._items = items;
     this._groupedBy = groupedBy;
   }
 
+  /**
+   * Groups the node and sub-nodes by the passed arguments.
+   * @param args
+   * @returns {Node}
+   */
   groupBy(...args) {
     if (!args.length) {
       return;
@@ -221,25 +412,37 @@ class Node {
       group.groupBy(...args);
     });
 
+    this.sortBy(...this._sortArgs);
+
     return this;
   }
 
-  ungroup() {
-    this._groupArgs = [];
-    this._groups = [];
-    this._groupedBy = null;
-  }
-
+  /**
+   * Sorts the node and sub-nodes by the passed arguments.
+   * @param args
+   * @returns {*}
+   */
   sortBy(...args) {
     if (!args.length) {
       return;
     }
 
     if (this.hasGroups) {
+      this._groups.forEach(group => group.sortBy(...args));
       return;
     }
 
-    //this._items.sortBy()
+    this._items.sort((r1, r2) => {
+      for (let i = 0; i < args.length; i++) {
+        const { field, dir } = args[i], v1 = r1[field], v2 = r2[field];
+        if (v1 < v1) return dir === 'asc' ? -1 : 1;
+        if (v1 > v2) return dir === 'asc' ? 1 : -1;
+      }
+
+      return 0;
+    });
+
+    return this;
   }
 
   search(args) {
@@ -263,11 +466,15 @@ class HttpSupervisor {
 
   /**
    * The UI widget through which user can interact with supervisor.
+   * @type {object}
+   * @private
    */
   _widget = null;
 
   /**
    * The reporter that displays the metrics and requests info captured in a particular period.
+   * @type {object}
+   * @private
    */
   _reporter = null;
 
@@ -287,6 +494,7 @@ class HttpSupervisor {
 
   /**
    * Request Quota.
+   * @type {object}
    * @private
    */
   _quota = {
@@ -297,25 +505,42 @@ class HttpSupervisor {
 
   /**
    * Display each completed request.
+   * @type {boolean}
    * @private
    */
   _traceEachRequest = true;
 
   /**
    * Display failed request.
+   * @type {boolean}
    * @private
    */
   _alertOnError = true;
 
   /**
    * Display request that exceeded quota.
+   * @type {boolean}
    * @private
    */
   _alertOnExceedQuota = true;
 
   /**
+   * Default grouping parameters.
+   * @type {string[]}
+   * @private
+   */
+  _defaultGroupBy = ['path', 'method'];
+
+  /**
+   * Default sorting parameters.
+   * @type {*[]}
+   * @private
+   */
+  _defaultSortBy = [{ field: 'id', dir: 'asc' }];
+
+  /**
    * Collection of captured requests.
-   * @type {Array}
+   * @type {Set}
    * @private
    */
   _requests = new Set();
@@ -336,21 +561,29 @@ class HttpSupervisor {
 
   /**
    * The id generator function.
+   * @type {function}
+   * @private
    */
   _id = idGenerator(1);
 
   /**
    * The events and their associated handlers store.
+   * @type {Map}
+   * @private
    */
   _eventsHandlersMap = new Map();
 
   /**
    * XMLHttpRequest native open method.
+   * @type {function}
+   * @private
    */
   _nativeOpen = XMLHttpRequest.prototype.open;
 
-    /**
+  /**
    * XMLHttpRequest native send method.
+   * @type {function}
+   * @private
    */
   _nativeSend = XMLHttpRequest.prototype.send;
 
@@ -370,18 +603,34 @@ class HttpSupervisor {
     return this._requests.size;
   }
 
+  /**
+   * Setting `true` will print each request.
+   * @param {boolean} value
+   */
   set traceEachRequest(value) {
     this._traceEachRequest = value;
   }
 
+  /**
+   * Setting `true` will print error requests.
+   * @param {boolean} value
+   */
   set alertOnError(value) {
     this._alertOnError = value;
   }
 
+  /**
+   * Setting `true` will print requests that exceeds quota.
+   * @param {boolean} value
+   */
   set alertOnExceedQuota(value) {
     this._alertOnExceedQuota = value;
   }
 
+  /**
+   * Re-set the quota.
+   * @param {object} value
+   */
   set quota(value) {
     this._quota = {...this._quota, ...value};
   }
@@ -392,13 +641,21 @@ class HttpSupervisor {
    * @param {object} reporter
    */
   constructor(widget, reporter) {
-    this._widget = widget || CALL_ME_ANYTHING;
-    this._reporter = reporter || CALL_ME_ANYTHING;
+    this._widget = widget || FAKE;
+    this._reporter = reporter || FAKE;
   }
 
   /**
    * Initialize the supervisor.
    * @param {object} [config] The configuration parameters.
+   * @param {Array<string>} [config.domains] Array of domains to monitor.
+   * @param {boolean} [config.renderUI] Passing `true` will render UI.
+   * @param {boolean} [config.traceEachRequest] Passing `true` will print each request.
+   * @param {boolean} [config.alertOnError] Passing `true` will print error requests.
+   * @param {boolean} [config.alertOnExceedQuota] Passing `true` will print requests that exceeds quota.
+   * @param {object} [config.quota] Request Quota.
+   * @param {object} [config.defaultGroupBy] Default grouping parameters.
+   * @param {object} [config.defaultSortBy] Default sorting parameters.
    */
   init(config = {}) {
     if (this._status !== SupervisorStatus.NotReady) {
@@ -411,7 +668,9 @@ class HttpSupervisor {
       traceEachRequest,
       alertOnError,
       alertOnExceedQuota,
-      quota
+      quota,
+      defaultGroupBy,
+      defaultSortBy
     } = config;
 
     Array.isArray(domains) && (this._domains = new Set(domains));
@@ -420,20 +679,22 @@ class HttpSupervisor {
     typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
     typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
     typeof quota === 'object' && (this._quota = {...this._quota, ...quota});
+    Array.isArray(defaultGroupBy) && (this._defaultGroupBy = defaultGroupBy);
+    Array.isArray(defaultSortBy) && (this._defaultSortBy = defaultSortBy);
 
     this.on(SupervisorEvents.REQUEST_END, (supervisor, xhr, request) => {
       if (this._traceEachRequest) {
-        this._reporter.reportObject(request);
+        this._reporter.report(request);
         return;
       }
 
-      if (this._alertOnError && request.error) {
-        this._reporter.reportObject(request);
+      if (this._alertOnError && request.error === true) {
+        this._reporter.report(request);
         return;
       }
 
       if (this._alertOnExceedQuota && this._isExceededQuota(request)) {
-        this._reporter.reportObject(request);
+        this._reporter.report(request);
       }
     });
 
@@ -486,8 +747,9 @@ class HttpSupervisor {
       return;
     }
 
-    const collection = new Collection([...this._requests]);
-    collection.groupBy('path', 'method', 'payload');
+    const collection = new Collection([...this._requests])
+      .groupBy(...this._defaultGroupBy)
+      .sortBy(...this._defaultSortBy);
 
     this._reporter.report({
       totalRequests: this.totalRequests,
@@ -536,6 +798,9 @@ class HttpSupervisor {
     handlers && handlers.remove(handler);
   }
 
+  /**
+   * Retires the supervisor.
+   */
   retire() {
     this._undoMonkeyPatch();
     this._widget.destroy();
@@ -545,118 +810,254 @@ class HttpSupervisor {
     this._status = SupervisorStatus.Retired;
   }
 
+  /**
+   * Displays the passed collection using the reporter.
+   * @param {Collection} collection
+   */
   report(collection) {
     this._reporter.report(collection);
   }
 
   /**
    * Returns the captured requests.
+   * @returns {Collection}
    */
   requests() {
     return new Collection([...this._requests]);
   }
 
+  /**
+   * Filters the requests based on the passed type and returns as collection.
+   * TODO: Need refactoring
+   * @param method
+   * @returns {Collection}
+   */
   getRequestsByType(method) {
     return new Collection([...this._requests].filter(r => r.method === method));
   }
 
+  /**
+   * Returns the failed requests.
+   * TODO: Need refactoring
+   * @returns {Collection}
+   */
   getFailedRequests() {
     const failedRequests = [...this._requests].filter(r => r.error === true);
     return new Collection(failedRequests);
   }
 
+  /**
+   * Returns the last failed request.
+   * @returns {HttpRequestInfo}
+   */
   getLastFailedRequest() {
     return this.getFailedRequests().last;
   }
 
+  /**
+   * Returns the last request.
+   * @returns {HttpRequestInfo}
+   */
   getLastRequest() {
     return this.requests().last;
   }
 
+  /**
+   * Returns the requests that exceeded the quota.
+   * TODO: Need refactoring
+   * @returns {Collection}
+   */
   getRequestsExceededQuota() {
     return new Collection([...this._requests].filter(r => this._isExceededQuota(r)));
   }
 
+  /**
+   * Groups the requests based on the passed arguments.
+   * @param {...string} groupArgs
+   * @returns {Collection}
+   */
   groupRequests(...groupArgs) {
     return this.requests().groupBy(...groupArgs);
   }
 
+  /**
+   * Sorts the requests based on the passed arguments.
+   * @param {...string} sortArgs
+   * @returns {Collection}
+   */
   sortRequests(...sortArgs) {
     return this.requests().sortBy(...sortArgs);
   }
 
+  /**
+   * Groups and sorts the requests.
+   * @param {Array<string>} groupArgs
+   * @param {Array<string>} sortArgs
+   * @returns {Collection}
+   */
   arrangeRequests(groupArgs, sortArgs) {
     return this.groupRequests(...groupArgs).sortBy(...sortArgs);
   }
 
-  getRequestsBy(query, groupArgs, sortArgs) {
-    return this.searchRequests(query).groupBy(...groupArgs).sortBy(...sortArgs);
-  }
-
+  /**
+   * Filters requests based on the passed query.
+   * @param {string} query
+   * @returns {Collection}
+   */
   searchRequests(query) {
     return this.requests.search(query);
   }
 
+  /**
+   * Get requests matches the query; group and sort the results based on the passed paramaters.
+   * @param {*} query
+   * @param {Array<string>} groupArgs
+   * @param {Array<string>} sortArgs
+   * @returns {Collection}
+   */
+  getRequestsBy(query, groupArgs, sortArgs) {
+    return this.searchRequests(query).groupBy(...groupArgs).sortBy(...sortArgs);
+  }
+
+  /**
+   * Returns the total payload size summing all requests.
+   * @returns {number}
+   */
   getTotalPayloadSize() {
     return [...this._requests].reduce((a, b) => a + b.payloadSize, 0);
   }
 
+  /**
+   * Returns the total response size summing all requests.
+   * @returns {number}
+   */
   getTotalResponseSize() {
     return [...this._requests].reduce((a, b) => a + b.responseSize, 0);
   }
 
+  /**
+   * Returns the max payload size of the requests.
+   * @returns {number}
+   */
   maxPayloadSize() {
     return Math.max(...[...this._requests].map(r => r.payloadSize));
   }
 
+  /**
+   * Returns the max response size of the requests.
+   * @returns {number}
+   */
   maxResponseSize() {
     return Math.max(...[...this._requests].map(r => r.responseSize));
   }
 
+  /**
+   * Returns the max duration.
+   * @returns {number}
+   */
   maxDuration() {
     return Math.max(...[...this._requests].map(r => r.duration));
   }
 
+  /**
+   * Prints all the requests in the passed reporter.
+   */
   printRequests() {
-    this._reporter.reportObject(this.requests());
+    this._reporter.report(this.requests());
   }
 
+  /**
+   * Prints the requests matched the passed method (GET, POST etc.).
+   * @param {string} method
+   */
   printRequestsByType(method) {
-    this._reporter.reportObject(this.getRequestsByType(method));
+    this._reporter.report(this.getRequestsByType(method));
   }
 
+  /**
+   * Prints failed requests.
+   */
   printFailedRequests() {
-    this._reporter.reportObject(this.getFailedRequests());
+    this._reporter.report(this.getFailedRequests());
   }
 
+  /**
+   * Prints the last failed request.
+   */
   printLastFailedRequest() {
-    this._reporter.reportObject(this.getLastFailedRequest());
+    this._reporter.report(this.getLastFailedRequest());
   }
 
+  /**
+   * Prints the last request.
+   */
   printLastRequest() {
-    this._reporter.reportObject(this.getLastRequest());
+    this._reporter.report(this.getLastRequest());
   }
 
+  /**
+   * Groups and prints the requests.
+   * @param {...string} groupArgs
+   */
   groupAndPrintRequests(...groupArgs) {
-    this._reporter.reportObject(this.groupRequests(...groupArgs));
+    this._reporter.report(this.groupRequests(...groupArgs));
   }
 
+  /**
+   * Sorts and prints the requests.
+   * @param {...string} sortArgs
+   */
   sortAndPrintRequests(...sortArgs) {
-    this._reporter.reportObject(this.sortRequests(...sortArgs));
+    this._reporter.report(this.sortRequests(...sortArgs));
   }
 
+  /**
+   * Groups, sorts and prints the requests.
+   * @param {Array<string>} groupArgs
+   * @param {Array<string>} sortArgs
+   */
   arrangeAndPrintRequests(groupArgs, sortArgs) {
-    this._reporter.reportObject(this.arrangeRequests(groupArgs, sortArgs));
+    this._reporter.report(this.arrangeRequests(groupArgs, sortArgs));
   }
 
+  /**
+   * Searches and prints the requests matches the search query.
+   * @param {*} query
+   */
   searchAndPrintRequests(query) {
-    this._reporter.reportObject(this.searchRequests(query));
+    this._reporter.report(this.searchRequests(query));
   }
 
+  /**
+   * Searches and then groups, sorts and finally prints the collection.
+   * @param {*} query
+   * @param {Array<string>} groupArgs
+   * @param {Array<string>} sortArgs
+   */
   searchArrangeAndPrintRequests(query, groupArgs, sortArgs) {
-    this._reporter.reportObject(this.getRequestsBy(query, groupArgs, sortArgs));
+    this._reporter.report(this.getRequestsBy(query, groupArgs, sortArgs));
   }
 
+  /**
+   * Render the UI.
+   * @private
+   */
+  _render() {
+    if (!this._renderUI) {
+      return;
+    }
+
+    this._widget.render();
+    this._widget.subscribe('start', () => this.start());
+    this._widget.subscribe('stop', () => this.stop());
+    this._widget.subscribe('clear', () => this.clear());
+    this._widget.subscribe('print', () => this.print());
+  }
+
+  /**
+   * Monkey patches XHR's open and send methods.
+   * @private
+   */
   _monkeyPatch() {
     const open = this._open.bind(this),
       send = this._send.bind(this);
@@ -670,21 +1071,13 @@ class HttpSupervisor {
     };
   }
 
+  /**
+   * Revert the monkey patching.
+   * @private
+   */
   _undoMonkeyPatch() {
     XMLHttpRequest.prototype.open = this._nativeOpen;
     XMLHttpRequest.prototype.send = this._nativeSend;
-  }
-
-  _render() {
-    if (!this._renderUI) {
-      return;
-    }
-
-    this._widget.render();
-    this._widget.subscribe('start', () => this.start());
-    this._widget.subscribe('stop', () => this.stop());
-    this._widget.subscribe('clear', () => this.clear());
-    this._widget.subscribe('print', () => this.print());
   }
 
   /**
@@ -753,7 +1146,7 @@ class HttpSupervisor {
       error && (requestInfo.error = xhr.response);
       requestInfo.timeEnd = performance.now();
       requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
-      requestInfo.responseSize = this._byteSize(xhr.responseText);
+      requestInfo.responseSize = byteSize(xhr.responseText);
       error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, xhr, requestInfo);
       this._triggerEvent(SupervisorEvents.REQUEST_END, xhr, requestInfo);
     });
@@ -796,13 +1189,14 @@ class HttpSupervisor {
     } = xhr;
 
     const httpRequestInfo = new HttpRequestInfo(id, url, method, payload);
-    httpRequestInfo.payloadSize = this._byteSize(payload);
+    httpRequestInfo.payloadSize = byteSize(payload);
 
     return httpRequestInfo;
   }
 
   /**
    * Returns `true` is the passed event is supported.
+   * @private
    */
   _supportEvent(eventName) {
     return Object.values(SupervisorEvents).indexOf(eventName) > -1;
@@ -810,6 +1204,7 @@ class HttpSupervisor {
 
   /**
    * Invokes the handlers registered for the event.
+   * @private
    */
   _triggerEvent(eventName, ...args) {
     const handlers = this._eventsHandlersMap.get(eventName);
@@ -819,17 +1214,12 @@ class HttpSupervisor {
     [...handlers].forEach(handler => handler(this, ...args));
   }
 
-  _byteSize(str) {
-    return str ? new Blob([str]).size : 0;
-  }
-
+  /**
+   * Returns true if the passed request exceeds the quota.
+   * @private
+   */
   _isExceededQuota(request) {
     return request.payloadSize > this._quota.payloadSize || request.responseSize > this._quota.responseSize || request.duration > this._quota.duration;
-  }
-
-  _printHeader(title) {
-    this.print(title, Colors.INFO, true);
-    this.print(Array(title.length).fill('-').join(''), Colors.INFO, true);
   }
 }
 
@@ -838,20 +1228,44 @@ class HttpSupervisor {
  */
 class HttpSupervisorWidget {
 
+  /**
+   * The container or root element.
+   */
   el = null;
 
+  /**
+   * The start button HTML element.
+   */
   _startButton = null;
 
+  /**
+   * The stop button HTML element.
+   */
   _stopButton = null;
 
+  /**
+   * The clear button HTML element.
+   */
   _clearButton = null;
 
+  /**
+   * The print button HTML element.
+   */
   _printButton = null;
 
+  /**
+   * The label that displays the calls count.
+   */
   _callsCountLabel = null;
 
+  /**
+   * Events and buttons map.
+   */
   _eventsAndButtons = null;
 
+  /**
+   * Renders the UI.
+   */
   render() {
     if (this.el) {
       return;
@@ -888,32 +1302,54 @@ class HttpSupervisorWidget {
     };
   }
 
+  /**
+   * Disables the stop and enables the start buttons.
+   */
   start() {
     this._startButton.disabled = true;
     this._stopButton.disabled = false;
   }
 
+  /**
+   * Disables the start and enables the stop buttons.
+   */
   stop() {
     this._stopButton.disabled = true;
     this._startButton.disabled = false;
   }
 
+  /**
+   * Update the calls counter label.
+   * @param count
+   */
   updateCalls(count) {
     this._callsCountLabel.innerText = count.toString();
   }
 
+  /**
+   * Shows the widget.
+   */
   show() {
     this.el.style.display = 'none';
   }
 
+  /**
+   * Hides the widget.
+   */
   hide() {
     this.el.style.display = 'flex';
   }
 
+  /**
+   * Subscribes to the corresponding button click event.
+   */
   subscribe(evt, handler) {
     this._eventsAndButtons[evt].addEventListener('click', handler);
   }
 
+  /**
+   * Destroys the element.
+   */
   destroy() {
     this.el.remove();
   }
@@ -962,10 +1398,15 @@ class ConsoleReporter {
   }
 
   printKeyValue(head, value) {
-    console.log(`%c${this._getTileWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO}; border-bottom: dashed 2px #aaa;`);
+    if (typeof value === 'object') {
+      console.log(`%c${this._getTitleWithSpaces(head)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
+      return;
+    }
+
+    console.log(`%c${this._getTitleWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
   }
 
-  _getTileWithSpaces(title) {
+  _getTitleWithSpaces(title) {
     return `${title}${Array(30 - title.length).fill(' ').join('')}`;
   }
 
@@ -973,8 +1414,8 @@ class ConsoleReporter {
     let msgs = [];
     let styles = [];
     Object.entries(obj).forEach(([title, value], index) => {
-      msgs.push(`%c${index === 0 ? this._getTileWithSpaces(title) : title}: %c${value}`);
-      styles.push(`font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO}; border-bottom: dashed 2px #aaa;`);
+      msgs.push(`%c${index === 0 ? this._getTitleWithSpaces(title) : title}: %c${value}`);
+      styles.push(`font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
       index < Object.keys(obj).length - 1 && styles.push(`color: #ccc`);
     });
 
@@ -985,7 +1426,7 @@ class ConsoleReporter {
     console.log(...messages);
   }
 
-  reportStats({
+  _reportStats({
     totalRequests,
     getRequestsCount,
     postRequestsCount,
@@ -1015,20 +1456,20 @@ class ConsoleReporter {
     this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
   }
 
-  reportObject(requestOrCollection) {
+  _reportObject(requestOrCollection) {
     if (requestOrCollection instanceof HttpRequestInfo) {
       this.printKeyValue(Messages.ID, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
       this.printKeyValue(Messages.PATH, requestOrCollection.path);
       this.printKeyValue(Messages.METHOD, requestOrCollection.method);
-      this.printMultiple(`${Messages.PAYLOAD}:`, requestOrCollection.payload);
+      this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
       this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));
       this.printKeyValue(Messages.DURATION, formatTime(requestOrCollection.duration));
-      this.printMultiple(`${Messages.RESPONSE}:`, requestOrCollection.response);
+      this.printKeyValue(Messages.RESPONSE, requestOrCollection.response);
       this.printKeyValue(Messages.RESPONSE_SIZE, formatBytes(requestOrCollection.responseSize));
       this.printKeyValue(Messages.RESPONSE_STATUS, requestOrCollection.responseStatus);
       this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
-      this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription);
+      this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription || '-');
       return;
     }
 
@@ -1048,7 +1489,7 @@ class ConsoleReporter {
           this.groupStart(`${name} %c- [${items.length}]`, 'font-size: 0.6rem; color: #aaa;');
         }
 
-        this.reportObject(group);
+        this._reportObject(group);
         this.groupEnd();
       });
 
@@ -1070,16 +1511,28 @@ class ConsoleReporter {
       });
       return displayObj;
     });
+
     this.table(items);
-    return;
   }
 
-  report(stats, collection) {
+  report(statsOrObj, collection) {
+    if (arguments.length === 1) {
+      if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
+        this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO);
+        this._reportObject(statsOrObj);
+      } else {
+        this.printTitle(Messages.METRICS_SUMMARY);
+        this._reportStats(statsOrObj);
+      }
+
+      return;
+    }
+
     this.printTitle(Messages.METRICS_SUMMARY);
-    this.reportStats(stats);
+    this._reportStats(statsOrObj);
     this.break();
     this.printTitle(Messages.REQUESTS_INFO);
-    this.reportObject(collection);
+    this._reportObject(collection);
   }
 
   table(array, displayFields) {
@@ -1103,12 +1556,6 @@ class ConsoleReporter {
   }
 
   destroy() {
-  }
-}
-
-function idGenerator(seed = 0) {
-  return function() {
-    return seed++;
   }
 }
 
