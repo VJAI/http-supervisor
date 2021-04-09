@@ -1361,7 +1361,7 @@ class HttpSupervisorWidget {
   _startButton = null;
 
   /**
-   * The stop button HTML element.
+   * The start button HTML element.
    */
   _stopButton = null;
 
@@ -1393,29 +1393,43 @@ class HttpSupervisorWidget {
       return;
     }
 
+    const linkStyle = `width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-right: solid 1px #666; background-color: #333`;
+
     const template = document.createRange()
-      .createContextualFragment(`<div id="http-supervisor" style="position: fixed;z-index: 20000;top: 0;right: 0;text-align: center;display: flex;width: 100%;justify-content: center;align-items:center;">
-                 <button id="start">
-                   Start
-                 </button>
-                 <button id="stop">
-                   Stop
-                 </button>
-                 <button id="clear">
-                   Clear
-                 </button>
-                 <button id="print">
-                   Print
-                 </button>
-                 <span id="calls-count" style="width: 20px;border: solid 2px;display: block;">
-                   0
-                 <span>
+      .createContextualFragment(`<div id="http-supervisor" style="position: fixed;z-index: 20000;top: 0;right: 0;text-align: center;width: 100%;">
+                 <div style="display: flex;justify-content: center;align-items:center;color:#ddd;">
+                   <a id="start" href="#" style="${linkStyle};border-bottom-left-radius: 5px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-play" viewBox="0 0 16 16" style="color: #fff;">
+                       <path d="M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z"/>
+                    </svg>
+                   </a>
+                   <a id="stop" href="#" style="${linkStyle};border-bottom-left-radius: 5px;display: none;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-stop" viewBox="0 0 16 16" style="color: #fff;">
+                        <path d="M3.5 5A1.5 1.5 0 0 1 5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5zM5 4.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V5a.5.5 0 0 0-.5-.5H5z"/>
+                      </svg>
+                   </a>
+                   <a id="clear" href="#" style="${linkStyle}">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16" style="color: #fff;">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                      </svg>
+                   </a>
+                   <a id="print" href="#" style="${linkStyle}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16" style="color: #fff;">
+                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                      <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                    </svg>
+                   </a>
+                   <span id="calls-count" style="${linkStyle};font-size: 14px;border-bottom-right-radius: 5px;">
+                     0
+                   <span>
+                </div>
            </div>`);
 
     document.body.appendChild(template);
 
     this.el = document.querySelector('#http-supervisor');
-    [this._startButton, this._stopButton, this._clearButton, this._printButton, this._callsCountLabel] = this.el.children;
+    [this._startButton, this._stopButton, this._clearButton, this._printButton, this._callsCountLabel] = Array.from(this.el.firstElementChild.children);
     this._eventsAndButtons = {
       start: this._startButton,
       stop: this._stopButton,
@@ -1425,19 +1439,19 @@ class HttpSupervisorWidget {
   }
 
   /**
-   * Disables the stop and enables the start buttons.
+   * Shows the stop and hides the start buttons.
    */
   start() {
-    this._startButton.disabled = true;
-    this._stopButton.disabled = false;
+    this._startButton.style.display = 'none';
+    this._stopButton.style.display = 'flex';
   }
 
   /**
-   * Disables the start and enables the stop buttons.
+   * Shows the hide and hides the stop buttons.
    */
   stop() {
-    this._stopButton.disabled = true;
-    this._startButton.disabled = false;
+    this._startButton.style.display = 'flex';
+    this._stopButton.style.display = 'none';
   }
 
   /**
