@@ -10,9 +10,7 @@ to manage requests.
 
 ### UI with controls
 
-<p align="center">
-  <img width="220" src="https://github.com/VJAI/http-supervisor/blob/main/ui.png">
-</p>
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/ui.png)
 
 ### Console Output
 
