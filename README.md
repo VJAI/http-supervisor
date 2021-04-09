@@ -8,6 +8,10 @@ a variety of parameters.
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to manage requests.
 
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/master/ui.png)
+
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/master/console.png)
+
 ## Install
 
 Currently it's available in `npm`. There are plans to make it available as a browser addon.
@@ -16,3 +20,6 @@ Currently it's available in `npm`. There are plans to make it available as a bro
 npm i http-supervisor --save-dev
 ``` 
 
+## API
+
+-- TODO --
