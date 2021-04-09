@@ -8,9 +8,9 @@ a variety of parameters.
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to manage requests.
 
-![Screen Shot](https://github.com/VJAI/http-supervisor/blob/master/ui.png)
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/ui.png)
 
-![Screen Shot](https://github.com/VJAI/http-supervisor/blob/master/console.png)
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/console.png)
 
 ## Install
 
