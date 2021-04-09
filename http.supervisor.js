@@ -18,7 +18,7 @@ function formatBytes(bytes, decimals) {
 
   const k = 1024,
     dm = decimals || 2,
-    sizes = ['bytes', 'kb', 'mb', 'gb', 'tb', 'pb', 'eb', 'zb', 'yb'],
+    sizes = ['bytes', 'kb', 'mb', 'gb'],
     i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
@@ -28,7 +28,21 @@ function formatBytes(bytes, decimals) {
  * Converts human-readable payload size to bytes.
  */
 function convertBytes(bytes) {
-  return bytes;
+  if (!bytes) {
+    return 0;
+  }
+
+  if (bytes.endsWith('bytes')) {
+    return parseFloat(bytes);
+  }
+
+  const map = {
+    kb: 1024,
+    mb: 1024 * 1024,
+    gb: 1024 * 1024 * 1024
+  };
+
+  return parseFloat(bytes) * map[bytes.substr(bytes.length -2, 2)];
 }
 
 /**
@@ -42,7 +56,11 @@ function formatTime(time) {
  * Converts human-readable time to milliseconds.
  */
 function convertTime(time) {
-  return time;
+  if (!time) {
+    return 0;
+  }
+
+  return time.endsWith('ms') ? parseFloat(time) : parseFloat(time) * 1000;
 }
 
 /**
@@ -712,11 +730,43 @@ class HttpSupervisor {
   }
 
   /**
+   * Returns the passed domains.
+   * @returns {Array}
+   */
+  get domains() {
+    return [...this._domains];
+  }
+
+  /**
+   * Returns `true` if ui is required.
+   * @returns {boolean}
+   */
+  get renderUI() {
+    return this._renderUI;
+  }
+
+  /**
+   * Returns `true` if trace each request is set.
+   * @returns {boolean}
+   */
+  get traceEachRequest() {
+    return this._traceEachRequest;
+  }
+
+  /**
    * Setting `true` will print each request.
    * @param {boolean} value
    */
   set traceEachRequest(value) {
     this._traceEachRequest = value;
+  }
+
+  /**
+   * Returns `true` if alert on error is set.
+   * @returns {boolean}
+   */
+  get alertOnError() {
+    return this._alertOnError;
   }
 
   /**
@@ -728,6 +778,14 @@ class HttpSupervisor {
   }
 
   /**
+   * Returns `true` if print requests that exceeds quota is set.
+   * @returns {boolean}
+   */
+  get alertOnExceedQuota() {
+    return this._alertOnExceedQuota;
+  }
+
+  /**
    * Setting `true` will print requests that exceeds quota.
    * @param {boolean} value
    */
@@ -736,11 +794,35 @@ class HttpSupervisor {
   }
 
   /**
+   * Returns the defined quota.
+   * @returns {object}
+   */
+  get quota() {
+    return {...this.quota};
+  }
+
+  /**
    * Re-set the quota.
    * @param {object} value
    */
   set quota(value) {
     this._quota = {...this._quota, ...value};
+  }
+
+  /**
+   * Returns the default group parameters.
+   * @returns {string[]}
+   */
+  get defaultGroupBy() {
+    return [...this._defaultGroupBy];
+  }
+
+  /**
+   * Returns the default sort parameters.
+   * @returns {*[]}
+   */
+  get defaultSortBy() {
+    return [...this._defaultSortBy];
   }
 
   /**
@@ -969,11 +1051,26 @@ class HttpSupervisor {
 
   /**
    * Returns the requests that exceeded the quota.
-   * TODO: Need refactoring
    * @returns {Collection}
    */
   getRequestsExceededQuota() {
-    return new Collection([...this._requests].filter(r => this._isExceededQuota(r)));
+    return this.requests().search({ field: 'exceedsQuota', operator: '=', value: true });
+  }
+
+  /**
+   * Returns the request that has maximum response size.
+   * @returns {HttpRequestInfo}
+   */
+  getMaxSizeRequest() {
+    return this.requests().sortBy({ field: 'responseSize', dir: 'desc' }).first;
+  }
+
+  /**
+   * Returns the request that took maximum time to complete.
+   * @returns {HttpRequestInfo}
+   */
+  getMaxDurationRequest() {
+    return this.requests().sortBy({ field: 'duration', dir: 'desc' }).first;
   }
 
   /**
@@ -1113,6 +1210,20 @@ class HttpSupervisor {
    */
   printLastRequest() {
     this._reporter.report(this.getLastRequest());
+  }
+
+  /**
+   * Prints the request that has maximum size.
+   */
+  printMaxSizeRequest() {
+    this._reporter.report(this.getMaxSizeRequest());
+  }
+
+  /**
+   * Prints the request that took maximum time.
+   */
+  printMaxDurationRequest() {
+    this._reporter.report(this.getMaxDurationRequest());
   }
 
   /**
@@ -1266,7 +1377,7 @@ class HttpSupervisor {
       error && (requestInfo.error = xhr.response);
       requestInfo.timeEnd = performance.now();
       requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
-      requestInfo.responseSize = byteSize(xhr.responseText);
+      requestInfo.responseSize = byteSize(xhr.responseText || '');
       requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
       error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, xhr, requestInfo);
       requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo);
@@ -1311,7 +1422,7 @@ class HttpSupervisor {
     } = xhr;
 
     const httpRequestInfo = new HttpRequestInfo(id, url, method, payload);
-    httpRequestInfo.payloadSize = byteSize(payload);
+    httpRequestInfo.payloadSize = byteSize(payload ? JSON.stringify(payload) : '');
 
     return httpRequestInfo;
   }
@@ -1744,7 +1855,17 @@ class ConsoleReporter {
         } else if (typeof name === 'object') {
           this.groupStart(`${groupedBy}: %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
         } else {
-          this.groupStart(`${name} %c- [${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
+          let groupName = '';
+
+          if (typeof name === 'number') {
+            if (['payloadSize', 'responseSize'].indexOf(groupedBy) > -1) {
+              groupName = formatBytes(name);
+            } else if (groupedBy === 'duration') {
+              groupName = formatTime(name);
+            }
+          }
+
+          this.groupStart(`${groupName} %c- [${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         }
 
         this._reportObject(group);
@@ -1774,7 +1895,7 @@ class ConsoleReporter {
   }
 }
 
-const httpSupervisor = window.httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter({
+const httpSupervisor = new HttpSupervisor(new HttpSupervisorWidget(), new ConsoleReporter({
     id: 'Request No',
     url: 'URL',
     path: 'Path',

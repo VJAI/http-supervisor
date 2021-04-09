@@ -11,6 +11,7 @@ export default {
     path: __dirname + '/dist',
     filename: optimizeMinimize ? `http.supervisor-${version}.min.js` : `http.supervisor-${version}.js`,
     library: 'httpSupervisor',
+    libraryExport: 'default',
     libraryTarget: 'umd'
   },
   module: {

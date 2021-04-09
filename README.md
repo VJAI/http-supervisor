@@ -28,7 +28,7 @@ npm i http-supervisor --save-dev
 
 ## Usage
 
-Reference the script at the end of the body. Invoke `httpSupervisor.default.init()` to start the tool.
+Reference the script at the end of the body. Invoke `httpSupervisor.init()` to start the tool.
 
 ```html
 <html>
@@ -36,12 +36,68 @@ Reference the script at the end of the body. Invoke `httpSupervisor.default.init
     ...
     <script src="node_modules/http-supervisor/http.supervisor-1.2.0.js"></script>
     <script>
-      httpSupervisor.default.init();
+      httpSupervisor.init();
     </script>
   </body>
 </html>
 ```
 
+The library exports a single object called `httpSupervisor` through which you can control the audit.
+
+## Initializing Supervisor
+
+The `init` method helps to configure and initialize the tool with parameters passed as input. You should call this method 
+to start the audit and it can be called only once.
+
+```js
+httpSupervisor.init({
+  domains: ['https://my.api.com'],
+  alertOnError: true
+})
+```
+
+You can pass a bunch of parameters to the `init` method to configure the tool which you can see at the API section.
+
+## Starting Audit
+
+Calling the `init` method start the audit. If you stopped it for some reason and you can restart it by calling the `start` method.
+
+```js
+httpSupervisor.start();
+```
+
+## Stopping Audit
+
+You can temporarily stop auditing by calling `stop` method.
+
+```js
+httpSupervisor.stop();
+```
+
+## Printing Requests
+
+The library provides bunch of methods to print the requests. Calling the plain `print` method displays the requests 
+in console using the default group and sort parameters passed during the initialization. There are also methods that accepts 
+group, sort and search parameters and does the printing after performing the necessary operations.
+
+```js
+httpSupervisor.print()
+```
+
+You can see other print methods in the API section.
+
+## Sorting Requests
+
+
+
+## Grouping Requests
+
+## Searching Requests
+
 ## API
 
--- TODO --
+### `HttpSupervisor` Properties
+
+- 
+
+### `HttpSupervisor` Methods
