@@ -88,16 +88,36 @@ You can see other print methods in the API section.
 
 ## Sorting Requests
 
+You can multi-sort the requests.
 
+```js
+httpSupervisor.sortAndPrintRequests({ field: 'method', dir: 'asc' }, { field: 'responseSize', dir: 'desc' });
+```
 
 ## Grouping Requests
 
+You can group and sub-group requests.
+
+```js
+httpSupervisor.groupAndPrintRequests('path', 'method');
+```
+
+There are also methods available that helps to group and sort in the same call.
+
 ## Searching Requests
+
+You can also search requests on different fields passing different operators.
+
+```js
+httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', value: '1 kb' });
+```
 
 ## API
 
 ### `HttpSupervisor` Properties
 
-- 
+TODO
 
 ### `HttpSupervisor` Methods
+
+TODO
