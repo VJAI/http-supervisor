@@ -8,6 +8,8 @@ a variety of parameters.
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to manage requests.
 
+![DEMO](https://vjai.github.io/http-supervisor/)
+
 ### UI with controls
 
 ![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/ui.png)
