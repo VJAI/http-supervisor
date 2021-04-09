@@ -63,7 +63,7 @@ function idGenerator(seed = 0) {
   }
 }
 
-const HTTP_SUPERVISOR_EMOJI = '💂';
+const HTTP_SUPERVISOR_EMOJI = '👮';
 
 /**
  * Collection of messages used by supervisor.
