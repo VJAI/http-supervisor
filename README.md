@@ -116,15 +116,24 @@ httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', va
 
 ### `HttpSupervisor` Properties
 
-**busy** - Returns `true` if the supervisor is busy audit.<br/>
-**totalRequests** - Returns the total count of requests.<br/>
-**domains** - Returns the domains that's configured to audit.<br/>
-**renderUI** - Returns `true` if ui is required.<br/>
-**traceEachRequest** - Gets/sets whether each request need to be printed in console.<br/>
-**alertOnError** - Gets/sets whether we need to display the request on error in console.<br/>
-**alertOnExceedQuota** - Gets/sets whether to display requests exceeded quota in console.<br/>
-**quota** - Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`.<br/>
-**defaultGroupBy** - Returns the array of grouping parameters.<br/>
+**busy** - Returns `true` if the supervisor is busy audit.
+
+**totalRequests** - Returns the total count of requests.
+
+**domains** - Returns the domains that's configured to audit.
+
+**renderUI** - Returns `true` if ui is required.
+
+**traceEachRequest** - Gets/sets whether each request need to be printed in console.
+
+**alertOnError** - Gets/sets whether we need to display the request on error in console.
+
+**alertOnExceedQuota** - Gets/sets whether to display requests exceeded quota in console.
+
+**quota** - Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`.
+
+**defaultGroupBy** - Returns the array of grouping parameters.
+
 **defaultSortBy** - Returns the array of sorting parameters.
 
 ### `HttpSupervisor` Methods
