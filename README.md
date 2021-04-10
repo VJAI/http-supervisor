@@ -116,7 +116,7 @@ httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', va
 
 ### `HttpSupervisor` Properties
 
-TODO
+`*busy*` - Returns `true` if the supervisor is busy audit.
 
 ### `HttpSupervisor` Methods
 
