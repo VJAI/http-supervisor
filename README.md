@@ -130,11 +130,14 @@ httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', va
 
 **alertOnExceedQuota** - Gets/sets whether to display requests exceeded quota in console.
 
-**quota** - Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`.
+**quota** - Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`. The default values are 1 kb, 10 kb and 1 second respectively.
 
 **defaultGroupBy** - Returns the array of grouping parameters.
 
 **defaultSortBy** - Returns the array of sorting parameters.
+
+**usePerformance** - Leveraged `performance.getEntriesByType` API for calculating more precise duration and resource size. Using this feature 
+will add a new query parameter (hs_rid) in the url.
 
 ### `HttpSupervisor` Methods
 
@@ -201,6 +204,8 @@ httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', va
 **printLastFailedRequest()** - Prints the last failed request.
 
 **printLastRequest()** - Prints the last request.
+
+**printRequestsExceededQuota()** - Prints requests exceeds quota.
 
 **printMaxSizeRequest()** - Prints the request that has maximum size.
 

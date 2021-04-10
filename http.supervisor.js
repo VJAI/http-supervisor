@@ -624,9 +624,9 @@ class HttpSupervisor {
    * @private
    */
   _quota = {
-    maxPayloadSize: Infinity,
-    maxResponseSize: Infinity,
-    maxDuration: Infinity
+    maxPayloadSize: 1024, // 1kb
+    maxResponseSize: 10240, // 10kb
+    maxDuration: 1000 // 1s
   };
 
   /**
@@ -663,6 +663,13 @@ class HttpSupervisor {
    * @private
    */
   _defaultSortBy = [{ field: 'id', dir: 'asc' }];
+
+  /**
+   * Uses performance.getEntriesByType for accurate duration and payload info.
+   * @type {boolean}
+   * @private
+   */
+  _usePerformance = true;
 
   /**
    * Collection of captured requests.
@@ -844,8 +851,9 @@ class HttpSupervisor {
    * @param {boolean} [config.alertOnError] Passing `true` will print error requests.
    * @param {boolean} [config.alertOnExceedQuota] Passing `true` will print requests that exceeds quota.
    * @param {object} [config.quota] Request Quota.
-   * @param {object} [config.defaultGroupBy] Default grouping parameters.
-   * @param {object} [config.defaultSortBy] Default sorting parameters.
+   * @param {Array} [config.defaultGroupBy] Default grouping parameters.
+   * @param {Array} [config.defaultSortBy] Default sorting parameters.
+   * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    */
   init(config = {}) {
     if (this._status !== SupervisorStatus.NotReady) {
@@ -860,7 +868,8 @@ class HttpSupervisor {
       alertOnExceedQuota,
       quota,
       defaultGroupBy,
-      defaultSortBy
+      defaultSortBy,
+      usePerformance
     } = config;
 
     Array.isArray(domains) && (this._domains = new Set(domains));
@@ -871,6 +880,7 @@ class HttpSupervisor {
     typeof quota === 'object' && (this._quota = {...this._quota, ...quota});
     Array.isArray(defaultGroupBy) && (this._defaultGroupBy = defaultGroupBy);
     Array.isArray(defaultSortBy) && (this._defaultSortBy = defaultSortBy);
+    typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
 
     this.on(SupervisorEvents.REQUEST_END, (supervisor, xhr, request) => {
       if (this._traceEachRequest) {
@@ -905,7 +915,7 @@ class HttpSupervisor {
 
     this._status = SupervisorStatus.Busy;
     this._widget.start();
-    this._reporter.print(Messages.ACTIVE, Colors.BRAND, true);
+    this._reporter.printStatusMessage(Messages.ACTIVE);
     this._triggerEvent(SupervisorEvents.START);
   }
 
@@ -915,7 +925,7 @@ class HttpSupervisor {
   stop() {
     this._status = SupervisorStatus.Idle;
     this._widget.stop();
-    this._reporter.print(Messages.SLEEP, Colors.BRAND, true);
+    this._reporter.printStatusMessage(Messages.SLEEP);
     this._triggerEvent(SupervisorEvents.STOP);
   }
 
@@ -932,11 +942,6 @@ class HttpSupervisor {
    * Prints the log to the passed reporter.
    */
   print() {
-    if (!this._requests.size) {
-      this._reporter.print(Messages.NO_REQUESTS, Colors.INFO, true);
-      return;
-    }
-
     const collection = new Collection([...this._requests])
       .groupBy(...this._defaultGroupBy)
       .sortBy(...this._defaultSortBy);
@@ -1213,6 +1218,13 @@ class HttpSupervisor {
   }
 
   /**
+   * Prints requests exceeds quota.
+   */
+  printRequestsExceededQuota() {
+    this._reporter.report(this.getRequestsExceededQuota());
+  }
+
+  /**
    * Prints the request that has maximum size.
    */
   printMaxSizeRequest() {
@@ -1325,8 +1337,14 @@ class HttpSupervisor {
 
     parameters.shift();
 
+    const id = this._id();
+
+    if (this._isPerformanceSupported()) {
+      parameters[1] = this._appendRequestIdToUrl(url, id);
+    }
+
     Object.assign(xhr, {
-      id: this._id(),
+      id: id,
       method: method,
       url: url
     });
@@ -1375,9 +1393,24 @@ class HttpSupervisor {
       }
       requestInfo.error = error;
       error && (requestInfo.error = xhr.response);
-      requestInfo.timeEnd = performance.now();
+
+      let performanceEntry;
+
+      if (this._isPerformanceSupported()) {
+        const urlName = this._appendRequestIdToUrl(requestInfo.url, requestInfo.id);
+        performanceEntry = performance.getEntriesByType('resource').find(e => e.initiatorType === 'xmlhttprequest' && e.name === urlName);
+      }
+
+      if (performanceEntry) {
+        requestInfo.timeStart = performanceEntry.startTime;
+        requestInfo.timeEnd = performanceEntry.responseEnd;
+        requestInfo.responseSize = performanceEntry.transferSize ? performanceEntry.transferSize : byteSize(xhr.responseText || '');
+      } else {
+        requestInfo.timeEnd = performance.now();
+        requestInfo.responseSize = byteSize(xhr.responseText || '');
+      }
+
       requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
-      requestInfo.responseSize = byteSize(xhr.responseText || '');
       requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
       error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, xhr, requestInfo);
       requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo);
@@ -1436,6 +1469,28 @@ class HttpSupervisor {
   }
 
   /**
+   * Returns true if `performance.getEntriesByType` is supported.
+   * @returns {boolean}
+   * @private
+   */
+  _isPerformanceSupported() {
+    return this._usePerformance && !!(window.performance && window.performance.getEntriesByType);
+  }
+
+  /**
+   * Append request id to url.
+   * @param url
+   * @param id
+   * @returns {string}
+   * @private
+   */
+  _appendRequestIdToUrl(url, id) {
+    const urlObj = new URL(url);
+    urlObj.searchParams.append('hs_rid', id.toString());
+    return urlObj.toString();
+  }
+
+  /**
    * Invokes the handlers registered for the event.
    * @private
    */
@@ -1452,7 +1507,7 @@ class HttpSupervisor {
    * @private
    */
   _isExceededQuota(request) {
-    return request.payloadSize > this._quota.payloadSize || request.responseSize > this._quota.responseSize || request.duration > this._quota.duration;
+    return request.payloadSize > this._quota.maxPayloadSize || request.responseSize > this._quota.maxResponseSize || request.duration > this._quota.maxDuration;
   }
 }
 
@@ -1515,8 +1570,9 @@ class HttpSupervisorWidget {
                     </svg>
                    </a>
                    <a id="stop" href="#" style="${linkStyle};border-bottom-left-radius: 5px;display: none;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-stop" viewBox="0 0 16 16" style="color: #fff;">
-                        <path d="M3.5 5A1.5 1.5 0 0 1 5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5zM5 4.5a.5.5 0 0 0-.5.5v6a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V5a.5.5 0 0 0-.5-.5H5z"/>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-stop-circle" viewBox="0 0 16 16" style="color: #fff;">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z"/>
                       </svg>
                    </a>
                    <a id="clear" href="#" style="${linkStyle}">
@@ -1622,6 +1678,10 @@ class ConsoleReporter {
     fieldsConfig && (this._fieldsToDisplay = new Map(Object.entries(fieldsConfig)));
   }
 
+  printStatusMessage(message) {
+    this.print(message, Colors.BRAND, true);
+  }
+
   /**
    * Prints the metrics summary and the requests information in console.
    * @param statsOrObj
@@ -1630,6 +1690,11 @@ class ConsoleReporter {
   report(statsOrObj, collection) {
     if (arguments.length === 1) {
       if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
+        if (statsOrObj instanceof Collection && !statsOrObj.hasGroups && !statsOrObj.hasItems) {
+          this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+          return;
+        }
+
         this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO);
         this._reportObject(statsOrObj);
       } else {
@@ -1637,6 +1702,11 @@ class ConsoleReporter {
         this._reportStats(statsOrObj);
       }
 
+      return;
+    }
+
+    if (!collection.hasGroups && !collection.hasItems) {
+      this.print(Messages.NO_REQUESTS, Colors.INFO, true);
       return;
     }
 
