@@ -116,7 +116,7 @@ httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', va
 
 ### `HttpSupervisor` Properties
 
-**busy** - Returns `true` if the supervisor is busy audit. <br>
+**busy** - Returns `true` if the supervisor is busy audit.<br/>
 **totalRequests** - Returns the total count of requests.
 **domains** - Returns the domains that's configured to audit.
 **renderUI** - Returns `true` if ui is required.
