@@ -798,7 +798,7 @@ class HttpSupervisor {
    * @returns {object}
    */
   get quota() {
-    return {...this.quota};
+    return {...this._quota};
   }
 
   /**
