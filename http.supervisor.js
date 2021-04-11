@@ -1970,7 +1970,7 @@ class ConsoleReporter {
         } else if (typeof name === 'object') {
           this.groupStart(`${groupedBy}: %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
         } else {
-          let groupName = '';
+          let groupName = name;
 
           if (typeof name === 'number') {
             if (['payloadSize', 'responseSize'].indexOf(groupedBy) > -1) {
