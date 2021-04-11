@@ -2,8 +2,7 @@
 
 ## Intro
 
-A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort and query requests based upon 
-a variety of parameters.
+A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort, query and export requests.
 
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to manage requests.
@@ -110,6 +109,14 @@ You can also search requests on different fields passing different operators.
 
 ```js
 httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', value: '1 kb' });
+```
+
+## Exporting Requests
+
+You can export requests as a CSV file by calling the `export` method.
+
+```js
+httpSupervisor.export();
 ```
 
 ## API
@@ -221,3 +228,4 @@ will add a new query parameter (hs_rid) in the url.
 
 **searchArrangeAndPrintRequests(query, groupArgs, sortArgs)** - Searches and then groups, sorts and finally prints the collection.
 
+**export()** - Export requests to a CSV file.
