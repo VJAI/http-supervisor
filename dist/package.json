@@ -1,6 +1,6 @@
 {
   "name": "http-supervisor",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort and query requests based upon a variety of parameters.",
   "devDependencies": {
     "@babel/cli": "^7.8.4",
