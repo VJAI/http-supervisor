@@ -12,8 +12,8 @@ import {
   idGenerator,
   convertBytes,
   convertTime,
-  byteSize
-}                      from './util';
+  byteSize, isAbsolute
+} from './util';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify duplicate requests, analyze payload and much more.
@@ -909,7 +909,7 @@ export default class HttpSupervisor {
 
     const parameters = [...arguments],
       [xhr, payload] = parameters,
-      url = new URL(xhr[XHR_METADATA_KEY].url);
+      url = this._createUrl(xhr[XHR_METADATA_KEY].url);
 
     xhr[XHR_METADATA_KEY].payload = payload;
     parameters.shift();
@@ -1041,7 +1041,7 @@ export default class HttpSupervisor {
    * @private
    */
   _appendRequestIdToUrl(url, id) {
-    const urlObj = new URL(url);
+    const urlObj = this._createUrl(url);
     urlObj.searchParams.append('hs_rid', id.toString());
     return urlObj.toString();
   }
@@ -1064,5 +1064,15 @@ export default class HttpSupervisor {
    */
   _isExceededQuota(request) {
     return request.payloadSize > this._quota.maxPayloadSize || request.responseSize > this._quota.maxResponseSize || request.duration > this._quota.maxDuration;
+  }
+
+  /**
+   * Creates URL object.
+   * @param url
+   * @returns {URL}
+   * @private
+   */
+  _createUrl(url) {
+    return isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin);
   }
 }
