@@ -4,6 +4,7 @@
   if (httpSupervisorScript) {
     window.httpSupervisor && window.httpSupervisor.retire();
     window.httpSupervisor = null;
+    delete window.httpSupervisor;
     httpSupervisorScript.remove();
   }
 })();

@@ -1017,6 +1017,7 @@ class HttpSupervisor {
    * Retires the supervisor.
    */
   retire() {
+    this.stop();
     this._undoMonkeyPatch();
     this._widget.destroy();
     this._reporter.destroy &&  this._reporter.destroy();
