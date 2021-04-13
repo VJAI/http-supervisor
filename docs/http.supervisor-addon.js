@@ -2,8 +2,8 @@
   let httpSupervisorScript = document.querySelector('#http-supervisor-script');
 
   if (httpSupervisorScript) {
-    window.httpSupervisor && window.httpSupervisor.destroy();
-    httpSupervisorScript.retire();
+    window.httpSupervisor && window.httpSupervisor.retire();
+    httpSupervisorScript.remove();
     return;
   }
 
