@@ -3,7 +3,7 @@
 
   if (httpSupervisorScript) {
     window.httpSupervisor && window.httpSupervisor.destroy();
-    httpSupervisorScript.remove();
+    httpSupervisorScript.retire();
     return;
   }
 
