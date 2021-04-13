@@ -6,7 +6,7 @@ const version = pkg.version;
 
 export default {
   mode: 'production',
-  entry: { app: './http.supervisor.js' },
+  entry: { app: './src/index.js' },
   output: {
     path: __dirname + '/dist',
     filename: optimizeMinimize ? `http.supervisor-${version}.min.js` : `http.supervisor-${version}.js`,

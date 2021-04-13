@@ -11,11 +11,11 @@ to manage requests.
 
 ### UI with controls
 
-![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/ui.png)
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/ui.png)
 
 ### Console Output
 
-![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/console.png)
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/console.png)
 
 ## Install
 

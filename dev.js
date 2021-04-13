@@ -1,4 +1,4 @@
-import httpSupervisor from './http.supervisor';
+import httpSupervisor from './src';
 
 function makeAjaxCalls() {
   sendCall1();
