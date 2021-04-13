@@ -254,6 +254,8 @@ export default class ConsoleReporter {
       this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
       this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription || '-');
       this.printKeyValue(Messages.EXCEEDS_QUOTA, requestOrCollection.exceedsQuota ? 'Yes' : 'No');
+      this.printKeyValue(Messages.INITIATOR_TYPE, requestOrCollection.initiatorType);
+      this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, requestOrCollection.payloadByPerformance ? 'Yes' : 'No');
       return;
     }
 

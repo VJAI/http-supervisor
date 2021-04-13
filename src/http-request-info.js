@@ -1,5 +1,5 @@
-import { isAbsolute } from './util';
-import { ERROR_STATUS_CODES } from './constants';
+import { isAbsolute }    from './util';
+import { InitiatorType } from './constants';
 
 /**
  * Holds the http request information.
@@ -83,7 +83,7 @@ export default class HttpRequestInfo {
    * @type {boolean}
    */
   get error() {
-    return ERROR_STATUS_CODES.has(this.responseStatus);
+    return this.responseStatus >= 400;
   }
 
   /**
@@ -99,6 +99,18 @@ export default class HttpRequestInfo {
    * @type {boolean}
    */
   exceedsQuota = false;
+
+  /**
+   * Whether the ajax call is triggered by xhr or fetch.
+   * @type {string}
+   */
+  initiatorType = InitiatorType.XHR;
+
+  /**
+   * True if the payload size is determined using performance api.
+   * @type {boolean}
+   */
+  payloadByPerformance = true;
 
   /**
    * Constructor.

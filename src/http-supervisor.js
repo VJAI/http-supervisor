@@ -4,15 +4,16 @@ import {
   SupervisorStatus,
   SupervisorEvents,
   Messages,
-  ERROR_STATUS_CODES,
+  SUPERVISOR_QUERY_KEY,
   FAKE,
-  XHR_METADATA_KEY
-}                      from './constants';
+  XHR_METADATA_KEY, InitiatorType
+} from './constants';
 import {
   idGenerator,
   convertBytes,
   convertTime,
-  byteSize, isAbsolute
+  byteSize,
+  isAbsolute
 } from './util';
 
 /**
@@ -478,12 +479,30 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns request belongs to the id.
+   * @param id
+   * @returns {HttpRequestInfo}
+   */
+  getRequestById(id) {
+    return [...this._requests].find(r => r.id === id);
+  }
+
+  /**
    * Filters the requests based on the passed type and returns as collection.
    * @param method
    * @returns {Collection}
    */
   getRequestsByType(method) {
     return this.requests().search({ field: 'method', operator: '=', value: method });
+  }
+
+  /**
+   * Returns requests fired for the passed url.
+   * @param url
+   * @returns {Collection}
+   */
+  getRequestByUrl(url) {
+    return this.requests().search({ field: isAbsolute(url) ? 'url' : 'path', operator: '=', value: url });
   }
 
   /**
@@ -828,10 +847,6 @@ export default class HttpSupervisor {
     let [url, options = {}] = [...arguments],
       { method = 'GET', body } = options;
 
-    if (this._isPerformanceSupported()) {
-      url = this._appendRequestIdToUrl(url, id);
-    }
-
     let payload;
 
     if (body) {
@@ -843,6 +858,7 @@ export default class HttpSupervisor {
     }
 
     const requestInfo = new HttpRequestInfo(id, url, method, payload);
+    requestInfo.initiatorType = InitiatorType.FETCH;
     requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
     this._requests.add(requestInfo);
 
@@ -850,7 +866,8 @@ export default class HttpSupervisor {
       this._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
 
       let response;
-      this._nativeFetch.call(window, url, options)
+
+      this._nativeFetch.call(window, this._isPerformanceSupported() ? this._appendRequestIdToUrl(url, id) : url, options)
         .then(r => {
           const contentType = r.headers.get('content-type'),
             isJsonResponse = contentType.toLowerCase().startsWith('application/json');
@@ -957,7 +974,7 @@ export default class HttpSupervisor {
 
     if (this._isPerformanceSupported()) {
       const urlName = this._appendRequestIdToUrl(requestInfo.url, requestInfo.id);
-      performanceEntry = performance.getEntriesByType('resource').find(e => e.initiatorType === 'xmlhttprequest' && e.name === urlName);
+      performanceEntry = performance.getEntriesByType('resource').find(e => e.name === urlName);
     }
 
     const responseSize = byteSize(JSON.stringify(requestInfo.response || ''));
@@ -965,6 +982,7 @@ export default class HttpSupervisor {
     if (performanceEntry) {
       requestInfo.timeStart = performanceEntry.startTime;
       requestInfo.timeEnd = performanceEntry.responseEnd;
+      requestInfo.payloadByPerformance = !!performanceEntry.transferSize;
       requestInfo.responseSize = performanceEntry.transferSize ? performanceEntry.transferSize : responseSize;
     } else {
       requestInfo.timeEnd = performance.now();
@@ -1014,6 +1032,7 @@ export default class HttpSupervisor {
     } = xhr[XHR_METADATA_KEY];
 
     const httpRequestInfo = new HttpRequestInfo(id, url, method, payload);
+    httpRequestInfo.initiatorType = InitiatorType.XHR;
     httpRequestInfo.payloadSize = byteSize(payload ? JSON.stringify(payload) : '');
 
     return httpRequestInfo;
@@ -1045,7 +1064,7 @@ export default class HttpSupervisor {
    */
   _appendRequestIdToUrl(url, id) {
     const urlObj = this._createUrl(url);
-    urlObj.searchParams.append('hs_rid', id.toString());
+    urlObj.searchParams.append(SUPERVISOR_QUERY_KEY, id.toString());
     return urlObj.toString();
   }
 

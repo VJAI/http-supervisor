@@ -36,7 +36,9 @@ export const Messages = {
   RESPONSE_STATUS: 'Status',
   IS_ERROR: 'Is Error?',
   ERROR_DESC: 'Error Description',
-  EXCEEDS_QUOTA: 'Exceeds Quota?'
+  EXCEEDS_QUOTA: 'Exceeds Quota?',
+  INITIATOR_TYPE: 'Initiator Type',
+  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size'
 };
 
 /**
@@ -79,13 +81,15 @@ export const SupervisorEvents = {
 };
 
 /**
- * HTTP Error status codes.
- */
-export const ERROR_STATUS_CODES = new Set([500, 401, 404]);
-
-/**
  * Proxy object that allows to call any method in an object that not even exists.
  */
 export const FAKE = new Proxy({}, { get: function () { return function () { }; } });
 
 export const XHR_METADATA_KEY = '__supervisor__';
+
+export const SUPERVISOR_QUERY_KEY = 'hs_rid';
+
+export const InitiatorType = {
+  XHR: 'xhr',
+  FETCH: 'fetch'
+};
