@@ -15,6 +15,7 @@ function makeAjaxCalls() {
   setTimeout(() => {
     sendCall4();
     sendCall5();
+    sendCall6();
   }, 600);
 }
 
@@ -59,6 +60,9 @@ function sendCall5() {
   });
 }
 
+function sendCall6() {
+  fetch('https://jsonplaceholder.typicode.com/comments');
+}
 
 window.httpSupervisor = httpSupervisor;
 httpSupervisor.init({

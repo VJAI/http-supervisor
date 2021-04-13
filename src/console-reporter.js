@@ -130,7 +130,7 @@ export default class ConsoleReporter {
    * @param value
    */
   printKeyValue(head, value) {
-    if (typeof value === 'object') {
+    if (value !== null && typeof value === 'object') {
       console.log(`%c${this._getTitleWithSpaces(head)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
       return;
     }
@@ -267,7 +267,7 @@ export default class ConsoleReporter {
 
         if (typeof name === 'undefined') {
           this.groupStart(`- %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
-        } else if (typeof name === 'object') {
+        } else if (name !== null && typeof name === 'object') {
           this.groupStart(`${groupedBy}: %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
         } else {
           let groupName = name;
@@ -296,7 +296,7 @@ export default class ConsoleReporter {
         let v;
         if (typeof item[key] === 'undefined') {
           v = null;
-        } else if (typeof item[key] === 'object' || Array.isArray(item[key])) {
+        } else if (item[key] !== null && typeof item[key] === 'object' || Array.isArray(item[key])) {
           v = JSON.stringify(item[key]);
         } else {
           v = item[key];
