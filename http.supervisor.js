@@ -1417,7 +1417,7 @@ class HttpSupervisor {
       [xhr, payload] = parameters,
       url = new URL(xhr[XHR_METADATA_KEY].url);
 
-    xhr.payload = payload;
+    xhr[XHR_METADATA_KEY].payload = payload;
     parameters.shift();
 
     if (this._domains !== null && !this._domains.has(url.origin)) {
