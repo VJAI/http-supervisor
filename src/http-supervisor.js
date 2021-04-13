@@ -852,8 +852,11 @@ export default class HttpSupervisor {
       let response;
       this._nativeFetch.call(window, url, options)
         .then(r => {
+          const contentType = r.headers.get('content-type'),
+            isJsonResponse = contentType.toLowerCase().startsWith('application/json');
+
           response = r.clone();
-          return r.json();
+          return isJsonResponse ? r.json() : null;
         })
         .then(data => {
           requestInfo.response = data;
