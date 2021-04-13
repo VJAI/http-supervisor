@@ -102,6 +102,13 @@ export default class HttpSupervisor {
   _usePerformance = true;
 
   /**
+   * True to monkey patch fetch requests.
+   * @type {boolean}
+   * @private
+   */
+  _monkeyPatchFetch = true;
+
+  /**
    * Collection of captured requests.
    * @type {Set}
    * @private
@@ -135,6 +142,13 @@ export default class HttpSupervisor {
    * @private
    */
   _eventsHandlersMap = new Map();
+
+  /**
+   * Native fetch method.
+   * @type {function}
+   * @private
+   */
+  _nativeFetch = fetch;
 
   /**
    * XMLHttpRequest native open method.
@@ -284,6 +298,7 @@ export default class HttpSupervisor {
    * @param {Array} [config.defaultGroupBy] Default grouping parameters.
    * @param {Array} [config.defaultSortBy] Default sorting parameters.
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
+   * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
    */
   init(config = {}) {
     if (this._status !== SupervisorStatus.NotReady) {
@@ -299,7 +314,8 @@ export default class HttpSupervisor {
       quota,
       defaultGroupBy,
       defaultSortBy,
-      usePerformance
+      usePerformance,
+      monkeyPatchFetch
     } = config;
 
     Array.isArray(domains) && (this._domains = new Set(domains));
@@ -311,6 +327,7 @@ export default class HttpSupervisor {
     Array.isArray(defaultGroupBy) && (this._defaultGroupBy = defaultGroupBy);
     Array.isArray(defaultSortBy) && (this._defaultSortBy = defaultSortBy);
     typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
+    typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
 
     this.on(SupervisorEvents.REQUEST_END, (supervisor, xhr, request) => {
       if (this._traceEachRequest) {
@@ -776,11 +793,13 @@ export default class HttpSupervisor {
     const open = this._open.bind(this),
       send = this._send.bind(this);
 
-    window['XMLHttpRequest'].prototype.open = function () {
+    this._monkeyPatchFetch && (window.fetch = this._fetch.bind(this));
+
+    XMLHttpRequest.prototype.open = function () {
       open(this, ...arguments);
     };
 
-    window['XMLHttpRequest'].prototype.send = function () {
+    XMLHttpRequest.prototype.send = function () {
       send(this, ...arguments);
     };
   }
@@ -790,8 +809,64 @@ export default class HttpSupervisor {
    * @private
    */
   _undoMonkeyPatch() {
+    this._monkeyPatchFetch && (window.fetch = this._nativeFetch);
     XMLHttpRequest.prototype.open = this._nativeOpen;
     XMLHttpRequest.prototype.send = this._nativeSend;
+  }
+
+  /**
+   * Capture request information and opens network connection using fetch API.
+   * @private
+   */
+  _fetch() {
+    if (!this.busy) {
+      return;
+    }
+
+    const id = this._id();
+
+    let [url, options = {}] = [...arguments],
+      { method = 'GET', body } = options;
+
+    if (this._isPerformanceSupported()) {
+      url = this._appendRequestIdToUrl(url, id);
+    }
+
+    let payload;
+
+    if (body) {
+      try {
+        payload = JSON.parse(body);
+      } catch {
+        payload = body;
+      }
+    }
+
+    const requestInfo = new HttpRequestInfo(id, url, method, payload);
+    requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
+    this._requests.add(requestInfo);
+
+    return new Promise((resolve, reject) => {
+      this._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
+
+      let response;
+      this._nativeFetch.call(window, url, options)
+        .then(r => {
+          response = r.clone();
+          return r.json();
+        })
+        .then(data => {
+          requestInfo.response = data;
+          resolve(response);
+        })
+        .catch(error => {
+          reject(error);
+        })
+        .finally(() => {
+          requestInfo.responseStatus = response.status;
+          this._fillResponseParameters(requestInfo, response);
+        });
+    });
   }
 
   /**
@@ -816,8 +891,8 @@ export default class HttpSupervisor {
 
     xhr[XHR_METADATA_KEY] = {
       id: id,
-      method: method,
-      url: url
+      method: method.toUpperCase(),
+      url: url.toLowerCase()
     };
 
     this._nativeOpen.call(xhr, ...parameters);
@@ -852,43 +927,53 @@ export default class HttpSupervisor {
     this._requests.add(requestInfo);
 
     xhr.addEventListener('load', () => {
-      const statusCode = xhr.status,
-        error = ERROR_STATUS_CODES.has(statusCode);
-
       this._decrement();
-      requestInfo.responseStatus = statusCode;
+      requestInfo.responseStatus = xhr.status;
+
       try {
         requestInfo.response = JSON.parse(xhr.response);
       } catch {
         requestInfo.response = xhr.response;
       }
-      requestInfo.error = error;
-      error && (requestInfo.error = xhr.response);
 
-      let performanceEntry;
-
-      if (this._isPerformanceSupported()) {
-        const urlName = this._appendRequestIdToUrl(requestInfo.url, requestInfo.id);
-        performanceEntry = performance.getEntriesByType('resource').find(e => e.initiatorType === 'xmlhttprequest' && e.name === urlName);
-      }
-
-      if (performanceEntry) {
-        requestInfo.timeStart = performanceEntry.startTime;
-        requestInfo.timeEnd = performanceEntry.responseEnd;
-        requestInfo.responseSize = performanceEntry.transferSize ? performanceEntry.transferSize : byteSize(xhr.responseText || '');
-      } else {
-        requestInfo.timeEnd = performance.now();
-        requestInfo.responseSize = byteSize(xhr.responseText || '');
-      }
-
-      requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
-      requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
-      error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, xhr, requestInfo);
-      requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo);
-      this._triggerEvent(SupervisorEvents.REQUEST_END, xhr, requestInfo);
+      this._fillResponseParameters(requestInfo, xhr);
     });
+
     this._nativeSend.call(xhr, ...parameters);
-    this._triggerEvent(SupervisorEvents.REQUEST_START, xhr, requestInfo);
+    this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);
+  }
+
+  /**
+   * Fill duration and size parameters from response.
+   * @param requestInfo
+   * @param xhrOrResponse
+   * @private
+   */
+  _fillResponseParameters(requestInfo, xhrOrResponse) {
+    let performanceEntry;
+
+    if (this._isPerformanceSupported()) {
+      const urlName = this._appendRequestIdToUrl(requestInfo.url, requestInfo.id);
+      performanceEntry = performance.getEntriesByType('resource').find(e => e.initiatorType === 'xmlhttprequest' && e.name === urlName);
+    }
+
+    const responseSize = byteSize(JSON.stringify(requestInfo.response || ''));
+
+    if (performanceEntry) {
+      requestInfo.timeStart = performanceEntry.startTime;
+      requestInfo.timeEnd = performanceEntry.responseEnd;
+      requestInfo.responseSize = performanceEntry.transferSize ? performanceEntry.transferSize : responseSize;
+    } else {
+      requestInfo.timeEnd = performance.now();
+      requestInfo.responseSize = responseSize;
+    }
+
+    requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
+    requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
+
+    requestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, requestInfo, xhrOrResponse);
+    requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo, xhrOrResponse);
+    this._triggerEvent(SupervisorEvents.REQUEST_END, requestInfo, xhrOrResponse);
   }
 
   /**

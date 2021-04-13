@@ -1,4 +1,5 @@
 import { isAbsolute } from './util';
+import { ERROR_STATUS_CODES } from './constants';
 
 /**
  * Holds the http request information.
@@ -81,13 +82,17 @@ export default class HttpRequestInfo {
    * True if the request error-ed out.
    * @type {boolean}
    */
-  error = false;
+  get error() {
+    return ERROR_STATUS_CODES.has(this.responseStatus);
+  }
 
   /**
    * The error description.
    * @type {string}
    */
-  errorDescription = null;
+  get errorDescription() {
+    return this.error ? this.response : null;
+  }
 
   /**
    * True if the request exceeds quota.

@@ -2,7 +2,7 @@
 
 ## Intro
 
-A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort, query and export requests.
+A simple tool that helps to audit HTTP requests (fetch and XHR) and identify the requests that exceeds the set quota. It also helps to group, sort, query and export requests.
 
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to manage requests.
@@ -145,6 +145,8 @@ httpSupervisor.export();
 
 **usePerformance** - Leveraged `performance.getEntriesByType` API for calculating more precise duration and resource size. Using this feature 
 will add a new query parameter (hs_rid) in the url.
+
+**monkeyPatchFetch** - `True` to Intercept fetch requests.
 
 ### `HttpSupervisor` Methods
 
