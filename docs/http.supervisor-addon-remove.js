@@ -3,6 +3,7 @@
 
   if (httpSupervisorScript) {
     window.httpSupervisor && window.httpSupervisor.retire();
+    window.httpSupervisor = null;
     httpSupervisorScript.remove();
   }
 })();
