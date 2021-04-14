@@ -1,5 +1,6 @@
 import HttpRequestInfo from './http-request-info';
 import Collection      from './collection';
+import EventEmitter    from './event.emitter';
 import {
   SupervisorStatus,
   SupervisorEvents,
@@ -7,14 +8,14 @@ import {
   SUPERVISOR_QUERY_KEY,
   FAKE,
   XHR_METADATA_KEY, InitiatorType, CHARTJS_LIB_PATH
-} from './constants';
+}                      from './constants';
 import {
   idGenerator,
   convertBytes,
   convertTime,
   byteSize,
   isAbsolute, loadScript
-} from './util';
+}                      from './util';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify duplicate requests, analyze payload and much more.
@@ -34,6 +35,13 @@ export default class HttpSupervisor {
    * @private
    */
   _reporter = null;
+
+  /**
+   * Event emitter.
+   * @type {EventEmitter}
+   * @private
+   */
+  _eventEmitter = null;
 
   /**
    * Array of domains to monitor.
@@ -143,13 +151,6 @@ export default class HttpSupervisor {
    * @private
    */
   _id = idGenerator(1);
-
-  /**
-   * The events and their associated handlers store.
-   * @type {Map}
-   * @private
-   */
-  _eventsHandlersMap = new Map();
 
   /**
    * Native fetch method.
@@ -284,6 +285,18 @@ export default class HttpSupervisor {
     return [...this._defaultSortBy];
   }
 
+  get usePerformance() {
+    return this._usePerformance;
+  }
+
+  get monkeyPatchFetch() {
+    return this._monkeyPatchFetch;
+  }
+
+  get useVisualization() {
+    return this._useVisualization;
+  }
+
   /**
    * Constructor.
    * @param {object} widget
@@ -292,6 +305,7 @@ export default class HttpSupervisor {
   constructor(widget, reporter) {
     this._widget = widget || FAKE;
     this._reporter = reporter || FAKE;
+    this._eventEmitter = new EventEmitter();
   }
 
   /**
@@ -411,6 +425,7 @@ export default class HttpSupervisor {
   clear() {
     this._reporter.clear();
     this._requests.clear();
+    this._widget.updateTotalRequestsCount(this._requests.size);
     this._triggerEvent(SupervisorEvents.CLEAR);
   }
 
@@ -444,15 +459,7 @@ export default class HttpSupervisor {
    * @param {function} handler
    */
   on(eventName, handler) {
-    if (!this._supportEvent(eventName)) {
-      return;
-    }
-
-    if (!this._eventsHandlersMap.has(eventName)) {
-      this._eventsHandlersMap.set(eventName, new Set());
-    }
-
-    this._eventsHandlersMap.get(eventName).add(handler);
+    this._eventEmitter.on(eventName, handler);
   }
 
   /**
@@ -461,12 +468,7 @@ export default class HttpSupervisor {
    * @param {function} handler
    */
   off(eventName, handler) {
-    if (!this._eventsHandlersMap.has(eventName)) {
-      return;
-    }
-
-    const handlers = this._eventsHandlersMap.get(eventName);
-    handlers && handlers.remove(handler);
+    this._eventEmitter.off(eventName, handler);
   }
 
   /**
@@ -476,9 +478,12 @@ export default class HttpSupervisor {
     this.stop();
     this._undoMonkeyPatch();
     this._widget.destroy();
+    this._widget = null;
     this._reporter.destroy && this._reporter.destroy();
+    this._reporter = null;
     this._triggerEvent(SupervisorEvents.RETIRE);
-    this._eventsHandlersMap = {};
+    this._eventEmitter.destroy();
+    this._eventEmitter = null;
     this._status = SupervisorStatus.Retired;
   }
 
@@ -907,6 +912,7 @@ export default class HttpSupervisor {
     requestInfo.initiatorType = InitiatorType.FETCH;
     requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
     this._requests.add(requestInfo);
+    this._widget.updateTotalRequestsCount(this._requests.size);
 
     return new Promise((resolve, reject) => {
       this._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
@@ -991,6 +997,7 @@ export default class HttpSupervisor {
     // Capture the request.
     const requestInfo = this._createRequest(xhr);
     this._requests.add(requestInfo);
+    this._widget.updateTotalRequestsCount(this._requests.size);
 
     xhr.addEventListener('load', () => {
       this._decrement();
@@ -1029,7 +1036,7 @@ export default class HttpSupervisor {
       requestInfo.timeStart = performanceEntry.startTime;
       requestInfo.timeEnd = performanceEntry.responseEnd;
       requestInfo.payloadByPerformance = !!performanceEntry.transferSize;
-      requestInfo.responseSize = performanceEntry.transferSize ? performanceEntry.transferSize : responseSize;
+      requestInfo.responseSize = requestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
     } else {
       requestInfo.timeEnd = performance.now();
       requestInfo.responseSize = responseSize;
@@ -1085,14 +1092,6 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns `true` is the passed event is supported.
-   * @private
-   */
-  _supportEvent(eventName) {
-    return Object.values(SupervisorEvents).indexOf(eventName) > -1;
-  }
-
-  /**
    * Returns true if `performance.getEntriesByType` is supported.
    * @returns {boolean}
    * @private
@@ -1119,11 +1118,7 @@ export default class HttpSupervisor {
    * @private
    */
   _triggerEvent(eventName, ...args) {
-    const handlers = this._eventsHandlersMap.get(eventName);
-    if (!handlers) {
-      return;
-    }
-    [...handlers].forEach(handler => handler(this, ...args));
+    this._eventEmitter.triggerEvent(eventName, this, ...args);
   }
 
   /**
