@@ -1,7 +1,8 @@
-import HttpRequestInfo              from './http-request-info';
+import HttpRequestInfo             from './http-request-info';
 import Collection                  from './collection';
 import { formatBytes, formatTime } from './util';
 import { Messages, Colors }        from './constants';
+import './console-snapshot';
 
 /**
  * Class that is responsible for displaying the requests info to console.
@@ -16,11 +17,49 @@ export default class ConsoleReporter {
   _fieldsToDisplay = null;
 
   /**
+   * True to visualize data through charts.
+   * @type {boolean}
+   * @private
+   */
+  _useVisualization = true;
+
+  /**
+   * Canvas element used for chart generation.
+   * @type {HTMLCanvasElement}
+   * @private
+   */
+  _canvasEl = null;
+
+  _chartFontSize = 6;
+
+  _chartHeight = 200;
+
+  _chartWidth = 200;
+
+  /**
    * Ctor.
    * @param {Object} fieldsConfig
    */
   constructor(fieldsConfig) {
     fieldsConfig && (this._fieldsToDisplay = new Map(Object.entries(fieldsConfig)));
+  }
+
+  /**
+   * Does initialization stuff.
+   */
+  init(useVisualization) {
+    this._useVisualization = !!(useVisualization && Chart);
+
+    if (!this._useVisualization) {
+      return;
+    }
+
+    Chart && (Chart.defaults.font.size = this._chartFontSize);
+    this._canvasEl = document.createElement('canvas');
+    this._canvasEl.style.width = `${this._chartWidth}px`;
+    this._canvasEl.style.height = `${this._chartHeight}px`;
+    this._canvasEl.style.display = 'none';
+    document.body.appendChild(this._canvasEl);
   }
 
   printStatusMessage(message) {
@@ -60,6 +99,52 @@ export default class ConsoleReporter {
     this.break();
     this.printTitle(Messages.REQUESTS_INFO);
     this._reportObject(collection);
+  }
+
+  /**
+   * Create chart in canvans and render in console.
+   * @param chartOptions
+   */
+  visualize(chartOptions) {
+    if (!this._useVisualization) {
+      this.print(Messages.CHART_NOT_FOUND, Colors.ERROR, true);
+      return;
+    }
+
+    const {
+      type,
+      title,
+      labels,
+      data,
+      yAxisLabel
+    } = chartOptions;
+
+    const ctx = this._canvasEl.getContext('2d');
+    const myChart = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: title,
+          data: data,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: yAxisLabel
+          }
+        }
+      }
+    });
+
+    setTimeout(() => {
+      console.screenshot(this._canvasEl);
+      myChart.destroy();
+    }, 500);
   }
 
   /**
@@ -202,7 +287,8 @@ export default class ConsoleReporter {
   }
 
   destroy() {
-    return 0;
+    this._canvasEl.remove();
+    this._canvasEl = null;
   }
 
   _getTitleWithSpaces(title) {

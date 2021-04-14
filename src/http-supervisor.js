@@ -6,14 +6,14 @@ import {
   Messages,
   SUPERVISOR_QUERY_KEY,
   FAKE,
-  XHR_METADATA_KEY, InitiatorType
+  XHR_METADATA_KEY, InitiatorType, CHARTJS_LIB_PATH
 } from './constants';
 import {
   idGenerator,
   convertBytes,
   convertTime,
   byteSize,
-  isAbsolute
+  isAbsolute, loadScript
 } from './util';
 
 /**
@@ -108,6 +108,13 @@ export default class HttpSupervisor {
    * @private
    */
   _monkeyPatchFetch = true;
+
+  /**
+   * True to use chart.js library for data visualization.
+   * @type {boolean}
+   * @private
+   */
+  _useVisualization = true;
 
   /**
    * Collection of captured requests.
@@ -300,6 +307,7 @@ export default class HttpSupervisor {
    * @param {Array} [config.defaultSortBy] Default sorting parameters.
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
+   * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
    */
   init(config = {}) {
     if (this._status !== SupervisorStatus.NotReady) {
@@ -316,7 +324,8 @@ export default class HttpSupervisor {
       defaultGroupBy,
       defaultSortBy,
       usePerformance,
-      monkeyPatchFetch
+      monkeyPatchFetch,
+      useVisualization
     } = config;
 
     Array.isArray(domains) && (this._domains = new Set(domains));
@@ -329,8 +338,9 @@ export default class HttpSupervisor {
     Array.isArray(defaultSortBy) && (this._defaultSortBy = defaultSortBy);
     typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
     typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
+    typeof useVisualization === 'boolean' && (this._useVisualization = useVisualization);
 
-    this.on(SupervisorEvents.REQUEST_END, (supervisor, xhr, request) => {
+    this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
       if (this._traceEachRequest) {
         this._reporter.report(request);
         return;
@@ -346,10 +356,20 @@ export default class HttpSupervisor {
       }
     });
 
-    this._render();
-    this._monkeyPatch();
-    this._status = SupervisorStatus.Idle;
-    this.start();
+    const renderAndStart = () => {
+      this._render();
+      this._reporter.init(this._useVisualization);
+      this._monkeyPatch();
+      this._status = SupervisorStatus.Idle;
+      this.start();
+    };
+
+    if (this._useVisualization) {
+      loadScript(CHARTJS_LIB_PATH, () => renderAndStart());
+      return;
+    }
+
+    renderAndStart();
   }
 
   /**
@@ -754,6 +774,32 @@ export default class HttpSupervisor {
    */
   searchArrangeAndPrintRequests(query, groupArgs, sortArgs) {
     this._reporter.report(this.getRequestsBy(...query, ...groupArgs, ...sortArgs));
+  }
+
+  /**
+   * Displays the bar chart of responsive size.
+   */
+  displayResponseSizeChart() {
+    const labels = [...this._requests].map(r => r.id),
+      data = [...this._requests].map(r => r.responseSize);
+
+    this._reporter.visualize({
+      type: 'bar',
+      title: 'Response Size Of Requests',
+      labels,
+      data,
+      yAxisLabel: 'bytes'
+    });
+  }
+
+  /**
+   * Displays the bar chart of responsive size.
+   */
+  displayResponseTimeChart() {
+    const labels = [...this._requests].map(r => r.id),
+      data = [...this._requests].map(r => r.duration);
+
+    this._reporter.visualize('bar', 'Response Time Of Requests', labels, data);
   }
 
   /**

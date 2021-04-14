@@ -61,12 +61,15 @@ function sendCall5() {
 }
 
 function sendCall6() {
-  fetch('https://jsonplaceholder.typicode.com/comments');
+  fetch('https://jsonplaceholder.typicode.com/comments1');
 }
 
 window.httpSupervisor = httpSupervisor;
 httpSupervisor.init({
   domains: ['https://jsonplaceholder.typicode.com'],
-  traceEachRequest: false
+  traceEachRequest: false,
+  alertOnExceedQuota: false,
+  alertOnError: false
 });
 makeAjaxCalls();
+setTimeout(makeAjaxCalls, 100);

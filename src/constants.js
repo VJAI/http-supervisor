@@ -38,7 +38,8 @@ export const Messages = {
   ERROR_DESC: 'Error Description',
   EXCEEDS_QUOTA: 'Exceeds Quota?',
   INITIATOR_TYPE: 'Initiator Type',
-  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size'
+  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size',
+  CHART_NOT_FOUND: 'Chart.js library not found'
 };
 
 /**
@@ -93,3 +94,5 @@ export const InitiatorType = {
   XHR: 'xhr',
   FETCH: 'fetch'
 };
+
+export const CHARTJS_LIB_PATH = 'https://cdn.jsdelivr.net/npm/chart.js';

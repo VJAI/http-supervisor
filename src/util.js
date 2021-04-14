@@ -80,3 +80,10 @@ export function isAbsolute(url) {
   const reg = /^https?:\/\/|^\/\//i;
   return reg.test(url);
 }
+
+export function loadScript(src, onload) {
+  const script = document.createElement('script');
+  script.src = src;
+  script.addEventListener('load', onload);
+  document.head.appendChild(script);
+}
