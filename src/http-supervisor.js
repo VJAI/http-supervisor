@@ -804,7 +804,13 @@ export default class HttpSupervisor {
     const labels = [...this._requests].map(r => r.id),
       data = [...this._requests].map(r => r.duration);
 
-    this._reporter.visualize('bar', 'Response Time Of Requests', labels, data);
+    this._reporter.visualize({
+      type: 'bar',
+      title: 'Response Time Of Requests',
+      labels,
+      data,
+      yAxisLabel: 'bytes'
+    });
   }
 
   /**

@@ -1,6 +1,6 @@
 {
   "name": "http-supervisor",
-  "version": "1.4.8",
+  "version": "2.0.0",
   "description": "A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort and query requests based upon a variety of parameters.",
   "repository": {
     "type": "git",

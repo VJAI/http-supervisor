@@ -1,7 +1,7 @@
-import HttpRequestInfo             from './http-request-info';
-import Collection                  from './collection';
-import { formatBytes, formatTime } from './util';
-import { Messages, Colors }        from './constants';
+import HttpRequestInfo                         from './http-request-info';
+import Collection                              from './collection';
+import { formatBytes, formatTime, poolColors } from './util';
+import { Messages, Colors }                    from './constants';
 import './console-snapshot';
 
 /**
@@ -30,11 +30,26 @@ export default class ConsoleReporter {
    */
   _canvasEl = null;
 
-  _chartFontSize = 6;
+  /**
+   * The chart font size.
+   * @type {number}
+   * @private
+   */
+  _chartFontSize = 9;
 
-  _chartHeight = 200;
+  /**
+   * Chart height.
+   * @type {number}
+   * @private
+   */
+  _chartHeight = 300;
 
-  _chartWidth = 200;
+  /**
+   * Chart width.
+   * @type {number}
+   * @private
+   */
+  _chartWidth = 500;
 
   /**
    * Ctor.
@@ -55,10 +70,12 @@ export default class ConsoleReporter {
     }
 
     Chart && (Chart.defaults.font.size = this._chartFontSize);
+
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;
     this._canvasEl.style.height = `${this._chartHeight}px`;
     this._canvasEl.style.display = 'none';
+
     document.body.appendChild(this._canvasEl);
   }
 
@@ -127,6 +144,8 @@ export default class ConsoleReporter {
         datasets: [{
           label: title,
           data: data,
+          backgroundColor: poolColors(data.length),
+          borderColor: poolColors(data.length),
           borderWidth: 1
         }]
       },
@@ -142,7 +161,7 @@ export default class ConsoleReporter {
     });
 
     setTimeout(() => {
-      console.screenshot(this._canvasEl);
+      console.screenshot(this._canvasEl, .5, .35);
       myChart.destroy();
     }, 500);
   }
