@@ -73,7 +73,7 @@ export default class HttpSupervisor {
    * @type {boolean}
    * @private
    */
-  _traceEachRequest = true;
+  _traceEachRequest = false;
 
   /**
    * Display failed request.
@@ -1005,7 +1005,11 @@ export default class HttpSupervisor {
     this._requests.add(requestInfo);
     this._widget.updateTotalRequestsCount(this._requests.size);
 
-    xhr.addEventListener('load', () => {
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState !== XMLHttpRequest.DONE) {
+        return;
+      }
+
       this._decrement();
       requestInfo.responseStatus = xhr.status;
 
@@ -1016,7 +1020,7 @@ export default class HttpSupervisor {
       }
 
       this._fillResponseParameters(requestInfo, xhr);
-    });
+    };
 
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);
@@ -1044,6 +1048,7 @@ export default class HttpSupervisor {
       requestInfo.payloadByPerformance = !!performanceEntry.transferSize;
       requestInfo.responseSize = requestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
     } else {
+      requestInfo.payloadByPerformance = false;
       requestInfo.timeEnd = performance.now();
       requestInfo.responseSize = responseSize;
     }

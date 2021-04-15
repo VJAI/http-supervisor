@@ -353,7 +353,7 @@ export default class ConsoleReporter {
       this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
       this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));
       this.printKeyValue(Messages.DURATION, formatTime(requestOrCollection.duration));
-      this.printKeyValue(Messages.RESPONSE, requestOrCollection.response);
+      this.printKeyValue(Messages.RESPONSE, requestOrCollection.response || '-');
       this.printKeyValue(Messages.RESPONSE_SIZE, formatBytes(requestOrCollection.responseSize));
       this.printKeyValue(Messages.RESPONSE_STATUS, requestOrCollection.responseStatus);
       this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
