@@ -66,10 +66,7 @@ function sendCall6() {
 
 window.httpSupervisor = httpSupervisor;
 httpSupervisor.init({
-  domains: ['https://jsonplaceholder.typicode.com'],
-  traceEachRequest: false,
-  alertOnExceedQuota: false,
-  alertOnError: false
+  domains: ['https://jsonplaceholder.typicode.com']
 });
 makeAjaxCalls();
 setTimeout(makeAjaxCalls, 100);

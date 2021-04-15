@@ -157,9 +157,9 @@ export default class Collection {
   /**
    * Constructor.
    */
-  constructor(items, name = '-', groupedBy) {
+  constructor(items, name, groupedBy) {
     this._items = items;
-    this._name = name;
+    this._name = name || '-';
     this._originalItems = [...items];
     this._groupedBy = groupedBy;
   }

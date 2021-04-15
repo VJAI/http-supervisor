@@ -46,7 +46,7 @@ export default class EventEmitter {
     if (!handlers) {
       return;
     }
-    [...handlers].forEach(handler => handler(this, ...args));
+    [...handlers].forEach(handler => handler(...args));
   }
 
   destroy() {

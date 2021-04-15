@@ -403,8 +403,6 @@ export default class ConsoleReporter {
         let v;
         if (typeof item[key] === 'undefined') {
           v = null;
-        } else if (item[key] !== null && typeof item[key] === 'object' || Array.isArray(item[key])) {
-          v = JSON.stringify(item[key]);
         } else {
           v = item[key];
         }

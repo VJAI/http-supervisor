@@ -1,1 +1,1 @@
-module.exports = require('./dist/http.supervisor-2.0.0');
+module.exports = require('./dist/http.supervisor-2.0.1');
