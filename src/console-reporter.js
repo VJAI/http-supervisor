@@ -90,13 +90,23 @@ export default class ConsoleReporter {
    */
   report(statsOrObj, collection) {
     if (arguments.length === 1) {
-      if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
+      if (statsOrObj === null) {
+        this.print(Messages.NO_REQUEST, Colors.INFO, true);
+        return;
+      } else if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
         if (statsOrObj instanceof Collection && !statsOrObj.hasGroups && !statsOrObj.hasItems) {
           this.print(Messages.NO_REQUESTS, Colors.INFO, true);
           return;
         }
 
-        this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO);
+        let titleColor = Colors.GRAY;
+        if (statsOrObj.error) {
+          titleColor = '#ff6e92';
+        } else if (statsOrObj.exceedsQuota) {
+          titleColor = '#edca6b';
+        }
+
+        this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO, titleColor);
         this._reportObject(statsOrObj);
       } else {
         this.printTitle(Messages.METRICS_SUMMARY);
@@ -216,8 +226,8 @@ export default class ConsoleReporter {
    * Prints section title.
    * @param message
    */
-  printTitle(message) {
-    this.print(message, Colors.INFO, true, `padding: 5px 250px; background-color: ${Colors.GRAY}; color: ${Colors.WHITE};margin-bottom: 10px;`);
+  printTitle(message, bgColor = Colors.GRAY) {
+    this.print(message, Colors.INFO, true, `padding: 5px 250px; background-color: ${bgColor}; color: ${Colors.WHITE};margin-bottom: 10px;`);
   }
 
   /**
@@ -345,6 +355,11 @@ export default class ConsoleReporter {
   }
 
   _reportObject(requestOrCollection) {
+    if (requestOrCollection === null) {
+      this.print(Messages.NO_REQUEST, Colors.INFO, true);
+      return;
+    }
+
     if (requestOrCollection instanceof HttpRequestInfo) {
       this.printKeyValue(Messages.ID, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);

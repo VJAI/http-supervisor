@@ -8,6 +8,7 @@ export const Messages = {
   SLEEP: `${HTTP_SUPERVISOR_EMOJI}‍ HTTP SUPERVISOR STOPPED`,
   LOG_START: `------------------------ LOG STARTS ------------------------`,
   LOG_END: `------------------------- LOG ENDS -------------------------`,
+  NO_REQUEST: `No Request Found`,
   NO_REQUESTS: `No Requests Found`,
   METRICS_SUMMARY: 'Metrics Summary',
   TOTAL_REQUESTS: 'Total Requests',
