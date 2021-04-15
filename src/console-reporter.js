@@ -98,15 +98,6 @@ export default class ConsoleReporter {
           this.print(Messages.NO_REQUESTS, Colors.INFO, true);
           return;
         }
-
-        let titleColor = Colors.GRAY;
-        if (statsOrObj.error) {
-          titleColor = '#ff6e92';
-        } else if (statsOrObj.exceedsQuota) {
-          titleColor = '#edca6b';
-        }
-
-        this.printTitle(statsOrObj instanceof HttpRequestInfo ? Messages.REQUEST_INFO : Messages.REQUESTS_INFO, titleColor);
         this._reportObject(statsOrObj);
       } else {
         this.printTitle(Messages.METRICS_SUMMARY);
@@ -440,6 +431,14 @@ export default class ConsoleReporter {
     }
 
     if (requestOrCollection instanceof HttpRequestInfo) {
+      let bgColor = Colors.GRAY;
+      if (requestOrCollection.error) {
+        bgColor = '#ff6e92';
+      } else if (requestOrCollection.exceedsQuota) {
+        bgColor = '#edca6b';
+      }
+
+      console.groupCollapsed(`%c${requestOrCollection.method}  ${requestOrCollection.path} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `padding: 5px 10px; background-color: ${bgColor}; color: ${Colors.WHITE};margin-bottom: 10px;`);
       this.printKeyValue(Messages.ID, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
       this.printKeyValue(Messages.PATH, requestOrCollection.path);
@@ -455,8 +454,11 @@ export default class ConsoleReporter {
       this.printKeyValue(Messages.EXCEEDS_QUOTA, requestOrCollection.exceedsQuota ? 'Yes' : 'No');
       this.printKeyValue(Messages.INITIATOR_TYPE, requestOrCollection.initiatorType);
       this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, requestOrCollection.payloadByPerformance ? 'Yes' : 'No');
+      console.groupEnd();
       return;
     }
+
+    this.printTitle(Messages.REQUESTS_INFO);
 
     if (!requestOrCollection.hasItems && !requestOrCollection.hasGroups) {
       return;

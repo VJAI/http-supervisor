@@ -285,14 +285,42 @@ export default class HttpSupervisor {
     return [...this._defaultSortBy];
   }
 
+  /**
+   * Returns true if performance API is enabled for accurate info.
+   * @returns {boolean}
+   */
   get usePerformance() {
     return this._usePerformance;
   }
 
+  /**
+   * Enable/Disable performance API.
+   * @param value
+   */
+  set usePerformance(value) {
+    this._usePerformance = value;
+  }
+
+  /**
+   * Returns if intercepting fetch API is enabled.
+   * @returns {boolean}
+   */
   get monkeyPatchFetch() {
     return this._monkeyPatchFetch;
   }
 
+  /**
+   * Enable/Disable intercepting fetch API.
+   * @param value
+   */
+  set monkeyPatchFetch(value) {
+    this._monkeyPatchFetch = value;
+  }
+
+  /**
+   * Returns true if visualization is enabled.
+   * @returns {boolean}
+   */
   get useVisualization() {
     return this._useVisualization;
   }
