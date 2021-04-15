@@ -989,7 +989,15 @@ export default class HttpSupervisor {
       [xhr, payload] = parameters,
       url = this._createUrl(xhr[XHR_METADATA_KEY].url);
 
-    xhr[XHR_METADATA_KEY].payload = payload;
+    let payloadJson;
+
+    try {
+      payloadJson = JSON.parse(payload);
+    } catch {
+      payloadJson = payload;
+    }
+
+    xhr[XHR_METADATA_KEY].payload = payloadJson;
     parameters.shift();
 
     if (this._domains !== null && !this._domains.has(url.origin)) {
@@ -1013,9 +1021,15 @@ export default class HttpSupervisor {
       this._decrement();
       requestInfo.responseStatus = xhr.status;
 
-      try {
-        requestInfo.response = JSON.parse(xhr.response);
-      } catch {
+      const contentType = xhr.getResponseHeader('Content-Type');
+
+      if (contentType.toLowerCase().startsWith('application/json')) {
+        try {
+          requestInfo.response = JSON.parse(xhr.response);
+        } catch {
+          requestInfo.response = xhr.response;
+        }
+      } else {
         requestInfo.response = xhr.response;
       }
 
