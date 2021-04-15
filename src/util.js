@@ -39,7 +39,7 @@ export function convertBytes(bytes) {
  * Formats time in seconds.
  */
 export function formatTime(time) {
-  return time < 500 ? `${time} ms` : `${time / 1000} s`;
+  return time < 1000 ? `${time} ms` : `${time / 1000} s`;
 }
 
 /**

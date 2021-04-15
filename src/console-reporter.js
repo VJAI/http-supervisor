@@ -143,36 +143,115 @@ export default class ConsoleReporter {
       title,
       labels,
       data,
-      yAxisLabel
+      format
     } = chartOptions;
 
     const ctx = this._canvasEl.getContext('2d');
-    const myChart = new Chart(ctx, {
-      type: type,
-      data: {
-        labels: labels,
-        datasets: [{
-          label: title,
-          data: data,
-          backgroundColor: poolColors(data.length),
-          borderColor: poolColors(data.length),
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: yAxisLabel
+    let myChart;
+
+    if (type === 'bar') {
+      myChart = new Chart(ctx, {
+        type: type,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: title,
+            data: data,
+            backgroundColor: poolColors(data.length),
+            borderColor: poolColors(data.length),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return format ? format(value): value;
+                }
+              }
+            }
           }
         }
-      }
-    });
+      });
+    } else if (type === 'bubble') {
+      myChart = new Chart(ctx, {
+        type: 'bubble',
+        data: {
+          datasets: [{
+            label: title,
+            data: data
+          }]
+        },
+        options: {
+          responsive: false,
+          aspectRatio: 1,
+          plugins: {
+            legend: false,
+            tooltip: false,
+          },
+          elements: {
+            point: {
+              backgroundColor: this._colorize.bind(this, false),
+              borderColor: this._colorize.bind(this, true),
+              borderWidth: function(context) {
+                return Math.min(Math.max(1, context.datasetIndex + 1), 8);
+              },
+              radius: function(context) {
+                const size = context.chart.width;
+                const base = Math.abs(context.raw.v) / 1000;
+                return (size / 24) * base;
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return format ? format(value): value;
+                }
+              }
+            }
+          }
+        }
+      });
+    } else if (type === 'pie') {
+      myChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Dataset 1',
+            data: data,
+            backgroundColor: poolColors(data.length)
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: true,
+              text: title
+            }
+          }
+        }
+      });
+    }
+
+    if (!myChart) {
+      return;
+    }
 
     setTimeout(() => {
       console.screenshot(this._canvasEl, .5, .35);
       myChart.destroy();
+      myChart = null;
     }, 500);
   }
 
@@ -427,5 +506,21 @@ export default class ConsoleReporter {
     });
 
     this.table(items);
+  }
+
+  _colorize(opaque, context) {
+    const value = context.raw;
+    const x = value.x / 100;
+    const y = value.y / 100;
+    const r = this._channelValue(x, y, [250, 150, 50, 0]);
+    const g = this._channelValue(x, y, [0, 50, 150, 250]);
+    const b = this._channelValue(x, y, [0, 150, 150, 250]);
+    const a = opaque ? 1 : 0.5 * value.v / 1000;
+
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+
+  _channelValue(x, y, values) {
+    return x < 0 && y < 0 ? values[0] : x < 0 ? values[1] : y < 0 ? values[2] : values[3];
   }
 }

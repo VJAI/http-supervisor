@@ -7,6 +7,8 @@ A simple tool that helps to audit HTTP requests (fetch and XHR) and identify the
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to manage requests.
 
+Last but not least it also provides visualization support using the chart.js library.
+
 [DEMO](https://vjai.github.io/http-supervisor/)
 
 ### UI with controls
@@ -16,6 +18,10 @@ to manage requests.
 ### Console Output
 
 ![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/console.png)
+
+### Data Visualization
+
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/visualization.png)
 
 ## Install
 
@@ -117,6 +123,14 @@ You can export requests as a CSV file by calling the `export` method.
 
 ```js
 httpSupervisor.export();
+```
+
+## Visualizing Requests
+
+The library provides methods to visualize data through charts.
+
+```
+httpSupervisor.displayResponseTimeChart()
 ```
 
 ## API
@@ -231,3 +245,11 @@ will add a new query parameter (hs_rid) in the url.
 **searchArrangeAndPrintRequests(query, groupArgs, sortArgs)** - Searches and then groups, sorts and finally prints the collection.
 
 **export()** - Export requests to a CSV file.
+
+**displayResponseSizeChart()** - Displays bar chart that shows the response size of each request.
+
+**displayResponseTimeChart()** - Displays bar chart that shows the response time of each request.
+
+**displaySizeTimeChart** - Displays the bubble chart that shows the size and time of each request in the same chart.
+
+**displaySizeDistribution** - Displays the response size distribution using pie chart.

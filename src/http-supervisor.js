@@ -14,8 +14,8 @@ import {
   convertBytes,
   convertTime,
   byteSize,
-  isAbsolute, loadScript
-}                      from './util';
+  isAbsolute, loadScript, formatBytes, formatTime
+} from './util';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify duplicate requests, analyze payload and much more.
@@ -793,7 +793,7 @@ export default class HttpSupervisor {
       title: 'Response Size Of Requests',
       labels,
       data,
-      yAxisLabel: 'bytes'
+      format: formatBytes
     });
   }
 
@@ -809,7 +809,41 @@ export default class HttpSupervisor {
       title: 'Response Time Of Requests',
       labels,
       data,
-      yAxisLabel: 'bytes'
+      format: formatTime
+    });
+  }
+
+  /**
+   * Displays buuble chart for response size and time.
+   */
+  displaySizeTimeChart() {
+    const data = [...this._requests].map(r => ({
+      x: r.id,
+      y: r.responseSize,
+      v: r.duration
+    }));
+
+    this._reporter.visualize({
+      type: 'bubble',
+      title: 'Response Size And Time Of Requests',
+      data,
+      format: formatBytes
+    });
+  }
+
+  /**
+   * Displays the response size distribution.
+   */
+  displaySizeDistribution() {
+    const labels = [...this._requests].map(r => r.id),
+      data = [...this._requests].map(r => r.responseSize);
+
+    this._reporter.visualize({
+      type: 'pie',
+      title: 'Response Size Distribution',
+      labels,
+      data,
+      format: formatBytes
     });
   }
 
