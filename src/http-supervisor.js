@@ -20,7 +20,8 @@ import {
   isAbsolute,
   loadScript,
   formatBytes,
-  formatTime
+  formatTime,
+  matchCriteria
 } from './util';
 
 /**
@@ -428,7 +429,12 @@ export default class HttpSupervisor {
       return;
     }
 
-    config = loadConfigFromStore && sessionStorage.getItem(STORAGE_KEY) ? JSON.parse(sessionStorage.getItem(STORAGE_KEY)) : config;
+    if (loadConfigFromStore && sessionStorage.getItem(STORAGE_KEY)) {
+      config = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+      const watches = config && config.watches ? new Map(JSON.parse(config.watches)) : null;
+      delete config.watches;
+      watches && (this._watches = watches);
+    }
 
     const {
       domains,
@@ -442,7 +448,7 @@ export default class HttpSupervisor {
       usePerformance,
       monkeyPatchFetch,
       useVisualization
-    } = config;
+    } = config || {};
 
     Array.isArray(domains) && (this._domains = new Set(domains));
     typeof renderUI === 'boolean' && (this._renderUI = renderUI);
@@ -468,6 +474,11 @@ export default class HttpSupervisor {
       }
 
       if (this._alertOnExceedQuota && this._isExceededQuota(request)) {
+        this._reporter.report(request);
+      }
+
+      const watchMatches = [...this._watches.values()].filter(w => this._matchWatch(w, request));
+      if (watchMatches.length) {
         this._reporter.report(request);
       }
     });
@@ -1039,18 +1050,30 @@ export default class HttpSupervisor {
     exportLink.click();
   }
 
+  /**
+   * Alert request that matches the passed arguments.
+   */
   watchOn(...args) {
     const watchId = this._watchId();
     this._watches.set(watchId, args);
+    this._updateStorage();
     return watchId;
   }
 
+  /**
+   * Remove the watch.
+   */
   removeWatch(watchId) {
     this._watches.remove(watchId);
+    this._updateStorage();
   }
 
+  /**
+   * Clear all watches.
+   */
   clearWatches() {
     this._watches.clear();
+    this._updateStorage();
   }
 
   /**
@@ -1153,7 +1176,7 @@ export default class HttpSupervisor {
         })
         .finally(() => {
           requestInfo.responseStatus = response ? response.status : 500;
-          this._fillResponseParameters(requestInfo, response);
+          this._fillParametersAndFireEvents(requestInfo, response);
         });
     });
   }
@@ -1243,7 +1266,7 @@ export default class HttpSupervisor {
         requestInfo.response = xhr.response;
       }
 
-      this._fillResponseParameters(requestInfo, xhr);
+      this._fillParametersAndFireEvents(requestInfo, xhr);
     };
 
     this._nativeSend.call(xhr, ...parameters);
@@ -1256,7 +1279,7 @@ export default class HttpSupervisor {
    * @param xhrOrResponse
    * @private
    */
-  _fillResponseParameters(requestInfo, xhrOrResponse) {
+  _fillParametersAndFireEvents(requestInfo, xhrOrResponse) {
     let performanceEntry;
 
     if (this._isPerformanceSupported()) {
@@ -1382,7 +1405,15 @@ export default class HttpSupervisor {
       alertOnExceedQuota: this._alertOnExceedQuota,
       usePerformance: this._usePerformance,
       quota: this._quota,
-      domains: this._domains
+      domains: this._domains,
+      watches: JSON.stringify([...this._watches.entries()])
     }));
+  }
+
+  /**
+   * Returns `true` if the request matches the arguments.
+   */
+  _matchWatch(argsArray, request) {
+    return matchCriteria(argsArray, request);
   }
 }

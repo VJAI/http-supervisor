@@ -1,3 +1,5 @@
+import { matchCriteria } from './util';
+
 /**
  * Represents a collection of records that can be groupable, sortable etc.
  */
@@ -253,37 +255,7 @@ export default class Collection {
     }
 
     this._query = args;
-
-    this._items = this._items.filter(r => {
-      const results = [];
-      args.forEach(({ field, operator, value }) => {
-        const v = r[field];
-
-        if (operator === '=') {
-          results.push(v === value);
-        } else if (operator === '!=') {
-          results.push(v !== value);
-        } else if (operator === '<') {
-          results.push(v < value);
-        } else if (operator === '>') {
-          results.push(v > value);
-        } else if (operator === '<=') {
-          results.push(v <= value);
-        } else if (operator === '>=') {
-          results.push(v >= value);
-        } else if (operator === '~') {
-          results.push(typeof r[field] === 'string' && v.startsWith(value));
-        } else if (operator === '^') {
-          results.push(typeof r[field] === 'string' && v.endsWith(value));
-        } else if (operator === 'contains') {
-          results.push(typeof r[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
-        } else if (operator === '!contains') {
-          results.push(typeof r[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) === -1);
-        }
-      });
-      return results.filter(r => !r).length === 0;
-    });
-
+    this._items = this._items.filter(r => matchCriteria(args, r));
     this._groups.forEach(group => group.search(...args));
 
     return this;

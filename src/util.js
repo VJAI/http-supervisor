@@ -104,3 +104,35 @@ export function poolColors(a) {
 
   return pool;
 }
+
+export function matchCriteria(criteria, object) {
+  const results = [];
+
+  criteria.forEach(({ field, operator, value }) => {
+    const v = object[field];
+
+    if (operator === '=') {
+      results.push(v === value);
+    } else if (operator === '!=') {
+      results.push(v !== value);
+    } else if (operator === '<') {
+      results.push(v < value);
+    } else if (operator === '>') {
+      results.push(v > value);
+    } else if (operator === '<=') {
+      results.push(v <= value);
+    } else if (operator === '>=') {
+      results.push(v >= value);
+    } else if (operator === '~') {
+      results.push(typeof object[field] === 'string' && v.startsWith(value));
+    } else if (operator === '^') {
+      results.push(typeof object[field] === 'string' && v.endsWith(value));
+    } else if (operator === 'contains') {
+      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+    } else if (operator === '!contains') {
+      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) === -1);
+    }
+  });
+
+  return results.filter(r => !r).length === 0;
+}
