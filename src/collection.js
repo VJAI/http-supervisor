@@ -275,6 +275,10 @@ export default class Collection {
           results.push(typeof r[field] === 'string' && v.startsWith(value));
         } else if (operator === '^') {
           results.push(typeof r[field] === 'string' && v.endsWith(value));
+        } else if (operator === 'contains') {
+          results.push(typeof r[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+        } else if (operator === '!contains') {
+          results.push(typeof r[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) === -1);
         }
       });
       return results.filter(r => !r).length === 0;

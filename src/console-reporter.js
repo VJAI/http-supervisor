@@ -61,9 +61,10 @@ export default class ConsoleReporter {
 
   /**
    * Does initialization stuff.
+   * @param {HttpSupervisor} httpSupervisor
    */
-  init(useVisualization) {
-    this._useVisualization = !!(useVisualization && Chart);
+  init(httpSupervisor) {
+    this._useVisualization = !!(httpSupervisor.useVisualization && Chart);
 
     if (!this._useVisualization) {
       return;
@@ -98,6 +99,8 @@ export default class ConsoleReporter {
           this.print(Messages.NO_REQUESTS, Colors.INFO, true);
           return;
         }
+
+        statsOrObj instanceof Collection && this.printTitle(Messages.REQUESTS_INFO);
         this._reportObject(statsOrObj);
       } else {
         this.printTitle(Messages.METRICS_SUMMARY);
@@ -457,8 +460,6 @@ export default class ConsoleReporter {
       console.groupEnd();
       return;
     }
-
-    this.printTitle(Messages.REQUESTS_INFO);
 
     if (!requestOrCollection.hasItems && !requestOrCollection.hasGroups) {
       return;

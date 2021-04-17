@@ -7,14 +7,20 @@ import {
   Messages,
   SUPERVISOR_QUERY_KEY,
   FAKE,
-  XHR_METADATA_KEY, InitiatorType, CHARTJS_LIB_PATH
+  XHR_METADATA_KEY,
+  InitiatorType,
+  CHARTJS_LIB_PATH,
+  STORAGE_KEY
 }                      from './constants';
 import {
   idGenerator,
   convertBytes,
   convertTime,
   byteSize,
-  isAbsolute, loadScript, formatBytes, formatTime
+  isAbsolute,
+  loadScript,
+  formatBytes,
+  formatTime
 } from './util';
 
 /**
@@ -90,18 +96,18 @@ export default class HttpSupervisor {
   _alertOnExceedQuota = true;
 
   /**
-   * Default grouping parameters.
+   * Grouping parameters used in displaying requests.
    * @type {string[]}
    * @private
    */
-  _defaultGroupBy = ['path', 'method'];
+  _groupBy = ['path', 'method'];
 
   /**
-   * Default sorting parameters.
+   * Sorting parameters used in displaying requests.
    * @type {*[]}
    * @private
    */
-  _defaultSortBy = [{ field: 'id', dir: 'asc' }];
+  _sortBy = [{ field: 'id', dir: 'asc' }];
 
   /**
    * Uses performance.getEntriesByType for accurate duration and payload info.
@@ -131,6 +137,13 @@ export default class HttpSupervisor {
    */
   _requests = new Set();
 
+    /**
+   * Collection of watches.
+   * @type {Map}
+   * @private
+   */
+  _watches = new Map();
+
   /**
    * Current status of the supervisor.
    * @type {string}
@@ -151,6 +164,13 @@ export default class HttpSupervisor {
    * @private
    */
   _id = idGenerator(1);
+
+    /**
+   * The id generator function for watches.
+   * @type {function}
+   * @private
+   */
+  _watchId = idGenerator(1);
 
   /**
    * Native fetch method.
@@ -198,11 +218,30 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Set the domains.
+   */
+  set domains(value) {
+    this._domains = new Set(value || []);
+    this._updateStorage();
+  }
+
+  /**
    * Returns `true` if ui is required.
    * @returns {boolean}
    */
   get renderUI() {
     return this._renderUI;
+  }
+
+  /**
+   * Shows/hides UI if `renderUI` is set as `true`.
+   */
+  set displayUI(value) {
+    if (value) {
+      this._widget.show();
+    } else {
+      this._widget.hide();
+    }
   }
 
   /**
@@ -219,6 +258,7 @@ export default class HttpSupervisor {
    */
   set traceEachRequest(value) {
     this._traceEachRequest = value;
+    this._updateStorage();
   }
 
   /**
@@ -235,6 +275,7 @@ export default class HttpSupervisor {
    */
   set alertOnError(value) {
     this._alertOnError = value;
+    this._updateStorage();
   }
 
   /**
@@ -251,6 +292,7 @@ export default class HttpSupervisor {
    */
   set alertOnExceedQuota(value) {
     this._alertOnExceedQuota = value;
+    this._updateStorage();
   }
 
   /**
@@ -267,22 +309,41 @@ export default class HttpSupervisor {
    */
   set quota(value) {
     this._quota = { ...this._quota, ...value };
+    this._updateStorage();
   }
 
   /**
-   * Returns the default group parameters.
+   * Returns the group parameters.
    * @returns {string[]}
    */
-  get defaultGroupBy() {
-    return [...this._defaultGroupBy];
+  get groupBy() {
+    return [...this._groupBy];
   }
 
   /**
-   * Returns the default sort parameters.
+   * Sets the group parameters.
+   * @param value
+   */
+  set groupBy(value) {
+    this._groupBy = value;
+    this._updateStorage();
+  }
+
+  /**
+   * Returns the sort parameters.
    * @returns {*[]}
    */
-  get defaultSortBy() {
-    return [...this._defaultSortBy];
+  get sortBy() {
+    return [...this._sortBy];
+  }
+
+  /**
+   * Set the sort parameters.
+   * @param value
+   */
+  set sortBy(value) {
+    this._sortBy = value;
+    this._updateStorage();
   }
 
   /**
@@ -299,6 +360,7 @@ export default class HttpSupervisor {
    */
   set usePerformance(value) {
     this._usePerformance = value;
+    this._updateStorage();
   }
 
   /**
@@ -315,6 +377,7 @@ export default class HttpSupervisor {
    */
   set monkeyPatchFetch(value) {
     this._monkeyPatchFetch = value;
+    this._updateStorage();
   }
 
   /**
@@ -323,6 +386,14 @@ export default class HttpSupervisor {
    */
   get useVisualization() {
     return this._useVisualization;
+  }
+
+  /**
+   * Returns the current calls count.
+   * @returns {number}
+   */
+  get onGoingCallsCount() {
+    return this._callsCount;
   }
 
   /**
@@ -345,16 +416,19 @@ export default class HttpSupervisor {
    * @param {boolean} [config.alertOnError] Passing `true` will print error requests.
    * @param {boolean} [config.alertOnExceedQuota] Passing `true` will print requests that exceeds quota.
    * @param {object} [config.quota] Request Quota.
-   * @param {Array} [config.defaultGroupBy] Default grouping parameters.
-   * @param {Array} [config.defaultSortBy] Default sorting parameters.
+   * @param {Array} [config.groupBy] Grouping parameters used in displaying requests.
+   * @param {Array} [config.sortBy] Sorting parameters used in displaying requests.
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
    * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
+   * @package {boolean} [config.loadConfigFromStore] True to load the config from session storage.
    */
-  init(config = {}) {
+  init(config = {}, loadConfigFromStore = true) {
     if (this._status !== SupervisorStatus.NotReady) {
       return;
     }
+
+    config = loadConfigFromStore && sessionStorage.getItem(STORAGE_KEY) ? JSON.parse(sessionStorage.getItem(STORAGE_KEY)) : config;
 
     const {
       domains,
@@ -363,8 +437,8 @@ export default class HttpSupervisor {
       alertOnError,
       alertOnExceedQuota,
       quota,
-      defaultGroupBy,
-      defaultSortBy,
+      groupBy,
+      sortBy,
       usePerformance,
       monkeyPatchFetch,
       useVisualization
@@ -376,8 +450,8 @@ export default class HttpSupervisor {
     typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
     typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
     typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
-    Array.isArray(defaultGroupBy) && (this._defaultGroupBy = defaultGroupBy);
-    Array.isArray(defaultSortBy) && (this._defaultSortBy = defaultSortBy);
+    Array.isArray(groupBy) && (this._groupBy = groupBy);
+    Array.isArray(sortBy) && (this._sortBy = sortBy);
     typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
     typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
     typeof useVisualization === 'boolean' && (this._useVisualization = useVisualization);
@@ -398,12 +472,15 @@ export default class HttpSupervisor {
       }
     });
 
+    this._updateStorage();
+
     const renderAndStart = () => {
       this._render();
-      this._reporter.init(this._useVisualization);
+      this._reporter.init(this);
       this._monkeyPatch();
       this._status = SupervisorStatus.Idle;
       this.start();
+      this._triggerEvent(SupervisorEvents.READY);
     };
 
     if (this._useVisualization) {
@@ -428,7 +505,6 @@ export default class HttpSupervisor {
     }
 
     this._status = SupervisorStatus.Busy;
-    this._widget.start();
     this._reporter.printStatusMessage(Messages.ACTIVE);
     this._triggerEvent(SupervisorEvents.START);
   }
@@ -442,7 +518,6 @@ export default class HttpSupervisor {
     }
 
     this._status = SupervisorStatus.Idle;
-    this._widget.stop();
     this._reporter.printStatusMessage(Messages.SLEEP);
     this._triggerEvent(SupervisorEvents.STOP);
   }
@@ -453,7 +528,6 @@ export default class HttpSupervisor {
   clear() {
     this._reporter.clear();
     this._requests.clear();
-    this._widget.updateTotalRequestsCount(this._requests.size);
     this._triggerEvent(SupervisorEvents.CLEAR);
   }
 
@@ -462,8 +536,8 @@ export default class HttpSupervisor {
    */
   print() {
     const collection = new Collection([...this._requests])
-      .groupBy(...this._defaultGroupBy)
-      .sortBy(...this._defaultSortBy);
+      .groupBy(...this._groupBy)
+      .sortBy(...this._sortBy);
 
     this._reporter.report({
       totalRequests: this.totalRequests,
@@ -554,8 +628,17 @@ export default class HttpSupervisor {
    * @param url
    * @returns {Collection}
    */
-  getRequestByUrl(url) {
+  getRequestsMatchingUrl(url) {
     return this.requests().search({ field: isAbsolute(url) ? 'url' : 'path', operator: '=', value: url });
+  }
+
+  /**
+   * Returns requests matches the passed status code.
+   * @param status
+   * @returns {Collection}
+   */
+  getRequestsOfStatus(status) {
+    return this.requests().search({ field: 'responseStatus', operator: '=', value: status });
   }
 
   /**
@@ -659,6 +742,24 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns requests that contains the passed string.
+   * @param part
+   * @returns {Collection}
+   */
+  searchRequestsContainsUrl(part) {
+    return this.requests().search({ field: 'url', operator: 'contains', value: part });
+  }
+
+  /**
+   * Returns requests that contains response size greater than the passed value.
+   * @param size
+   * @returns {Collection}
+   */
+  searchRequestsOfSizeGreaterThan(size) {
+    return this.requests().search({ field: 'responseSize', operator: '>=', value: size });
+  }
+
+  /**
    * Get requests matches the query; group and sort the results based on the passed paramaters.
    * @param {*} query
    * @param {Array<string>} groupArgs
@@ -722,6 +823,22 @@ export default class HttpSupervisor {
    */
   printRequestsByType(method) {
     this._reporter.report(this.getRequestsByType(method));
+  }
+
+  /**
+   * Prints the requests that's been issued against the passed url.
+   * @param url
+   */
+  printRequestsByUrl(url) {
+    this._reporter.report(this.getRequestsMatchingUrl(url));
+  }
+
+  /**
+   * Print requests that has the passed response status.
+   * @param status
+   */
+  printRequestsOfStatus(status) {
+    this._reporter.report(this.getRequestsOfStatus(status));
   }
 
   /**
@@ -800,6 +917,22 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Print requests that has url contains the passed string.
+   * @param part
+   */
+  printRequestsContainsUrl(part) {
+    this._reporter.report(this.searchRequestsContainsUrl(part));
+  }
+
+  /**
+   * Print requests that has response size greater than the passed value.
+   * @param size
+   */
+  printRequestsOfSizeGreaterThan(size) {
+    this._reporter.report(this.searchRequestsOfSizeGreaterThan(size));
+  }
+
+  /**
    * Searches and then groups, sorts and finally prints the collection.
    * @param {*} query
    * @param {Array<string>} groupArgs
@@ -863,7 +996,7 @@ export default class HttpSupervisor {
    * Displays the response size distribution.
    */
   displaySizeDistribution() {
-    const labels = [...this._requests].map(r => r.id),
+    const labels = [...this._requests].map(r => r.path),
       data = [...this._requests].map(r => r.responseSize);
 
     this._reporter.visualize({
@@ -906,6 +1039,27 @@ export default class HttpSupervisor {
     exportLink.click();
   }
 
+  watchOn(...args) {
+    const watchId = this._watchId();
+    this._watches.set(watchId, args);
+    return watchId;
+  }
+
+  removeWatch(watchId) {
+    this._watches.remove(watchId);
+  }
+
+  clearWatches() {
+    this._watches.clear();
+  }
+
+  /**
+   * Removes the stored config from session storage.
+   */
+  clearStore() {
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
+
   /**
    * Render the UI.
    * @private
@@ -915,12 +1069,8 @@ export default class HttpSupervisor {
       return;
     }
 
+    this._widget.init(this);
     this._widget.render();
-    this._widget.subscribe('start', () => this.start());
-    this._widget.subscribe('stop', () => this.stop());
-    this._widget.subscribe('clear', () => this.clear());
-    this._widget.subscribe('print', () => this.print());
-    this._widget.subscribe('export', () => this.export());
   }
 
   /**
@@ -980,7 +1130,6 @@ export default class HttpSupervisor {
     requestInfo.initiatorType = InitiatorType.FETCH;
     requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
     this._requests.add(requestInfo);
-    this._widget.updateTotalRequestsCount(this._requests.size);
 
     return new Promise((resolve, reject) => {
       this._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
@@ -1003,7 +1152,7 @@ export default class HttpSupervisor {
           reject(error);
         })
         .finally(() => {
-          requestInfo.responseStatus = response.status;
+          requestInfo.responseStatus = response ? response.status : 500;
           this._fillResponseParameters(requestInfo, response);
         });
     });
@@ -1073,7 +1222,6 @@ export default class HttpSupervisor {
     // Capture the request.
     const requestInfo = this._createRequest(xhr);
     this._requests.add(requestInfo);
-    this._widget.updateTotalRequestsCount(this._requests.size);
 
     xhr.onreadystatechange = () => {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
@@ -1143,7 +1291,6 @@ export default class HttpSupervisor {
    */
   _increment() {
     this._callsCount++;
-    this._widget.updateCalls(this._callsCount);
   }
 
   /**
@@ -1156,7 +1303,6 @@ export default class HttpSupervisor {
     }
 
     this._callsCount--;
-    this._widget.updateCalls(this._callsCount);
   }
 
   /**
@@ -1224,5 +1370,19 @@ export default class HttpSupervisor {
    */
   _createUrl(url) {
     return isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin);
+  }
+
+  /**
+   * Stores the configuration in local storage.
+   */
+  _updateStorage() {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      traceEachRequest: this._traceEachRequest,
+      alertOnError: this._alertOnError,
+      alertOnExceedQuota: this._alertOnExceedQuota,
+      usePerformance: this._usePerformance,
+      quota: this._quota,
+      domains: this._domains
+    }));
   }
 }

@@ -72,6 +72,7 @@ export const SupervisorStatus = {
  * Different events fired by supervisor.
  */
 export const SupervisorEvents = {
+  READY: 'ready',
   START: 'start',
   STOP: 'stop',
   CLEAR: 'clear',
@@ -97,3 +98,5 @@ export const InitiatorType = {
 };
 
 export const CHARTJS_LIB_PATH = 'https://cdn.jsdelivr.net/npm/chart.js';
+
+export const STORAGE_KEY = 'http-supervisor';
