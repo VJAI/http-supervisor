@@ -204,13 +204,6 @@ export default class HttpSupervisor {
   _nativeSend = XMLHttpRequest.prototype.send;
 
   /**
-   * XMLHttpRequest native `setRequestHeader` method.
-   * @type {function}
-   * @private
-   */
-  _nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
-
-  /**
    * Returns `true` if busy.
    * @return {boolean}
    */
@@ -1143,8 +1136,7 @@ export default class HttpSupervisor {
    */
   _monkeyPatch() {
     const open = this._open.bind(this),
-      send = this._send.bind(this),
-      setRequestHeader = this._setRequestHeader.bind(this);
+      send = this._send.bind(this);
 
     this._monkeyPatchFetch && (window.fetch = this._fetch.bind(this));
 
@@ -1154,10 +1146,6 @@ export default class HttpSupervisor {
 
     XMLHttpRequest.prototype.send = function () {
       send(this, ...arguments);
-    };
-
-    XMLHttpRequest.prototype.setRequestHeader = function () {
-      setRequestHeader(this, ...arguments);
     };
   }
 
@@ -1169,7 +1157,6 @@ export default class HttpSupervisor {
     this._monkeyPatchFetch && (window.fetch = this._nativeFetch);
     XMLHttpRequest.prototype.open = this._nativeOpen;
     XMLHttpRequest.prototype.send = this._nativeSend;
-    XMLHttpRequest.prototype.setRequestHeader = this._nativeSetRequestHeader;
   }
 
   /**
@@ -1288,16 +1275,6 @@ export default class HttpSupervisor {
 
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);
-  }
-
-  /**
-   * Set request header.
-   * @private
-   */
-  _setRequestHeader(xhr, name, value) {
-    const headers = xhr[XHR_METADATA_KEY].requestHeaders;
-    headers.set(name, value);
-    this._nativeSetRequestHeader(name, value);
   }
 
   /**
