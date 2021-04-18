@@ -21,7 +21,9 @@ import {
   loadScript,
   formatBytes,
   formatTime,
-  matchCriteria, isJsonResponse, safeParse
+  matchCriteria,
+  isJsonResponse,
+  safeParse
 } from './util';
 
 /**
@@ -132,6 +134,13 @@ export default class HttpSupervisor {
   _useVisualization = true;
 
   /**
+   * True to use keyboard events for operating control panel.
+   * @type {boolean}
+   * @private
+   */
+  _keyboardEvents = true;
+
+  /**
    * Collection of captured requests.
    * @type {Set}
    * @private
@@ -193,6 +202,13 @@ export default class HttpSupervisor {
    * @private
    */
   _nativeSend = XMLHttpRequest.prototype.send;
+
+  /**
+   * XMLHttpRequest native `setRequestHeader` method.
+   * @type {function}
+   * @private
+   */
+  _nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
   /**
    * Returns `true` if busy.
@@ -390,6 +406,22 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns `true` if keyboard events enabled.
+   * @return {boolean}
+   */
+  get keyboardEvents() {
+    return this._keyboardEvents;
+  }
+
+  /**
+   * Enables/disables keyboard events.
+   * @param value
+   */
+  set keyboardEvents(value) {
+    this._keyboardEvents = value;
+  }
+
+  /**
    * Returns the current on-going calls count.
    * @returns {number}
    */
@@ -422,7 +454,9 @@ export default class HttpSupervisor {
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
    * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
-   * @package {boolean} [loadConfigFromStore = true] True to load the config from session storage.
+   * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
+   * @param {Array} [config.watches] Collection of watches.
+   * @param {boolean} [loadConfigFromStore = true] True to load the config from session storage.
    */
   init(config = {}, loadConfigFromStore = true) {
     if (this._status !== SupervisorStatus.NotReady) {
@@ -443,6 +477,7 @@ export default class HttpSupervisor {
       usePerformance,
       monkeyPatchFetch,
       useVisualization,
+      keyboardEvents,
       watches
     } = config || {};
 
@@ -457,7 +492,8 @@ export default class HttpSupervisor {
     typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
     typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
     typeof useVisualization === 'boolean' && (this._useVisualization = useVisualization);
-    Array.isArray(watches) && (this._watches = new Set(this._watches));
+    typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
+    Array.isArray(watches) && (this._watches = new Map(this._watches));
 
     // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
@@ -485,22 +521,22 @@ export default class HttpSupervisor {
     this._updateStorage();
 
     // Render the widget, initialize the reporter and start monitoring.
-    const start = () => {
-      this._render();
+    this._render();
+    this._monkeyPatch();
+    this._status = SupervisorStatus.Idle;
+    this.start();
+
+    const initReporterAndFireEvent = () => {
       this._reporter.init(this);
-      this._monkeyPatch();
-      this._status = SupervisorStatus.Idle;
-      this.start();
       this._triggerEvent(SupervisorEvents.READY);
     };
 
-    // If visualization is enabled load the `chart.js` library and start.
     if (this._useVisualization) {
-      loadScript(CHARTJS_LIB_PATH, () => start());
+      loadScript(CHARTJS_LIB_PATH, initReporterAndFireEvent, initReporterAndFireEvent);
       return;
     }
 
-    start();
+    initReporterAndFireEvent();
   }
 
   /**
@@ -1081,50 +1117,6 @@ export default class HttpSupervisor {
     this._updateStorage();
   }
 
-  fireRequest(requestId) {
-
-  }
-
-  ignoreOn() {
-
-  }
-
-  removeIgnore() {
-
-  }
-
-  removeIgnores() {
-
-  }
-
-  interceptOn() {
-
-  }
-
-  removeIntercept() {
-
-  }
-
-  removeAllIntercepts() {
-
-  }
-
-  newSession() {
-
-  }
-
-  removeSession(sessionId) {
-
-  }
-
-  removeAllSessions() {
-
-  }
-
-  replaySession(sessionId) {
-
-  }
-
   /**
    * Removes the stored config from session storage.
    */
@@ -1151,7 +1143,8 @@ export default class HttpSupervisor {
    */
   _monkeyPatch() {
     const open = this._open.bind(this),
-      send = this._send.bind(this);
+      send = this._send.bind(this),
+      setRequestHeader = this._setRequestHeader.bind(this);
 
     this._monkeyPatchFetch && (window.fetch = this._fetch.bind(this));
 
@@ -1161,6 +1154,10 @@ export default class HttpSupervisor {
 
     XMLHttpRequest.prototype.send = function () {
       send(this, ...arguments);
+    };
+
+    XMLHttpRequest.prototype.setRequestHeader = function () {
+      setRequestHeader(this, ...arguments);
     };
   }
 
@@ -1172,6 +1169,7 @@ export default class HttpSupervisor {
     this._monkeyPatchFetch && (window.fetch = this._nativeFetch);
     XMLHttpRequest.prototype.open = this._nativeOpen;
     XMLHttpRequest.prototype.send = this._nativeSend;
+    XMLHttpRequest.prototype.setRequestHeader = this._nativeSetRequestHeader;
   }
 
   /**
@@ -1202,11 +1200,8 @@ export default class HttpSupervisor {
       // Make the fetch call and capture the response info.
       this._nativeFetch.call(window, this._isPerformanceSupported() ? this._appendRequestIdToUrl(url, id) : url, options)
         .then(r => {
-          const contentType = r.headers.get('content-type'),
-            isJsonResponse = isJsonResponse(contentType);
-
           response = r.clone();
-          return isJsonResponse ? r.json() : null;
+          return isJsonResponse(r.headers.get('content-type')) ? r.json() : null;
         })
         .then(data => {
           requestInfo.response = data;
@@ -1293,6 +1288,16 @@ export default class HttpSupervisor {
 
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);
+  }
+
+  /**
+   * Set request header.
+   * @private
+   */
+  _setRequestHeader(xhr, name, value) {
+    const headers = xhr[XHR_METADATA_KEY].requestHeaders;
+    headers.set(name, value);
+    this._nativeSetRequestHeader(name, value);
   }
 
   /**

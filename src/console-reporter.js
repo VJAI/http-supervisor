@@ -64,13 +64,13 @@ export default class ConsoleReporter {
    * @param {HttpSupervisor} httpSupervisor
    */
   init(httpSupervisor) {
-    this._useVisualization = !!(httpSupervisor.useVisualization && Chart);
+    this._useVisualization = !!(httpSupervisor.useVisualization && window.Chart);
 
     if (!this._useVisualization) {
       return;
     }
 
-    Chart && (Chart.defaults.font.size = this._chartFontSize);
+    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
 
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;

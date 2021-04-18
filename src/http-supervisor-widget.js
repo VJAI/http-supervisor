@@ -177,10 +177,11 @@ template.innerHTML = `
     padding: 0;
     display: none;
     margin-bottom: 0;
+    grid-template-columns: 1fr;
   }
 
   .popover-content .fourth.active {
-    display: block;
+    display: grid;
   }
 
   .advanced-container {
@@ -319,7 +320,11 @@ template.innerHTML = `
       <fieldset class="fourth">
         <div>
           <label>Domains:</label>
-          <input type="text" />
+          <input type="text" style="flex-grow: 1" />
+        </div>
+        <div>
+          <label>Keyboard Events:</label>
+          <input type="checkbox" />
         </div>
       </fieldset>
     </form>
@@ -378,7 +383,8 @@ export default class HttpSupervisorWidget {
       alertOnError,
       alertOnExceedQuota,
       quota,
-      usePerformance
+      usePerformance,
+      keyboardEvents
     } = this._httpSupervisor;
 
     this._el.setState({
@@ -387,7 +393,8 @@ export default class HttpSupervisorWidget {
       alertOnError,
       alertOnExceedQuota,
       quota,
-      usePerformance
+      usePerformance,
+      keyboardEvents
     });
 
     // Listen to supervisor events.
@@ -416,6 +423,7 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('responseSizeTimeChart', () => this._httpSupervisor.displaySizeTimeChart());
     this._el.subscribe('responseSizeDistributionChart', () => this._httpSupervisor.displaySizeDistribution());
     this._el.subscribe('domainsChange', (ctrl) => this._httpSupervisor.domains = ctrl.value.split(',').map(x => x.trim()));
+    this._el.subscribe('keyboardEventsChange', ctrl => this._httpSupervisor.keyboardEvents = ctrl.checked);
   }
 
   /**
@@ -513,6 +521,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _responseSizeTimeChartButton = null;
   _responseSizeDistributionChartButton = null;
   _domainsTextbox = null;
+  _keyboardEventsCheckbox = null;
   _expandButton = null;
   _collapisbleFieldSet = null;
 
@@ -544,7 +553,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._responseTimeChartButton,
       this._responseSizeTimeChartButton,
       this._responseSizeDistributionChartButton,
-      this._domainsTextbox
+      this._domainsTextbox,
+      this._keyboardEventsCheckbox
     ] = [
       ...Array.from(shadowRoot.querySelector('.http-supervisor-container').children),
       ...Array.from(this._popover.querySelectorAll('input,button'))
@@ -567,7 +577,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       responseTimeChart: this._responseTimeChartButton,
       responseSizeTimeChart: this._responseSizeTimeChartButton,
       responseSizeDistributionChart: this._responseSizeDistributionChartButton,
-      domainsChange: this._domainsTextbox
+      domainsChange: this._domainsTextbox,
+      keyboardEventsChange: this._keyboardEventsCheckbox
     };
 
     this._expandButton = shadowRoot.querySelector('.expand');
@@ -597,8 +608,13 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     });
 
     this._overlay.addEventListener('click', () => this._hidePopover());
-
-    document.addEventListener('keydown', this._handleKeyPress);
+    this._keyboardEventsCheckbox.addEventListener('change', () => {
+      if (this._keyboardEventsCheckbox.checked) {
+        this._listenToKeyPressEvent();
+      } else {
+        this._unlistenToKeyPressEvent();
+      }
+    });
   }
 
   setState({
@@ -607,7 +623,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     alertOnError,
     alertOnExceedQuota,
     quota,
-    usePerformance
+    usePerformance,
+    keyboardEvents
   }) {
     Array.isArray(domains) && (this._domainsTextbox.value = domains.join(','));
     this._traceEachRequestCheckbox.checked = traceEachRequest;
@@ -617,6 +634,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     this._maxResponseSizeTextbox.value = quota.maxResponseSize;
     this._maxDurationTextbox.value = quota.maxDuration;
     this._usePerformanceAPICheckbox.checked = usePerformance;
+    this._keyboardEventsCheckbox.checked = keyboardEvents;
+    keyboardEvents && this._listenToKeyPressEvent();
   }
 
   subscribe(evt, handler) {
@@ -653,7 +672,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   }
 
   cleanup() {
-    document.removeEventListener('keydown', this._handleKeyPress);
+    this._unlistenToKeyPressEvent();
   }
 
   _isPopoverActive() {
@@ -666,6 +685,14 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
 
   _hidePopover() {
     [this._popover, this._overlay].forEach(el => el.classList.remove('active'));
+  }
+
+  _listenToKeyPressEvent() {
+    document.addEventListener('keydown', this._handleKeyPress);
+  }
+
+  _unlistenToKeyPressEvent() {
+    document.removeEventListener('keydown', this._handleKeyPress);
   }
 
   _handleKeyPress(event) {
@@ -687,6 +714,12 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
           this._hidePopover();
         } else {
           this._showPopover();
+        }
+      } else if (event.key === 't') {
+        if (this.style.display === 'none') {
+          this.style.display = 'block';
+        } else {
+          this.style.display = 'none';
         }
       }
 
