@@ -449,7 +449,7 @@ export default class HttpSupervisor {
    * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
    * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
    * @param {Array} [config.watches] Collection of watches.
-   * @param {boolean} [loadConfigFromStore = true] True to load the config from session storage.
+   * @param {boolean} [loadConfigFromStore = true] True to load the config from local storage.
    */
   init(config = {}, loadConfigFromStore = true) {
     if (this._status !== SupervisorStatus.NotReady) {
@@ -802,7 +802,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Get requests matches the query; group and sort the results based on the passed paramaters.
+   * Get requests matches the query; group and sort the results based on the passed parameters.
    * @param {Array<*>} query The search queries.
    * @param {Array<string>} groupArgs The group arguments.
    * @param {Array<string>} sortArgs The sort parameters.
@@ -1094,7 +1094,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Remove the watch.
+   * Remove the watch for the passed id.
    * @param {number} watchId The watch id.
    */
   removeWatch(watchId) {

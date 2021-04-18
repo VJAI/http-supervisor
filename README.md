@@ -153,18 +153,23 @@ httpSupervisor.displayResponseTimeChart()
 
 **quota** - Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`. The default values are 1 kb, 10 kb and 1 second respectively.
 
-**defaultGroupBy** - Returns the array of grouping parameters.
+**groupBy** - Returns the array of grouping parameters.
 
-**defaultSortBy** - Returns the array of sorting parameters.
+**sortBy** - Returns the array of sorting parameters.
 
 **usePerformance** - Leveraged `performance.getEntriesByType` API for calculating more precise duration and resource size. Using this feature 
 will add a new query parameter (hs_rid) in the url.
 
 **monkeyPatchFetch** - `True` to Intercept fetch requests.
 
+**useVisualization** - `True` to use chart.js library for data visualization.
+
+**keyboardEvents** - `True` to use keyboard events for operating control panel.
+
+
 ### `HttpSupervisor` Methods
 
-**init(config)** - Configures the supervisor. You can pass the following parameters to the `config` object: `domains`, `renderUI`, `traceEachRequest`, `alertOnError`, `alertOnExceedQuota`, `quota`, `defaultGroupBy` and `defaultSortBy`.
+**init(config, loadConfigFromStore = true)** - Configures the supervisor. You can pass the following parameters to the `config` object: `domains`, `renderUI`, `traceEachRequest`, `alertOnError`, `alertOnExceedQuota`, `quota`, `groupBy`, `sortBy`, `usePerformance`, `monkeyPatchFetch`, `useVisualization` and `keyboardEvents`. Passing `true` for `loadConfigFromStore` loads the config from local storage.
 
 **start()** - Starts network monitoring.
 
@@ -186,13 +191,17 @@ will add a new query parameter (hs_rid) in the url.
 
 **getRequestsByType(method)** - Filters the requests based on the passed type and returns as collection.
 
+**getRequestsByUrl(url)** - Returns requests initiated for the passed url.
+
+**getRequestsOfStatus(status)** - Returns requests matches the passed status code.
+
 **getFailedRequests()** - Returns the failed requests.
+
+**getRequestsExceededQuota()** - Returns the requests that exceeded the quota.
 
 **getLastFailedRequest()** - Returns the last failed request.
 
 **getLastRequest()** - Returns the last request.
-
-**getRequestsExceededQuota()** - Returns the requests that exceeded the quota.
 
 **getMaxSizeRequest()** - Returns the request that has maximum response size.
 
@@ -202,11 +211,15 @@ will add a new query parameter (hs_rid) in the url.
 
 **sortRequests(...sortArgs)** - Sorts the requests based on the passed arguments.
 
-**arrangeRequests(groupArgs, sortArgs)** - Groups and sorts the requests.
+**groupSortRequests(groupArgs, sortArgs)** - Groups and sorts the requests.
 
 **searchRequests(...query)** - Filters requests based on the passed query.
 
-**getRequestsBy(query, groupArgs, sortArgs)** - Get requests matches the query; group and sort the results based on the passed paramaters.
+**searchRequestsContainsUrl(part)** - Returns requests that contains the passed string.
+
+**searchRequestsOfSizeGreaterThan(size)** - Returns requests that contains response size greater than the passed value.
+
+**searchGroupSortRequests(query, groupArgs, sortArgs)** - Get requests matches the query; group and sort the results based on the passed parameters.
 
 **getTotalPayloadSize()** - Returns the total payload size summing all requests.
 
@@ -222,7 +235,13 @@ will add a new query parameter (hs_rid) in the url.
 
 **printRequestsByType(method)** - Prints the requests matched the passed method (GET, POST etc.).
 
+**printRequestsByUrl(url)** - Prints the requests that's been issued against the passed url.
+
+**printRequestsOfStatus(status)** - Print requests that has the passed response status.
+
 **printFailedRequests()** - Prints failed requests.
+
+**printRequestsExceededQuota()** - Prints requests exceeds quota.
 
 **printLastFailedRequest()** - Prints the last failed request.
 
@@ -238,18 +257,34 @@ will add a new query parameter (hs_rid) in the url.
 
 **sortAndPrintRequests(...sortArgs)** - Sorts and prints the requests.
 
-**arrangeAndPrintRequests(groupArgs, sortArgs)** - Groups, sorts and prints the requests.
+**groupSortAndPrintRequests(groupArgs, sortArgs)** - Groups, sorts and prints the requests.
 
 **searchAndPrintRequests(...query)** - Searches and prints the requests matches the search query.
 
-**searchArrangeAndPrintRequests(query, groupArgs, sortArgs)** - Searches and then groups, sorts and finally prints the collection.
+**printRequestsContainsUrl(part)** - Print requests that has url contains the passed string.
+
+**printRequestsOfSizeGreaterThan(size)** - Print requests that has response size greater than the passed value.
+
+**searchGroupSortAndPrintRequests(query, groupArgs, sortArgs)** - Searches and then groups, sorts and finally prints the collection.
+
+**displayResponseSizeChart()** - Displays the bar chart of responsive size.
+
+**displayResponseTimeChart()** - Displays the bar chart of responsive size.
+
+**displaySizeTimeChart()** - Displays bubble chart for response size and time.
+
+**displaySizeDistribution()** - Displays the response size distribution.
 
 **export()** - Export requests to a CSV file.
 
-**displayResponseSizeChart()** - Displays bar chart that shows the response size of each request.
+**watchOn(...args)** - Alert request that matches the passed arguments.
 
-**displayResponseTimeChart()** - Displays bar chart that shows the response time of each request.
+**removeWatch(watchId)** - Remove the watch for the passed id.
 
-**displaySizeTimeChart** - Displays the bubble chart that shows the size and time of each request in the same chart.
+**clearWatches()** - Clear all watches.
 
-**displaySizeDistribution** - Displays the response size distribution using pie chart.
+**clearStore()** - Removes the stored config from session storage.
+
+## License
+
+MIT
