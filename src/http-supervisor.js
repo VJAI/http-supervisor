@@ -21,11 +21,11 @@ import {
   loadScript,
   formatBytes,
   formatTime,
-  matchCriteria
+  matchCriteria, isJsonResponse, safeParse
 } from './util';
 
 /**
- * Supervises HTTP Network Traffic. Helps to identify duplicate requests, analyze payload and much more.
+ * Supervises HTTP Network Traffic. Helps to identify query, group, sort, export, visualize requests and much more.
  */
 export default class HttpSupervisor {
 
@@ -51,7 +51,7 @@ export default class HttpSupervisor {
   _eventEmitter = null;
 
   /**
-   * Array of domains to monitor.
+   * The domains to monitor.
    * @type {Set}
    * @private
    */
@@ -76,21 +76,21 @@ export default class HttpSupervisor {
   };
 
   /**
-   * Display each completed request.
+   * Displays each completed request.
    * @type {boolean}
    * @private
    */
   _traceEachRequest = false;
 
   /**
-   * Display failed request.
+   * Displays failed request.
    * @type {boolean}
    * @private
    */
   _alertOnError = true;
 
   /**
-   * Display request that exceeded quota.
+   * Displays requests that exceeded quota.
    * @type {boolean}
    * @private
    */
@@ -111,7 +111,7 @@ export default class HttpSupervisor {
   _sortBy = [{ field: 'id', dir: 'asc' }];
 
   /**
-   * Uses performance.getEntriesByType for accurate duration and payload info.
+   * Uses `performance.getEntriesByType` for capturing accurate duration and payload size.
    * @type {boolean}
    * @private
    */
@@ -125,7 +125,7 @@ export default class HttpSupervisor {
   _monkeyPatchFetch = true;
 
   /**
-   * True to use chart.js library for data visualization.
+   * True to use `chart.js` library for data visualization.
    * @type {boolean}
    * @private
    */
@@ -153,7 +153,7 @@ export default class HttpSupervisor {
   _status = SupervisorStatus.NotReady;
 
   /**
-   * Requests count.
+   * Current on-going requests count.
    * @type {number}
    * @private
    */
@@ -174,21 +174,21 @@ export default class HttpSupervisor {
   _watchId = idGenerator(1);
 
   /**
-   * Native fetch method.
+   * Native `fetch` method.
    * @type {function}
    * @private
    */
   _nativeFetch = fetch;
 
   /**
-   * XMLHttpRequest native open method.
+   * XMLHttpRequest native `open` method.
    * @type {function}
    * @private
    */
   _nativeOpen = XMLHttpRequest.prototype.open;
 
   /**
-   * XMLHttpRequest native send method.
+   * XMLHttpRequest native `send` method.
    * @type {function}
    * @private
    */
@@ -254,7 +254,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Setting `true` will print each request.
+   * Setting `true` will print each completed request in console or the passed reporter.
    * @param {boolean} value
    */
   set traceEachRequest(value) {
@@ -263,7 +263,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns `true` if alert on error is set.
+   * Returns `true` if alert on error is enabled.
    * @returns {boolean}
    */
   get alertOnError() {
@@ -280,7 +280,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns `true` if print requests that exceeds quota is set.
+   * Returns `true` if printing requests that exceeds quota is enabled.
    * @returns {boolean}
    */
   get alertOnExceedQuota() {
@@ -348,7 +348,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns true if performance API is enabled for accurate info.
+   * Returns `true` if performance API is enabled for capturing accurate info.
    * @returns {boolean}
    */
   get usePerformance() {
@@ -365,7 +365,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns if intercepting fetch API is enabled.
+   * Returns `true` if capturing fetch API is enabled.
    * @returns {boolean}
    */
   get monkeyPatchFetch() {
@@ -382,7 +382,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns true if visualization is enabled.
+   * Returns `true` if visualization is enabled.
    * @returns {boolean}
    */
   get useVisualization() {
@@ -390,7 +390,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns the current calls count.
+   * Returns the current on-going calls count.
    * @returns {number}
    */
   get onGoingCallsCount() {
@@ -399,8 +399,8 @@ export default class HttpSupervisor {
 
   /**
    * Constructor.
-   * @param {object} widget
-   * @param {object} reporter
+   * @param {object} widget The control panel.
+   * @param {object} reporter The reporter that's used for displaying requests info and charts.
    */
   constructor(widget, reporter) {
     this._widget = widget || FAKE;
@@ -422,19 +422,14 @@ export default class HttpSupervisor {
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
    * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
-   * @package {boolean} [config.loadConfigFromStore] True to load the config from session storage.
+   * @package {boolean} [loadConfigFromStore = true] True to load the config from session storage.
    */
   init(config = {}, loadConfigFromStore = true) {
     if (this._status !== SupervisorStatus.NotReady) {
       return;
     }
 
-    if (loadConfigFromStore && sessionStorage.getItem(STORAGE_KEY)) {
-      config = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
-      const watches = config && config.watches ? new Map(JSON.parse(config.watches)) : null;
-      delete config.watches;
-      watches && (this._watches = watches);
-    }
+    config = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : config;
 
     const {
       domains,
@@ -447,7 +442,8 @@ export default class HttpSupervisor {
       sortBy,
       usePerformance,
       monkeyPatchFetch,
-      useVisualization
+      useVisualization,
+      watches
     } = config || {};
 
     Array.isArray(domains) && (this._domains = new Set(domains));
@@ -461,7 +457,9 @@ export default class HttpSupervisor {
     typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
     typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
     typeof useVisualization === 'boolean' && (this._useVisualization = useVisualization);
+    Array.isArray(watches) && (this._watches = new Set(this._watches));
 
+    // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
       if (this._traceEachRequest) {
         this._reporter.report(request);
@@ -483,9 +481,11 @@ export default class HttpSupervisor {
       }
     });
 
+    // Update the configuration to the storage.
     this._updateStorage();
 
-    const renderAndStart = () => {
+    // Render the widget, initialize the reporter and start monitoring.
+    const start = () => {
       this._render();
       this._reporter.init(this);
       this._monkeyPatch();
@@ -494,12 +494,13 @@ export default class HttpSupervisor {
       this._triggerEvent(SupervisorEvents.READY);
     };
 
+    // If visualization is enabled load the `chart.js` library and start.
     if (this._useVisualization) {
-      loadScript(CHARTJS_LIB_PATH, () => renderAndStart());
+      loadScript(CHARTJS_LIB_PATH, () => start());
       return;
     }
 
-    renderAndStart();
+    start();
   }
 
   /**
@@ -568,8 +569,8 @@ export default class HttpSupervisor {
 
   /**
    * Subscribes to the passed event.
-   * @param {string} eventName
-   * @param {function} handler
+   * @param {string} eventName The event name.
+   * @param {function} handler The event handler.
    */
   on(eventName, handler) {
     this._eventEmitter.on(eventName, handler);
@@ -577,8 +578,8 @@ export default class HttpSupervisor {
 
   /**
    * Un-subscribes from the passed event.
-   * @param {string} eventName
-   * @param {function} handler
+   * @param {string} eventName The event name.
+   * @param {function} handler The event handler.
    */
   off(eventName, handler) {
     this._eventEmitter.off(eventName, handler);
@@ -587,7 +588,7 @@ export default class HttpSupervisor {
   /**
    * Retires the supervisor.
    */
-  retire() {
+  retire(clearStore = false) {
     this.stop();
     this._undoMonkeyPatch();
     this._widget.destroy();
@@ -597,6 +598,7 @@ export default class HttpSupervisor {
     this._triggerEvent(SupervisorEvents.RETIRE);
     this._eventEmitter.destroy();
     this._eventEmitter = null;
+    clearStore && this.clearStore();
     this._status = SupervisorStatus.Retired;
   }
 
@@ -617,8 +619,8 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns request belongs to the id.
-   * @param id
+   * Returns request of the id.
+   * @param {number} id The request id.
    * @returns {HttpRequestInfo}
    */
   getRequestById(id) {
@@ -627,7 +629,7 @@ export default class HttpSupervisor {
 
   /**
    * Filters the requests based on the passed type and returns as collection.
-   * @param method
+   * @param {string} method The request method (GET / POST etc.)
    * @returns {Collection}
    */
   getRequestsByType(method) {
@@ -635,17 +637,17 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns requests fired for the passed url.
-   * @param url
+   * Returns requests initiated for the passed url.
+   * @param {string} url The absolute or relative url.
    * @returns {Collection}
    */
-  getRequestsMatchingUrl(url) {
+  getRequestsByUrl(url) {
     return this.requests().search({ field: isAbsolute(url) ? 'url' : 'path', operator: '=', value: url });
   }
 
   /**
    * Returns requests matches the passed status code.
-   * @param status
+   * @param {number} status The status code.
    * @returns {Collection}
    */
   getRequestsOfStatus(status) {
@@ -658,6 +660,14 @@ export default class HttpSupervisor {
    */
   getFailedRequests() {
     return this.requests().search({ field: 'error', operator: '=', value: true });
+  }
+
+  /**
+   * Returns the requests that exceeded the quota.
+   * @returns {Collection}
+   */
+  getRequestsExceededQuota() {
+    return this.requests().search({ field: 'exceedsQuota', operator: '=', value: true });
   }
 
   /**
@@ -677,14 +687,6 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns the requests that exceeded the quota.
-   * @returns {Collection}
-   */
-  getRequestsExceededQuota() {
-    return this.requests().search({ field: 'exceedsQuota', operator: '=', value: true });
-  }
-
-  /**
    * Returns the request that has maximum response size.
    * @returns {HttpRequestInfo}
    */
@@ -701,8 +703,8 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Groups the requests based on the passed arguments.
-   * @param {...string} groupArgs
+   * Groups the requests based on the passed fields.
+   * @param {...string} groupArgs The group fields.
    * @returns {Collection}
    */
   groupRequests(...groupArgs) {
@@ -711,7 +713,7 @@ export default class HttpSupervisor {
 
   /**
    * Sorts the requests based on the passed arguments.
-   * @param {...string} sortArgs
+   * @param {...*} sortArgs The sort parameters.
    * @returns {Collection}
    */
   sortRequests(...sortArgs) {
@@ -720,17 +722,17 @@ export default class HttpSupervisor {
 
   /**
    * Groups and sorts the requests.
-   * @param {Array<string>} groupArgs
-   * @param {Array<string>} sortArgs
+   * @param {Array<string>} groupArgs Array of fields.
+   * @param {Array<*>} sortArgs Array of sort parameters.
    * @returns {Collection}
    */
-  arrangeRequests(groupArgs, sortArgs) {
+  groupSortRequests(groupArgs, sortArgs) {
     return this.groupRequests(...groupArgs).sortBy(...sortArgs);
   }
 
   /**
    * Filters requests based on the passed query.
-   * @param {string} query
+   * @param {...*} query The search query.
    * @returns {Collection}
    */
   searchRequests(...query) {
@@ -754,7 +756,7 @@ export default class HttpSupervisor {
 
   /**
    * Returns requests that contains the passed string.
-   * @param part
+   * @param {string} part The url part.
    * @returns {Collection}
    */
   searchRequestsContainsUrl(part) {
@@ -763,7 +765,7 @@ export default class HttpSupervisor {
 
   /**
    * Returns requests that contains response size greater than the passed value.
-   * @param size
+   * @param {number} size The size in bytes.
    * @returns {Collection}
    */
   searchRequestsOfSizeGreaterThan(size) {
@@ -772,12 +774,12 @@ export default class HttpSupervisor {
 
   /**
    * Get requests matches the query; group and sort the results based on the passed paramaters.
-   * @param {*} query
-   * @param {Array<string>} groupArgs
-   * @param {Array<string>} sortArgs
+   * @param {Array<*>} query The search queries.
+   * @param {Array<string>} groupArgs The group arguments.
+   * @param {Array<string>} sortArgs The sort parameters.
    * @returns {Collection}
    */
-  getRequestsBy(query, groupArgs, sortArgs) {
+  searchGroupSortRequests(query, groupArgs, sortArgs) {
     return this.searchRequests(query).groupBy(...groupArgs).sortBy(...sortArgs);
   }
 
@@ -838,15 +840,15 @@ export default class HttpSupervisor {
 
   /**
    * Prints the requests that's been issued against the passed url.
-   * @param url
+   * @param {string} url The absolute or relative url.
    */
   printRequestsByUrl(url) {
-    this._reporter.report(this.getRequestsMatchingUrl(url));
+    this._reporter.report(this.getRequestsByUrl(url));
   }
 
   /**
    * Print requests that has the passed response status.
-   * @param status
+   * @param {number} status The status code.
    */
   printRequestsOfStatus(status) {
     this._reporter.report(this.getRequestsOfStatus(status));
@@ -857,6 +859,13 @@ export default class HttpSupervisor {
    */
   printFailedRequests() {
     this._reporter.report(this.getFailedRequests());
+  }
+
+  /**
+   * Prints requests exceeds quota.
+   */
+  printRequestsExceededQuota() {
+    this._reporter.report(this.getRequestsExceededQuota());
   }
 
   /**
@@ -871,13 +880,6 @@ export default class HttpSupervisor {
    */
   printLastRequest() {
     this._reporter.report(this.getLastRequest());
-  }
-
-  /**
-   * Prints requests exceeds quota.
-   */
-  printRequestsExceededQuota() {
-    this._reporter.report(this.getRequestsExceededQuota());
   }
 
   /**
@@ -896,7 +898,7 @@ export default class HttpSupervisor {
 
   /**
    * Groups and prints the requests.
-   * @param {...string} groupArgs
+   * @param {...string} groupArgs The group fields.
    */
   groupAndPrintRequests(...groupArgs) {
     this._reporter.report(this.groupRequests(...groupArgs));
@@ -904,7 +906,7 @@ export default class HttpSupervisor {
 
   /**
    * Sorts and prints the requests.
-   * @param {...string} sortArgs
+   * @param {...string} sortArgs The sort parameters.
    */
   sortAndPrintRequests(...sortArgs) {
     this._reporter.report(this.sortRequests(...sortArgs));
@@ -912,16 +914,16 @@ export default class HttpSupervisor {
 
   /**
    * Groups, sorts and prints the requests.
-   * @param {Array<string>} groupArgs
-   * @param {Array<string>} sortArgs
+   * @param {Array<string>} groupArgs Array of fields.
+   * @param {Array<*>} sortArgs Array of sort parameters.
    */
-  arrangeAndPrintRequests(groupArgs, sortArgs) {
-    this._reporter.report(this.arrangeRequests(groupArgs, sortArgs));
+  groupSortAndPrintRequests(groupArgs, sortArgs) {
+    this._reporter.report(this.groupSortRequests(groupArgs, sortArgs));
   }
 
   /**
    * Searches and prints the requests matches the search query.
-   * @param {*} query
+   * @param {...*} query The search queries.
    */
   searchAndPrintRequests(...query) {
     this._reporter.report(this.searchRequests(...query));
@@ -929,7 +931,7 @@ export default class HttpSupervisor {
 
   /**
    * Print requests that has url contains the passed string.
-   * @param part
+   * @param part The url part.
    */
   printRequestsContainsUrl(part) {
     this._reporter.report(this.searchRequestsContainsUrl(part));
@@ -937,7 +939,7 @@ export default class HttpSupervisor {
 
   /**
    * Print requests that has response size greater than the passed value.
-   * @param size
+   * @param {number} size The size in bytes.
    */
   printRequestsOfSizeGreaterThan(size) {
     this._reporter.report(this.searchRequestsOfSizeGreaterThan(size));
@@ -945,12 +947,12 @@ export default class HttpSupervisor {
 
   /**
    * Searches and then groups, sorts and finally prints the collection.
-   * @param {*} query
-   * @param {Array<string>} groupArgs
-   * @param {Array<string>} sortArgs
+   * @param {Array<*>} query The search queries.
+   * @param {Array<string>} groupArgs The group arguments.
+   * @param {Array<string>} sortArgs The sort parameters.
    */
-  searchArrangeAndPrintRequests(query, groupArgs, sortArgs) {
-    this._reporter.report(this.getRequestsBy(...query, ...groupArgs, ...sortArgs));
+  searchGroupSortAndPrintRequests(query, groupArgs, sortArgs) {
+    this._reporter.report(this.searchGroupSortRequests(...query, ...groupArgs, ...sortArgs));
   }
 
   /**
@@ -986,7 +988,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Displays buuble chart for response size and time.
+   * Displays bubble chart for response size and time.
    */
   displaySizeTimeChart() {
     const data = [...this._requests].map(r => ({
@@ -1052,6 +1054,8 @@ export default class HttpSupervisor {
 
   /**
    * Alert request that matches the passed arguments.
+   * @param {...*} args The watch arguments.
+   * @returns {number}
    */
   watchOn(...args) {
     const watchId = this._watchId();
@@ -1062,6 +1066,7 @@ export default class HttpSupervisor {
 
   /**
    * Remove the watch.
+   * @param {number} watchId The watch id.
    */
   removeWatch(watchId) {
     this._watches.remove(watchId);
@@ -1076,11 +1081,55 @@ export default class HttpSupervisor {
     this._updateStorage();
   }
 
+  fireRequest(requestId) {
+
+  }
+
+  ignoreOn() {
+
+  }
+
+  removeIgnore() {
+
+  }
+
+  removeIgnores() {
+
+  }
+
+  interceptOn() {
+
+  }
+
+  removeIntercept() {
+
+  }
+
+  removeAllIntercepts() {
+
+  }
+
+  newSession() {
+
+  }
+
+  removeSession(sessionId) {
+
+  }
+
+  removeAllSessions() {
+
+  }
+
+  replaySession(sessionId) {
+
+  }
+
   /**
    * Removes the stored config from session storage.
    */
   clearStore() {
-    sessionStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE_KEY);
   }
 
   /**
@@ -1139,16 +1188,7 @@ export default class HttpSupervisor {
     let [url, options = {}] = [...arguments],
       { method = 'GET', body } = options;
 
-    let payload;
-
-    if (body) {
-      try {
-        payload = JSON.parse(body);
-      } catch {
-        payload = body;
-      }
-    }
-
+    const payload = safeParse(body);
     const requestInfo = new HttpRequestInfo(id, url, method, payload);
     requestInfo.initiatorType = InitiatorType.FETCH;
     requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
@@ -1159,10 +1199,11 @@ export default class HttpSupervisor {
 
       let response;
 
+      // Make the fetch call and capture the response info.
       this._nativeFetch.call(window, this._isPerformanceSupported() ? this._appendRequestIdToUrl(url, id) : url, options)
         .then(r => {
           const contentType = r.headers.get('content-type'),
-            isJsonResponse = contentType.toLowerCase().startsWith('application/json');
+            isJsonResponse = isJsonResponse(contentType);
 
           response = r.clone();
           return isJsonResponse ? r.json() : null;
@@ -1223,15 +1264,7 @@ export default class HttpSupervisor {
       [xhr, payload] = parameters,
       url = this._createUrl(xhr[XHR_METADATA_KEY].url);
 
-    let payloadJson;
-
-    try {
-      payloadJson = JSON.parse(payload);
-    } catch {
-      payloadJson = payload;
-    }
-
-    xhr[XHR_METADATA_KEY].payload = payloadJson;
+    xhr[XHR_METADATA_KEY].payload = safeParse(payload);
     parameters.shift();
 
     if (this._domains !== null && !this._domains.has(url.origin)) {
@@ -1246,6 +1279,7 @@ export default class HttpSupervisor {
     const requestInfo = this._createRequest(xhr);
     this._requests.add(requestInfo);
 
+    // Listen to `onreadystatechange` event to capture the response info.
     xhr.onreadystatechange = () => {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         return;
@@ -1253,19 +1287,7 @@ export default class HttpSupervisor {
 
       this._decrement();
       requestInfo.responseStatus = xhr.status;
-
-      const contentType = xhr.getResponseHeader('Content-Type');
-
-      if (contentType.toLowerCase().startsWith('application/json')) {
-        try {
-          requestInfo.response = JSON.parse(xhr.response);
-        } catch {
-          requestInfo.response = xhr.response;
-        }
-      } else {
-        requestInfo.response = xhr.response;
-      }
-
+      requestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
       this._fillParametersAndFireEvents(requestInfo, xhr);
     };
 
@@ -1275,13 +1297,12 @@ export default class HttpSupervisor {
 
   /**
    * Fill duration and size parameters from response.
-   * @param requestInfo
-   * @param xhrOrResponse
    * @private
    */
   _fillParametersAndFireEvents(requestInfo, xhrOrResponse) {
     let performanceEntry;
 
+    // If performance API is well supported read the duration and size leveraging it.
     if (this._isPerformanceSupported()) {
       const urlName = this._appendRequestIdToUrl(requestInfo.url, requestInfo.id);
       performanceEntry = performance.getEntriesByType('resource').find(e => e.name === urlName);
@@ -1349,7 +1370,6 @@ export default class HttpSupervisor {
 
   /**
    * Returns true if `performance.getEntriesByType` is supported.
-   * @returns {boolean}
    * @private
    */
   _isPerformanceSupported() {
@@ -1358,9 +1378,6 @@ export default class HttpSupervisor {
 
   /**
    * Append request id to url.
-   * @param url
-   * @param id
-   * @returns {string}
    * @private
    */
   _appendRequestIdToUrl(url, id) {
@@ -1387,8 +1404,6 @@ export default class HttpSupervisor {
 
   /**
    * Creates URL object.
-   * @param url
-   * @returns {URL}
    * @private
    */
   _createUrl(url) {
@@ -1399,7 +1414,7 @@ export default class HttpSupervisor {
    * Stores the configuration in local storage.
    */
   _updateStorage() {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
       traceEachRequest: this._traceEachRequest,
       alertOnError: this._alertOnError,
       alertOnExceedQuota: this._alertOnExceedQuota,

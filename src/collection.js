@@ -1,7 +1,7 @@
 import { matchCriteria } from './util';
 
 /**
- * Represents a collection of records that can be groupable, sortable etc.
+ * Represents a collection of records that can be group-able, sortable and searchable.
  */
 export default class Collection {
 
@@ -63,7 +63,7 @@ export default class Collection {
 
   /**
    * Search query;
-   * @type {object}
+   * @type {*}
    * @private
    */
   _query = null;
@@ -94,7 +94,7 @@ export default class Collection {
 
   /**
    * Returns the items.
-   * @returns {Array<object>}
+   * @returns {Array<*>}
    */
   get items() {
     return this.hasItems ? [...this._items] : null;
@@ -142,7 +142,7 @@ export default class Collection {
 
   /**
    * Returns the first item from the collection.
-   * @returns {object}
+   * @returns {*}
    */
   get first() {
     return this.hasItems ? this._items[0] : null;
@@ -150,7 +150,7 @@ export default class Collection {
 
   /**
    * Returns the last item from the collection.
-   * @returns {object}
+   * @returns {*}
    */
   get last() {
     return this.hasItems ? this._items[this.count - 1] : null;

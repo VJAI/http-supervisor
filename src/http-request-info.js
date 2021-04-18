@@ -43,6 +43,11 @@ export default class HttpRequestInfo {
   payloadSize = 0;
 
   /**
+   * Request Headers.
+   */
+  requestHeaders = new Map();
+
+  /**
    * The request start time.
    * @type {number}
    */
@@ -77,6 +82,11 @@ export default class HttpRequestInfo {
    * @type {number}
    */
   responseSize = 0;
+
+  /**
+   * Response headers.
+   */
+  responseHeaders = new Map();
 
   /**
    * True if the request error-ed out.

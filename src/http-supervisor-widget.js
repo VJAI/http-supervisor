@@ -8,20 +8,24 @@ const template = document.createElement('template');
 template.innerHTML = `
 <style>
   :host {
-    --bg-color: #333;
     --color: #eee;
+    --bg-color: #333;
     --hover-color: #5ab7fa;
     --disabled-color: #ccc;
     --border-color: #666;
+    --font-size: 12px;
+    --index: 20000;
+    --popover-width: 350px;
+    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
     color: var(--color);
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   }
 
   .http-supervisor-container {
     position: fixed;
-    z-index: 20000;
     top: 0;
     right: calc(50% - 91px);
+    z-index: var(--index);
     display: flex;
     justify-content: center;
     align-items:center;
@@ -29,10 +33,10 @@ template.innerHTML = `
     border: solid 1px var(--border-color);
     border-bottom-left-radius: 5px;
     border-bottom-right-radius: 5px;
-    font-size: 12px;
+    font-size: var(--font-size);
     box-sizing: border-box;
     color: var(--font-color);
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    box-shadow: var(--box-shadow);
   }
 
    button, button:active, button:focus, button:hover, span {
@@ -68,20 +72,30 @@ template.innerHTML = `
     border-right: solid 1px var(--border-color);
   }
 
-  .popover {
+  .popover-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    content: ' ';
+    display: none;
+  }
+
+  .popover-content {
     position: fixed;
     top: 38px;
-    width: 350px;
+    width: var(--popover-width);
     background-color: var(--bg-color);
     right: calc(50% - 216px);
     border-radius: 6px;
     padding: 20px;
-    font-size: 12px;
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    font-size: var(--font-size);
+    box-shadow: var(--box-shadow);
     display: none;
   }
 
-  .popover .popover-close {
+  .popover-content .popover-close {
     position: absolute;
     right: 8px;
     top: 8px;
@@ -91,7 +105,7 @@ template.innerHTML = `
     display: block;
   }
 
-  .popover:before {
+  .popover-content:before {
     position: absolute;
     z-index: -1;
     content: "";
@@ -102,26 +116,26 @@ template.innerHTML = `
     border-color: transparent transparent var(--bg-color) transparent;
   }
 
-  .popover input[type="number"], .popover input[type="text"] {
+  .popover-content input[type="number"], .popover-content input[type="text"] {
     background-color: transparent;
     color: var(--color);
     outline: none;
     border: none;
     border-bottom: solid 1px var(--border-color);
-    font-size: 12px;
+    font-size: var(--font-size);
     width: 60px;
   }
 
-  .popover form {
+  .popover-content form {
     margin-bottom: 0;
   }
 
-  .popover form div {
+  .popover-content form div {
     display: flex;
     align-items: center;
   }
 
-  .popover h4 {
+  .popover-content h4 {
     margin: 0;
     margin-bottom: 8px;
     color: var(--disabled-color);
@@ -130,7 +144,7 @@ template.innerHTML = `
     letter-spacing: 1px;
   }
 
-  .popover fieldset {
+  .popover-content fieldset {
     display: grid;
     grid-template-columns: 50% 50%;
     grid-column-gap: 5px;
@@ -140,32 +154,32 @@ template.innerHTML = `
     padding: 6px 12px;
   }
 
-  .popover .first div label {
+  .popover-content .first div label {
     width: 140px;
   }
 
-  .popover .second div label {
+  .popover-content .second div label {
     width: 80px;
   }
 
-  .popover .third {
+  .popover-content .third {
     display: flex;
     border: none;
     padding: 0;
   }
 
-  .popover .third button {
+  .popover-content .third button {
     border: solid 1px var(--border-color);
   }
 
-  .popover .fourth {
+  .popover-content .fourth {
     border: none;
     padding: 0;
     display: none;
     margin-bottom: 0;
   }
 
-  .popover .fourth.active {
+  .popover-content .fourth.active {
     display: block;
   }
 
@@ -222,91 +236,94 @@ template.innerHTML = `
    </button>
 </div>
 <div class="popover">
-  <a href="#" class="popover-close">
-    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#ccc" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
-    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
-  </svg>
-  </a>
-  <form>
-    <h4>Options</h4>
-    <fieldset class="first">
-      <div>
-        <label>Trace Request:</label>
-        <input type="checkbox" />
-      </div>
-      <div>
-        <label>Alert Error:</label>
-        <input type="checkbox" />
-      </div>
-      <div>
-        <label>Alert Quota Exceed:</label>
-        <input type="checkbox" />
-      </div>
-      <div>
-        <label>Use Performance:</label>
-        <input type="checkbox" />
-      </div>
-    </fieldset>
+  <div class="popover-overlay"></div>
+  <div class="popover-content">
+    <a href="#" class="popover-close">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#ccc" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
+      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+    </svg>
+    </a>
+    <form>
+      <h4>Options</h4>
+      <fieldset class="first">
+        <div>
+          <label>Trace Request:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
+          <label>Alert Error:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
+          <label>Alert Quota Exceed:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
+          <label>Use Performance:</label>
+          <input type="checkbox" />
+        </div>
+      </fieldset>
 
-    <h4>Quota</h4>
-    <fieldset class="second">
-      <div>
-        <label>Payload:</label>
-        <input type="number" min="1" />
-      </div>
-      <div>
-        <label>Response:</label>
-        <input type="number" min="1" />
-      </div>
-      <div>
-        <label>Duration:</label>
-        <input type="number" min="1" />
-      </div>
-    </fieldset>
+      <h4>Quota</h4>
+      <fieldset class="second">
+        <div>
+          <label>Payload:</label>
+          <input type="number" min="1" />
+        </div>
+        <div>
+          <label>Response:</label>
+          <input type="number" min="1" />
+        </div>
+        <div>
+          <label>Duration:</label>
+          <input type="number" min="1" />
+        </div>
+      </fieldset>
 
-    <h4>Visualization</h4>
-    <fieldset class="third">
-      <button title="Response Size Chart">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-            <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-          </svg>
-      </button>
-      <button title="Response Duration Chart">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-            <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-          </svg>
-      </button>
-      <button title="Response Size And Duration Chart">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-            <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-          </svg>
-      </button>
-      <button title="Response Size Distribution">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pie-chart-fill" viewBox="0 0 16 16">
-            <path d="M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z"/>
-          </svg>
-      </button>
-    </fieldset>
+      <h4>Visualization</h4>
+      <fieldset class="third">
+        <button title="Response Size Chart">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+            </svg>
+        </button>
+        <button title="Response Duration Chart">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+            </svg>
+        </button>
+        <button title="Response Size And Duration Chart">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+            </svg>
+        </button>
+        <button title="Response Size Distribution">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pie-chart-fill" viewBox="0 0 16 16">
+              <path d="M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z"/>
+            </svg>
+        </button>
+      </fieldset>
 
-    <div class="advanced-container">
-      <h4>Advanced</h4>
-      <svg class="expand" style="cursor:pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-down" viewBox="0 0 16 16">
-        <path fill-rule="evenodd" d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-        <path fill-rule="evenodd" d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-      </svg>
-      <svg class="collapse" style="cursor:pointer; display: none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-up" viewBox="0 0 16 16">
-        <path fill-rule="evenodd" d="M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z"/>
-        <path fill-rule="evenodd" d="M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
-      </svg>
-    </div>
+      <div class="advanced-container">
+        <h4>Advanced</h4>
+        <svg style="cursor:pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-down expand" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+          <path fill-rule="evenodd" d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <svg style="cursor:pointer; display: none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-up collapse" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z"/>
+          <path fill-rule="evenodd" d="M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+        </svg>
+      </div>
 
-    <fieldset class="fourth">
-      <div>
-         <label>Domains:</label>
-         <input type="text" style="flex-grow: 1" />
-       </div>
-    </fieldset>
-  </form>
+      <fieldset class="fourth">
+        <div>
+          <label>Domains:</label>
+          <input type="text" />
+        </div>
+      </fieldset>
+    </form>
+  </div>
 </div>
 `;
 
@@ -316,7 +333,7 @@ template.innerHTML = `
 export default class HttpSupervisorWidget {
 
   /**
-   * The web component.
+   * The control panel web component.
    */
   _el = null;
 
@@ -328,7 +345,17 @@ export default class HttpSupervisorWidget {
   _httpSupervisor = null;
 
   /**
-   * Initialize things.
+   * ctor.
+   */
+  constructor() {
+    this._onStart = this._onStart.bind(this);
+    this._onStop = this._onStop.bind(this);
+    this._updateTotalRequestsCount = this._updateTotalRequestsCount.bind(this);
+    this._updateLabelsCount = this._updateLabelsCount.bind(this);
+  }
+
+  /**
+   * Initialize stuff.
    * @param httpSupervisor
    */
   init(httpSupervisor) {
@@ -343,8 +370,7 @@ export default class HttpSupervisorWidget {
       return;
     }
 
-    this._el = document.createElement('http-supervisor-widget');
-    document.body.appendChild(this._el);
+    document.body.appendChild(this._el = document.createElement('http-supervisor-widget'));
 
     const {
       domains,
@@ -364,13 +390,15 @@ export default class HttpSupervisorWidget {
       usePerformance
     });
 
-    this._httpSupervisor.on(SupervisorEvents.START, this._onStart = this._onStart.bind(this));
-    this._httpSupervisor.on(SupervisorEvents.STOP, this._onStop = this._onStop.bind(this));
-    this._httpSupervisor.on(SupervisorEvents.CLEAR, this._updateTotalRequestsCount = this._updateTotalRequestsCount.bind(this));
-    this._httpSupervisor.on(SupervisorEvents.REQUEST_START, this._updateLabelsCount = this._updateLabelsCount.bind(this));
+    // Listen to supervisor events.
+    this._httpSupervisor.on(SupervisorEvents.START, this._onStart);
+    this._httpSupervisor.on(SupervisorEvents.STOP, this._onStop);
+    this._httpSupervisor.on(SupervisorEvents.CLEAR, this._updateTotalRequestsCount);
+    this._httpSupervisor.on(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
     this._httpSupervisor.on(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
     this._httpSupervisor.on(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
 
+    // Listen to web component events.
     this._el.subscribe('start', () => this._httpSupervisor.start());
     this._el.subscribe('stop', () => this._httpSupervisor.stop());
     this._el.subscribe('clear', () => this._httpSupervisor.clear());
@@ -405,15 +433,6 @@ export default class HttpSupervisorWidget {
   }
 
   /**
-   * Subscribes to the passed event.
-   * @param {string} eventName
-   * @param {function} handler
-   */
-  subscribe(eventName, handler) {
-    this._el.subscribe(eventName, handler);
-  }
-
-  /**
    * Destroys the element.
    */
   destroy() {
@@ -424,6 +443,7 @@ export default class HttpSupervisorWidget {
     this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
     this._httpSupervisor.off(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
     this._httpSupervisor = null;
+    this._el.cleanup();
     this._el.remove();
     this._el = null;
   }
@@ -444,7 +464,6 @@ export default class HttpSupervisorWidget {
 
   /**
    * Update the calls counter label.
-   * @param count
    */
   _updateLabelsCount() {
     this._el.updateCalls(this._httpSupervisor.onGoingCallsCount);
@@ -452,7 +471,6 @@ export default class HttpSupervisorWidget {
 
   /**
    * Update the total requests count.
-   * @param count
    */
   _updateTotalRequestsCount() {
     const count = this._httpSupervisor.totalRequests;
@@ -470,6 +488,7 @@ export default class HttpSupervisorWidget {
  */
 class HtmlSupervisorWidgetElement extends HTMLElement {
 
+  // Panel Controls
   _startButton = null;
   _stopButton = null;
   _clearButton = null;
@@ -478,7 +497,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _moreButton = null;
   _callsCountLabel = null;
 
+  // Popover Controls
   _popover = null;
+  _popoverClose = null;
+  _overlay = null;
   _traceEachRequestCheckbox = null;
   _alertOnErrorCheckbox = null;
   _alertOnQuotaExceedCheckbox = null;
@@ -491,18 +513,17 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _responseSizeTimeChartButton = null;
   _responseSizeDistributionChartButton = null;
   _domainsTextbox = null;
-
   _expandButton = null;
   _collapisbleFieldSet = null;
-
-  _popoverClose = null;
 
   constructor() {
     super();
 
+    this._handleKeyPress = this._handleKeyPress.bind(this);
+
     const shadowRoot = this.attachShadow({ mode: 'closed' });
     shadowRoot.appendChild(template.content.cloneNode(true));
-    this._popover = shadowRoot.querySelector('.popover');
+    this._popover = shadowRoot.querySelector('.popover-content');
 
     [
       this._startButton,
@@ -511,10 +532,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._printButton,
       this._exportButton,
       this._callsCountLabel,
-      this._moreButton
-    ] = Array.from(shadowRoot.querySelector('.http-supervisor-container').children);
-
-    [
+      this._moreButton,
       this._traceEachRequestCheckbox,
       this._alertOnErrorCheckbox,
       this._alertOnQuotaExceedCheckbox,
@@ -527,7 +545,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._responseSizeTimeChartButton,
       this._responseSizeDistributionChartButton,
       this._domainsTextbox
-    ] = Array.from(this._popover.querySelectorAll('input,button'));
+    ] = [
+      ...Array.from(shadowRoot.querySelector('.http-supervisor-container').children),
+      ...Array.from(this._popover.querySelectorAll('input,button'))
+    ];
 
     this._eventsAndControls = {
       start: this._startButton,
@@ -553,14 +574,9 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     this._collapseButton = shadowRoot.querySelector('.collapse');
     this._collapisbleFieldSet = shadowRoot.querySelector('.fourth');
     this._popoverClose = shadowRoot.querySelector('.popover-close');
+    this._overlay = shadowRoot.querySelector('.popover-overlay');
 
-    this._moreButton.addEventListener('click', () => {
-      if (this._popover.classList.contains('active')) {
-        this._hidePopover();
-      } else {
-        this._showPopover();
-      }
-    });
+    this._moreButton.addEventListener('click', () => this._isPopoverActive() ? this._hidePopover() : this._showPopover());
 
     this._expandButton.addEventListener('click', () => {
       this._collapisbleFieldSet.classList.add('active');
@@ -579,6 +595,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       e.stopPropagation();
       this._hidePopover();
     });
+
+    this._overlay.addEventListener('click', () => this._hidePopover());
+
+    document.addEventListener('keydown', this._handleKeyPress);
   }
 
   setState({
@@ -632,12 +652,50 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     [this._clearButton, this._printButton, this._exportButton].forEach(b => b.disabled = false);
   }
 
+  cleanup() {
+    document.removeEventListener('keydown', this._handleKeyPress);
+  }
+
+  _isPopoverActive() {
+    return this._popover.classList.contains('active');
+  }
+
   _showPopover() {
-    this._popover.classList.add('active');
+    [this._popover, this._overlay].forEach(el => el.classList.add('active'));
   }
 
   _hidePopover() {
-    this._popover.classList.remove('active');
+    [this._popover, this._overlay].forEach(el => el.classList.remove('active'));
+  }
+
+  _handleKeyPress(event) {
+    if (event.ctrlKey) {
+      if (event.key === 's') {
+        if (this._startButton.style.display === 'none') {
+          this._stopButton.click();
+        } else {
+          this._startButton.click();
+        }
+      } else if (event.key === 'c') {
+        this._clearButton.click();
+      } else if (event.key === 'p') {
+        this._printButton.click();
+      } else if (event.key === 'e') {
+        this._exportButton.click();
+      } else if (event.key === 'm') {
+        if (this._isPopoverActive()) {
+          this._hidePopover();
+        } else {
+          this._showPopover();
+        }
+      }
+
+      return;
+    }
+
+    if (event.key.toUpperCase() === 'ESCAPE' || event.key.toUpperCase() === 'ESC') {
+      this._hidePopover();
+    }
   }
 }
 

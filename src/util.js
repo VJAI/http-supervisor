@@ -81,6 +81,11 @@ export function isAbsolute(url) {
   return reg.test(url);
 }
 
+/**
+ * Load script dynamically in a web page.
+ * @param src
+ * @param onload
+ */
 export function loadScript(src, onload) {
   const script = document.createElement('script');
   script.src = src;
@@ -88,6 +93,10 @@ export function loadScript(src, onload) {
   document.head.appendChild(script);
 }
 
+/**
+ * Returns random color.
+ * @return {string}
+ */
 export function dynamicColors() {
   const r = Math.floor(Math.random() * 255);
   const g = Math.floor(Math.random() * 255);
@@ -95,6 +104,11 @@ export function dynamicColors() {
   return "rgba(" + r + "," + g + "," + b + ", 0.5)";
 }
 
+/**
+ * Create array of random color.
+ * @param a
+ * @return {Array}
+ */
 export function poolColors(a) {
   const pool = [];
 
@@ -105,6 +119,12 @@ export function poolColors(a) {
   return pool;
 }
 
+/**
+ * Returns `true` if the object matches the passed criteria.
+ * @param criteria
+ * @param object
+ * @return {boolean}
+ */
 export function matchCriteria(criteria, object) {
   const results = [];
 
@@ -135,4 +155,28 @@ export function matchCriteria(criteria, object) {
   });
 
   return results.filter(r => !r).length === 0;
+}
+
+/**
+ * Returns `true` if the content type is json.
+ * @param contentType
+ * @return {boolean}
+ */
+export function isJsonResponse(contentType) {
+    return contentType.toLowerCase().startsWith('application/json');
+}
+
+/**
+ * Safely parses string to JSON.
+ * @param string
+ * @return {any}
+ */
+export function safeParse(string) {
+  let json;
+  try {
+    json = JSON.parse(string);
+  } catch {
+    json = string;
+  }
+  return json;
 }
