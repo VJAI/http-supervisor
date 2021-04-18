@@ -92,6 +92,7 @@ template.innerHTML = `
     padding: 20px;
     font-size: var(--font-size);
     box-shadow: var(--box-shadow);
+    z-index: var(--index);
     display: none;
   }
 
