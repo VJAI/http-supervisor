@@ -854,47 +854,53 @@ export default class HttpSupervisor {
 
   /**
    * Prints all the requests in the passed reporter.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequests() {
-    this._reporter.report(this.requests());
+  printRequests(displayFields) {
+    this._reporter.report(this.requests(), displayFields);
   }
 
   /**
    * Prints the requests matched the passed method (GET, POST etc.).
    * @param {string} method
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsByType(method) {
-    this._reporter.report(this.getRequestsByType(method));
+  printRequestsByType(method, displayFields) {
+    this._reporter.report(this.getRequestsByType(method), displayFields);
   }
 
   /**
    * Prints the requests that's been issued against the passed url.
    * @param {string} url The absolute or relative url.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsByUrl(url) {
-    this._reporter.report(this.getRequestsByUrl(url));
+  printRequestsByUrl(url, displayFields) {
+    this._reporter.report(this.getRequestsByUrl(url), displayFields);
   }
 
   /**
    * Print requests that has the passed response status.
    * @param {number} status The status code.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsOfStatus(status) {
-    this._reporter.report(this.getRequestsOfStatus(status));
+  printRequestsOfStatus(status, displayFields) {
+    this._reporter.report(this.getRequestsOfStatus(status), displayFields);
   }
 
   /**
    * Prints failed requests.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printFailedRequests() {
-    this._reporter.report(this.getFailedRequests());
+  printFailedRequests(displayFields) {
+    this._reporter.report(this.getFailedRequests(), displayFields);
   }
 
   /**
    * Prints requests exceeds quota.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsExceededQuota() {
-    this._reporter.report(this.getRequestsExceededQuota());
+  printRequestsExceededQuota(displayFields) {
+    this._reporter.report(this.getRequestsExceededQuota(), displayFields);
   }
 
   /**
@@ -927,51 +933,66 @@ export default class HttpSupervisor {
 
   /**
    * Groups and prints the requests.
-   * @param {...string} groupArgs The group fields.
+   * @param {...string|Array<string>} args The group and display arguments.
    */
-  groupAndPrintRequests(...groupArgs) {
-    this._reporter.report(this.groupRequests(...groupArgs));
+  groupAndPrintRequests(...args) {
+    if (Array.isArray(args[0])) {
+      return this._reporter.report(this.groupRequests(...args[0]), args[1]);
+    }
+
+    this._reporter.report(this.groupRequests(...args));
   }
 
   /**
    * Sorts and prints the requests.
-   * @param {...string} sortArgs The sort parameters.
+   * @param {...string|Array<string>} args The group and sort arguments.
    */
-  sortAndPrintRequests(...sortArgs) {
-    this._reporter.report(this.sortRequests(...sortArgs));
+  sortAndPrintRequests(...args) {
+    if (Array.isArray(args[0])) {
+      return this._reporter.report(this.sortRequests(...args[0]), args[1]);
+    }
+
+    this._reporter.report(this.sortRequests(...args));
   }
 
   /**
    * Groups, sorts and prints the requests.
    * @param {Array<string>} groupArgs Array of fields.
    * @param {Array<*>} sortArgs Array of sort parameters.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  groupSortAndPrintRequests(groupArgs, sortArgs) {
-    this._reporter.report(this.groupSortRequests(groupArgs, sortArgs));
+  groupSortAndPrintRequests(groupArgs, sortArgs, displayFields) {
+    this._reporter.report(this.groupSortRequests(groupArgs, sortArgs), displayFields);
   }
 
   /**
    * Searches and prints the requests matches the search query.
-   * @param {...*} query The search queries.
+   * @param {...*} args The search query and display fields parameters.
    */
-  searchAndPrintRequests(...query) {
-    this._reporter.report(this.searchRequests(...query));
+  searchAndPrintRequests(...args) {
+    if (Array.isArray(args[0])) {
+      return this._reporter.report(this.searchRequests(...args[0]), args[1]);
+    }
+
+    this._reporter.report(this.searchRequests(...args));
   }
 
   /**
    * Print requests that has url contains the passed string.
    * @param part The url part.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsContainsUrl(part) {
-    this._reporter.report(this.searchRequestsContainsUrl(part));
+  printRequestsContainsUrl(part, displayFields) {
+    this._reporter.report(this.searchRequestsContainsUrl(part), displayFields);
   }
 
   /**
    * Print requests that has response size greater than the passed value.
    * @param {number} size The size in bytes.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsOfSizeGreaterThan(size) {
-    this._reporter.report(this.searchRequestsOfSizeGreaterThan(size));
+  printRequestsOfSizeGreaterThan(size, displayFields) {
+    this._reporter.report(this.searchRequestsOfSizeGreaterThan(size), displayFields);
   }
 
   /**
@@ -979,9 +1000,10 @@ export default class HttpSupervisor {
    * @param {Array<*>} query The search queries.
    * @param {Array<string>} groupArgs The group arguments.
    * @param {Array<string>} sortArgs The sort parameters.
+   * @param {Array<string>} displayFields The fields to display.
    */
-  searchGroupSortAndPrintRequests(query, groupArgs, sortArgs) {
-    this._reporter.report(this.searchGroupSortRequests(...query, ...groupArgs, ...sortArgs));
+  searchGroupSortAndPrintRequests(query, groupArgs, sortArgs, displayFields) {
+    this._reporter.report(this.searchGroupSortRequests(...query, ...groupArgs, ...sortArgs), displayFields);
   }
 
   /**

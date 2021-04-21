@@ -25,6 +25,12 @@ export default class HttpRequestInfo {
   path = null;
 
   /**
+   * The query in the url.
+   * @type {string}
+   */
+  query = null;
+
+  /**
    * The request type (GET, POST etc.)
    * @type {string}
    */
@@ -79,6 +85,25 @@ export default class HttpRequestInfo {
   responseSize = 0;
 
   /**
+   * Returns path with query.
+   * @type {string}
+   */
+  get pathWithQuery() {
+    return this.query ? `${this.path}${this.query}` : this.path;
+  }
+
+  /**
+   * Returns the path's last part and query.
+   * @type {string}
+   */
+  get partWithQuery() {
+    const pathParts = (this.path || []).split('/'),
+      lastPart = `/${pathParts[pathParts.length - 1]}` || '/';
+
+    return this.query ? `${lastPart}${this.query}` : lastPart;
+  }
+
+  /**
    * True if the request error-ed out.
    * @type {boolean}
    */
@@ -118,7 +143,11 @@ export default class HttpRequestInfo {
   constructor(id, url, method, payload) {
     this.id = id;
     this.url = url;
-    url && (this.path = (isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin)).pathname);
+    if (url) {
+      const urlObject = isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin);
+      this.path = urlObject.pathname;
+      this.query = urlObject.search;
+    }
     this.method = method;
     this.payload = payload;
   }

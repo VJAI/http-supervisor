@@ -25,22 +25,29 @@ export const Messages = {
   POST: 'POST',
   PUT: 'PUT',
   DELETE: 'DELETE',
-  ID: 'Id',
+  REQUEST_NO: 'Request No',
   URL: 'Url',
   PATH: 'Path',
+  PATH_WITH_QUERY: 'Path',
+  PART_WITH_QUERY: 'Path',
   METHOD: 'Type',
   PAYLOAD: 'Payload',
   PAYLOAD_SIZE: 'Payload Size',
+  PAYLOAD_SIZE_WITH_BYTES: 'Payload Size (bytes)',
   DURATION: 'Duration',
+  DURATION_WITH_MS: 'Duration (ms)',
   RESPONSE: 'Response',
   RESPONSE_SIZE: 'Response Size',
+  RESPONSE_SIZE_WITH_BYTES: 'Response Size (bytes)',
   RESPONSE_STATUS: 'Status',
   IS_ERROR: 'Is Error?',
   ERROR_DESC: 'Error Description',
   EXCEEDS_QUOTA: 'Exceeds Quota?',
   INITIATOR_TYPE: 'Initiator Type',
-  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size',
-  CHART_NOT_FOUND: 'Chart.js library not found'
+  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size?',
+  CHART_NOT_FOUND: 'Chart.js library not found',
+  TIME_START: 'Time Start',
+  TIME_END: 'Time End'
 };
 
 /**
@@ -55,7 +62,9 @@ export const Colors = {
   WHITE: '#fff',
   BLACK: '#000',
   GRAY: '#aaa',
-  MEDIUM_GRAY: '#ccc'
+  MEDIUM_GRAY: '#ccc',
+  ERROR_MEDIUM: '#ff6e92',
+  WARN_MEDIUM: '#e3b842'
 };
 
 /**
@@ -100,3 +109,24 @@ export const InitiatorType = {
 export const CHARTJS_LIB_PATH = 'https://cdn.jsdelivr.net/npm/chart.js';
 
 export const STORAGE_KEY = 'http-supervisor';
+
+export const HTTP_REQUEST_INFO_DISPLAY_NAMES = {
+  id: Messages.REQUEST_NO,
+  url: Messages.URL,
+  path: Messages.PATH,
+  pathWithQuery: Messages.PATH_WITH_QUERY,
+  partWithQuery: Messages.PART_WITH_QUERY,
+  method: Messages.METHOD,
+  payload: Messages.PAYLOAD,
+  payloadSize: Messages.PAYLOAD_SIZE_WITH_BYTES,
+  timeStart: Messages.TIME_START,
+  timeEnd: Messages.TIME_END,
+  duration: Messages.DURATION_WITH_MS,
+  responseStatus: Messages.RESPONSE_STATUS,
+  response: Messages.RESPONSE,
+  responseSize: Messages.RESPONSE_SIZE_WITH_BYTES,
+  error: Messages.IS_ERROR,
+  errorDescription: Messages.ERROR_DESC,
+  exceedsQuota: Messages.EXCEEDS_QUOTA,
+  payloadByPerformance: Messages.PAYLOAD_SIZE_BY_PERFORMANCE
+};

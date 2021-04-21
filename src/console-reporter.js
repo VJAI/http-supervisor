@@ -1,7 +1,7 @@
-import HttpRequestInfo                         from './http-request-info';
-import Collection                              from './collection';
-import { formatBytes, formatTime, poolColors } from './util';
-import { Messages, Colors }                    from './constants';
+import HttpRequestInfo                                       from './http-request-info';
+import Collection                                            from './collection';
+import { formatBytes, formatTime, poolColors }               from './util';
+import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES } from './constants';
 import './console-snapshot';
 
 /**
@@ -11,10 +11,24 @@ export default class ConsoleReporter {
 
   /**
    * Fields to display.
-   * @type {Map}
+   * @type {Set}
    * @private
    */
-  _fieldsToDisplay = null;
+  _fieldsToDisplay = new Set([
+    'id',
+    'url',
+    'partWithQuery',
+    'method',
+    'payload',
+    'payloadSize',
+    'duration',
+    'responseStatus',
+    'response',
+    'responseSize',
+    'error',
+    'errorDescription',
+    'exceedsQuota'
+  ]);
 
   /**
    * True to visualize data through charts.
@@ -53,10 +67,10 @@ export default class ConsoleReporter {
 
   /**
    * Ctor.
-   * @param {Object} fieldsConfig
+   * @param {Object} fieldsToDisplay
    */
-  constructor(fieldsConfig) {
-    fieldsConfig && (this._fieldsToDisplay = new Map(Object.entries(fieldsConfig)));
+  constructor(fieldsToDisplay) {
+    fieldsToDisplay && (this._fieldsToDisplay = new Set(fieldsToDisplay));
   }
 
   /**
@@ -86,40 +100,52 @@ export default class ConsoleReporter {
 
   /**
    * Prints the metrics summary and the requests information in console.
-   * @param statsOrObj
-   * @param collection
+   * @param arg1
+   * @param arg2
+   * @param arg3
    */
-  report(statsOrObj, collection) {
+  report(arg1, arg2, arg3) {
     if (arguments.length === 1) {
-      if (statsOrObj === null) {
+      if (arg1 === null) {
         this.print(Messages.NO_REQUEST, Colors.INFO, true);
         return;
-      } else if (statsOrObj instanceof HttpRequestInfo || statsOrObj instanceof Collection) {
-        if (statsOrObj instanceof Collection && !statsOrObj.hasGroups && !statsOrObj.hasItems) {
+      } else if (arg1 instanceof HttpRequestInfo || arg1 instanceof Collection) {
+        if (arg1 instanceof Collection && !arg1.hasGroups && !arg1.hasItems) {
           this.print(Messages.NO_REQUESTS, Colors.INFO, true);
           return;
         }
 
-        statsOrObj instanceof Collection && this.printTitle(Messages.REQUESTS_INFO);
-        this._reportObject(statsOrObj);
+        arg1 instanceof Collection && this.printTitle(Messages.REQUESTS_INFO);
+        this._reportObject(arg1);
       } else {
         this.printTitle(Messages.METRICS_SUMMARY);
-        this._reportStats(statsOrObj);
+        this._reportStats(arg1);
       }
 
       return;
     }
 
-    if (!collection.hasGroups && !collection.hasItems) {
+    if (arguments.length === 2 && arg1 instanceof Collection) {
+      if (!arg1.hasGroups && !arg1.hasItems) {
+        this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+        return;
+      }
+
+      this.printTitle(Messages.REQUESTS_INFO);
+      this._reportObject(arg1, arg2);
+      return;
+    }
+
+    if (!arg2.hasGroups && !arg2.hasItems) {
       this.print(Messages.NO_REQUESTS, Colors.INFO, true);
       return;
     }
 
     this.printTitle(Messages.METRICS_SUMMARY);
-    this._reportStats(statsOrObj);
+    this._reportStats(arg1);
     this.break();
     this.printTitle(Messages.REQUESTS_INFO);
-    this._reportObject(collection);
+    this._reportObject(arg2, arg3);
   }
 
   /**
@@ -427,22 +453,22 @@ export default class ConsoleReporter {
     this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
   }
 
-  _reportObject(requestOrCollection) {
+  _reportObject(requestOrCollection, fieldsToDisplay) {
     if (requestOrCollection === null) {
       this.print(Messages.NO_REQUEST, Colors.INFO, true);
       return;
     }
 
     if (requestOrCollection instanceof HttpRequestInfo) {
-      let bgColor = Colors.GRAY;
+      let borderColor = Colors.GRAY;
       if (requestOrCollection.error) {
-        bgColor = '#ff6e92';
+        borderColor = Colors.ERROR_MEDIUM;
       } else if (requestOrCollection.exceedsQuota) {
-        bgColor = '#edca6b';
+        borderColor = Colors.WARN_MEDIUM;
       }
 
-      console.groupCollapsed(`%c${requestOrCollection.method}  ${requestOrCollection.path} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `padding: 5px 10px; background-color: ${bgColor}; color: ${Colors.WHITE};margin-bottom: 10px;`);
-      this.printKeyValue(Messages.ID, requestOrCollection.id);
+      console.groupCollapsed(`%c${requestOrCollection.method}  ${requestOrCollection.path} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `padding: 5px; border-left: solid 4px ${borderColor};`);
+      this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
       this.printKeyValue(Messages.PATH, requestOrCollection.path);
       this.printKeyValue(Messages.METHOD, requestOrCollection.method);
@@ -487,7 +513,7 @@ export default class ConsoleReporter {
           this.groupStart(`${groupName} %c- [${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         }
 
-        this._reportObject(group);
+        this._reportObject(group, fieldsToDisplay);
         this.groupEnd();
       });
 
@@ -496,14 +522,14 @@ export default class ConsoleReporter {
 
     const items = requestOrCollection.items.map(item => {
       const displayObj = {};
-      this._fieldsToDisplay.forEach((value, key) => {
+      (fieldsToDisplay || [...this._fieldsToDisplay]).forEach(field => {
         let v;
-        if (typeof item[key] === 'undefined') {
+        if (typeof item[field] === 'undefined') {
           v = null;
         } else {
-          v = item[key];
+          v = item[field];
         }
-        displayObj[value] = v;
+        displayObj[HTTP_REQUEST_INFO_DISPLAY_NAMES[field]] = v;
       });
       return displayObj;
     });

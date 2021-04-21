@@ -14,6 +14,9 @@ export default {
     libraryExport: 'default',
     libraryTarget: 'umd'
   },
+  optimization:{
+    minimize: !!optimizeMinimize,
+  },
   module: {
     rules: [
       { test: /\.js$/, exclude: /node_modules/, loader: 'eslint-loader', enforce: 'pre' },
