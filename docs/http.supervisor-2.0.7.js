@@ -3594,7 +3594,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         alertOnExceedQuota: this._alertOnExceedQuota,
         usePerformance: this._usePerformance,
         quota: this._quota,
-        domains: this._domains,
+        domains: toConsumableArray_default()(this._domains),
         watches: JSON.stringify(toConsumableArray_default()(this._watches.entries()))
       }));
     }
