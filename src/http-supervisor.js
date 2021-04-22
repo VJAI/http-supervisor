@@ -1424,7 +1424,7 @@ export default class HttpSupervisor {
       alertOnExceedQuota: this._alertOnExceedQuota,
       usePerformance: this._usePerformance,
       quota: this._quota,
-      domains: this._domains,
+      domains: [...this._domains],
       watches: JSON.stringify([...this._watches.entries()])
     }));
   }
