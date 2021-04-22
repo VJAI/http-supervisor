@@ -7,7 +7,7 @@
 
   httpSupervisorScript = document.createElement('script');
   httpSupervisorScript.id = 'http-supervisor-script';
-  httpSupervisorScript.src = 'https://vjai.github.io/http-supervisor/http.supervisor-2.0.6.js';
+  httpSupervisorScript.src = 'https://vjai.github.io/http-supervisor/http.supervisor-2.0.7.js';
   httpSupervisorScript.async = false;
   httpSupervisorScript.addEventListener('load', function () {
     window.httpSupervisor && window.httpSupervisor.init();
