@@ -17,6 +17,7 @@ function makeAjaxCalls() {
     sendCall5();
     sendCall6();
     sendCall7();
+    sendCall8();
   }, 600);
 }
 
@@ -77,9 +78,15 @@ function sendCall7() {
   });
 }
 
+function sendCall8() {
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://eng-ecom.apttuscloud.io/ui/ecom/patch/assets/i18n/en_US.json');
+  xhr.send();
+}
+
 window.httpSupervisor = httpSupervisor;
 httpSupervisor.init({
-  domains: ['https://jsonplaceholder.typicode.com'],
+  domains: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
   traceEachRequest: true
 });
 makeAjaxCalls();

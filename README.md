@@ -233,6 +233,8 @@ will add a new query parameter (hs_rid) in the url.
 
 **printRequests()** - Prints all the requests in the passed reporter.
 
+**printRequestById(id)** - Prints the request for the passed id.
+
 **printRequestsByType(method)** - Prints the requests matched the passed method (GET, POST etc.).
 
 **printRequestsByUrl(url)** - Prints the requests that's been issued against the passed url.

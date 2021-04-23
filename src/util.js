@@ -77,7 +77,7 @@ export function idGenerator(seed = 0) {
  * @returns {boolean}
  */
 export function isAbsolute(url) {
-  const reg = new RegExp(/^https?:\/\/|^\/\//i);
+  const reg = new RegExp('/^https?:\/\/|^\/\//i');
   return reg.test(url);
 }
 

@@ -24,7 +24,7 @@ import {
   matchCriteria,
   isJsonResponse,
   safeParse
-} from './util';
+}                      from './util';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify query, group, sort, export, visualize requests and much more.
@@ -147,7 +147,7 @@ export default class HttpSupervisor {
    */
   _requests = new Set();
 
-    /**
+  /**
    * Collection of watches.
    * @type {Map}
    * @private
@@ -175,7 +175,7 @@ export default class HttpSupervisor {
    */
   _id = idGenerator(1);
 
-    /**
+  /**
    * The id generator function for watches.
    * @type {function}
    * @private
@@ -464,7 +464,7 @@ export default class HttpSupervisor {
       return;
     }
 
-    config = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : config;
+    const storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
 
     const {
       domains,
@@ -480,7 +480,7 @@ export default class HttpSupervisor {
       loadChart,
       keyboardEvents,
       watches
-    } = config || {};
+    } = { ...storedConfig, ...config };
 
     Array.isArray(domains) && (this._domains = new Set(domains));
     typeof renderUI === 'boolean' && (this._renderUI = renderUI);
@@ -866,6 +866,14 @@ export default class HttpSupervisor {
    */
   printRequests(displayFields) {
     this._reporter.report(this.requests(), displayFields);
+  }
+
+  /**
+   * Prints the request for the passed id.
+   * @param id
+   */
+  printRequestById(id) {
+    this._reporter.report(this.getRequestById(id));
   }
 
   /**
@@ -1292,7 +1300,7 @@ export default class HttpSupervisor {
     this._requests.add(requestInfo);
 
     // Listen to `onreadystatechange` event to capture the response info.
-    xhr.onreadystatechange = () => {
+    xhr.addEventListener('readystatechange', () => {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         return;
       }
@@ -1301,7 +1309,7 @@ export default class HttpSupervisor {
       requestInfo.responseStatus = xhr.status;
       requestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
       this._fillParametersAndFireEvents(requestInfo, xhr);
-    };
+    });
 
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);

@@ -68,7 +68,7 @@ template.innerHTML = `
     color: var(--hover-color);
   }
 
-  button:not(last-child), span {
+  button:not(last-child), span, button:hover:not(last-child) {
     border-right: solid 1px var(--border-color);
   }
 

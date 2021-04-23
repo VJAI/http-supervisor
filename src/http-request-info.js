@@ -108,7 +108,7 @@ export default class HttpRequestInfo {
    * @type {boolean}
    */
   get error() {
-    return this.responseStatus >= 400;
+    return this.responseStatus === 0 || this.responseStatus >= 400;
   }
 
   /**
