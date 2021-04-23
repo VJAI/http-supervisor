@@ -31,13 +31,6 @@ export default class ConsoleReporter {
   ]);
 
   /**
-   * True to visualize data through charts.
-   * @type {boolean}
-   * @private
-   */
-  _useVisualization = true;
-
-  /**
    * Canvas element used for chart generation.
    * @type {HTMLCanvasElement}
    * @private
@@ -78,12 +71,6 @@ export default class ConsoleReporter {
    * @param {HttpSupervisor} httpSupervisor
    */
   init(httpSupervisor) {
-    this._useVisualization = !!(httpSupervisor.useVisualization && window.Chart);
-
-    if (!this._useVisualization) {
-      return;
-    }
-
     window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
 
     this._canvasEl = document.createElement('canvas');
@@ -153,7 +140,7 @@ export default class ConsoleReporter {
    * @param chartOptions
    */
   visualize(chartOptions) {
-    if (!this._useVisualization) {
+    if (!window.Chart) {
       this.print(Messages.CHART_NOT_FOUND, Colors.ERROR, true);
       return;
     }

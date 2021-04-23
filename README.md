@@ -162,14 +162,14 @@ will add a new query parameter (hs_rid) in the url.
 
 **monkeyPatchFetch** - `True` to Intercept fetch requests.
 
-**useVisualization** - `True` to use chart.js library for data visualization.
+**loadChart** - `True` to use chart.js library for data visualization.
 
 **keyboardEvents** - `True` to use keyboard events for operating control panel.
 
 
 ### `HttpSupervisor` Methods
 
-**init(config, loadConfigFromStore = true)** - Configures the supervisor. You can pass the following parameters to the `config` object: `domains`, `renderUI`, `traceEachRequest`, `alertOnError`, `alertOnExceedQuota`, `quota`, `groupBy`, `sortBy`, `usePerformance`, `monkeyPatchFetch`, `useVisualization` and `keyboardEvents`. Passing `true` for `loadConfigFromStore` loads the config from local storage.
+**init(config, loadConfigFromStore = true)** - Configures the supervisor. You can pass the following parameters to the `config` object: `domains`, `renderUI`, `traceEachRequest`, `alertOnError`, `alertOnExceedQuota`, `quota`, `groupBy`, `sortBy`, `usePerformance`, `monkeyPatchFetch`, `loadChart` and `keyboardEvents`. Passing `true` for `loadConfigFromStore` loads the config from local storage.
 
 **start()** - Starts network monitoring.
 

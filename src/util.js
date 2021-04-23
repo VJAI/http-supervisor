@@ -77,7 +77,7 @@ export function idGenerator(seed = 0) {
  * @returns {boolean}
  */
 export function isAbsolute(url) {
-  const reg = /^https?:\/\/|^\/\//i;
+  const reg = new RegExp(/^https?:\/\/|^\/\//i);
   return reg.test(url);
 }
 
@@ -91,7 +91,7 @@ export function loadScript(src, onload, onerror) {
   script.src = src;
   onload && script.addEventListener('load', onload);
   onerror && script.addEventListener('error', onerror);
-  document.head.appendChild(script);
+  (document.head || document.documentElement).appendChild(script);
 }
 
 /**
@@ -164,7 +164,7 @@ export function matchCriteria(criteria, object) {
  * @return {boolean}
  */
 export function isJsonResponse(contentType) {
-    return contentType.toLowerCase().startsWith('application/json');
+    return contentType ? contentType.toLowerCase().startsWith('application/json') : false;
 }
 
 /**

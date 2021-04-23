@@ -131,7 +131,7 @@ export default class HttpSupervisor {
    * @type {boolean}
    * @private
    */
-  _useVisualization = true;
+  _loadChart = true;
 
   /**
    * True to use keyboard events for operating control panel.
@@ -209,6 +209,14 @@ export default class HttpSupervisor {
    */
   get busy() {
     return this._status === SupervisorStatus.Busy;
+  }
+
+  /**
+   * Returns the current status.
+   * @returns {string}
+   */
+  get status() {
+    return this._status;
   }
 
   /**
@@ -394,8 +402,8 @@ export default class HttpSupervisor {
    * Returns `true` if visualization is enabled.
    * @returns {boolean}
    */
-  get useVisualization() {
-    return this._useVisualization;
+  get loadChart() {
+    return this._loadChart;
   }
 
   /**
@@ -446,7 +454,7 @@ export default class HttpSupervisor {
    * @param {Array} [config.sortBy] Sorting parameters used in displaying requests.
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
-   * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
+   * @param {boolean} [config.loadChart] True to use chart.js library for data visualization.
    * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
    * @param {Array} [config.watches] Collection of watches.
    * @param {boolean} [loadConfigFromStore = true] True to load the config from local storage.
@@ -469,7 +477,7 @@ export default class HttpSupervisor {
       sortBy,
       usePerformance,
       monkeyPatchFetch,
-      useVisualization,
+      loadChart,
       keyboardEvents,
       watches
     } = config || {};
@@ -484,7 +492,7 @@ export default class HttpSupervisor {
     Array.isArray(sortBy) && (this._sortBy = sortBy);
     typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
     typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-    typeof useVisualization === 'boolean' && (this._useVisualization = useVisualization);
+    typeof loadChart === 'boolean' && (this._loadChart = loadChart);
     typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
     Array.isArray(watches) && (this._watches = new Map(this._watches));
 
@@ -524,7 +532,7 @@ export default class HttpSupervisor {
       this._triggerEvent(SupervisorEvents.READY);
     };
 
-    if (this._useVisualization) {
+    if (this._loadChart) {
       loadScript(CHARTJS_LIB_PATH, initReporterAndFireEvent, initReporterAndFireEvent);
       return;
     }

@@ -2,7 +2,7 @@
  * Supervisor Control Panel Template.
  * @type {HTMLTemplateElement}
  */
-import { SupervisorEvents } from './constants';
+import { SupervisorEvents, SupervisorStatus } from './constants';
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -354,6 +354,7 @@ export default class HttpSupervisorWidget {
    * ctor.
    */
   constructor() {
+    this._render = this._render.bind(this);
     this._onStart = this._onStart.bind(this);
     this._onStop = this._onStop.bind(this);
     this._updateTotalRequestsCount = this._updateTotalRequestsCount.bind(this);
@@ -372,10 +373,58 @@ export default class HttpSupervisorWidget {
    * Renders the UI.
    */
   render() {
+    if (this._httpSupervisor.status === SupervisorStatus.Retired) {
+      return;
+    }
+
     if (this._el) {
       return;
     }
 
+    if (!document.body) {
+      window.addEventListener('DOMContentLoaded', this._render);
+      return;
+    }
+
+    this._render();
+  }
+
+  /**
+   * Shows the widget.
+   */
+  show() {
+    this._el.style.display = 'block';
+  }
+
+  /**
+   * Hides the widget.
+   */
+  hide() {
+    this._el.style.display = 'none';
+  }
+
+  /**
+   * Destroys the element.
+   */
+  destroy() {
+    window.removeEventListener('DOMContentLoaded', this._render);
+    this._httpSupervisor.off(SupervisorEvents.START, this._onStart);
+    this._httpSupervisor.off(SupervisorEvents.STOP, this._onStop);
+    this._httpSupervisor.off(SupervisorEvents.CLEAR, this._updateTotalRequestsCount);
+    this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
+    this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
+    this._httpSupervisor.off(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
+    this._httpSupervisor = null;
+    this._el.cleanup();
+    this._el.remove();
+    this._el = null;
+  }
+
+  /**
+   * Renders the web component.
+   * @private
+   */
+  _render() {
     document.body.appendChild(this._el = document.createElement('http-supervisor-widget'));
 
     const {
@@ -385,7 +434,9 @@ export default class HttpSupervisorWidget {
       alertOnExceedQuota,
       quota,
       usePerformance,
-      keyboardEvents
+      keyboardEvents,
+      onGoingCallsCount,
+      status
     } = this._httpSupervisor;
 
     this._el.setState({
@@ -425,36 +476,15 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('responseSizeDistributionChart', () => this._httpSupervisor.displaySizeDistribution());
     this._el.subscribe('domainsChange', (ctrl) => this._httpSupervisor.domains = ctrl.value.split(',').map(x => x.trim()));
     this._el.subscribe('keyboardEventsChange', ctrl => this._httpSupervisor.keyboardEvents = ctrl.checked);
-  }
 
-  /**
-   * Shows the widget.
-   */
-  show() {
-    this._el.style.display = 'block';
-  }
+    if (status === SupervisorStatus.Busy) {
+      this._onStart();
+    } else {
+      this._onStop();
+    }
 
-  /**
-   * Hides the widget.
-   */
-  hide() {
-    this._el.style.display = 'none';
-  }
-
-  /**
-   * Destroys the element.
-   */
-  destroy() {
-    this._httpSupervisor.off(SupervisorEvents.START, this._onStart);
-    this._httpSupervisor.off(SupervisorEvents.STOP, this._onStop);
-    this._httpSupervisor.off(SupervisorEvents.CLEAR, this._updateTotalRequestsCount);
-    this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
-    this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
-    this._httpSupervisor.off(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
-    this._httpSupervisor = null;
-    this._el.cleanup();
-    this._el.remove();
-    this._el = null;
+    this._updateLabelsCount();
+    this._updateTotalRequestsCount();
   }
 
   /**

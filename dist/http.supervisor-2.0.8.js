@@ -948,7 +948,7 @@ function idGenerator() {
  */
 
 function isAbsolute(url) {
-  var reg = /^https?:\/\/|^\/\//i;
+  var reg = new RegExp(/^https?:\/\/|^\/\//i);
   return reg.test(url);
 }
 /**
@@ -962,7 +962,7 @@ function loadScript(src, onload, onerror) {
   script.src = src;
   onload && script.addEventListener('load', onload);
   onerror && script.addEventListener('error', onerror);
-  document.head.appendChild(script);
+  (document.head || document.documentElement).appendChild(script);
 }
 /**
  * Returns random color.
@@ -1038,7 +1038,7 @@ function matchCriteria(criteria, object) {
  */
 
 function isJsonResponse(contentType) {
-  return contentType.toLowerCase().startsWith('application/json');
+  return contentType ? contentType.toLowerCase().startsWith('application/json') : false;
 }
 /**
  * Safely parses string to JSON.
@@ -1892,7 +1892,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_monkeyPatchFetch", true);
 
-    defineProperty_default()(this, "_useVisualization", true);
+    defineProperty_default()(this, "_loadChart", true);
 
     defineProperty_default()(this, "_keyboardEvents", true);
 
@@ -1931,7 +1931,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
    * @param {Array} [config.sortBy] Sorting parameters used in displaying requests.
    * @param {boolean} [config.usePerformance] True to use performance.getEntriesByType for accurate duration and payload info.
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
-   * @param {boolean} [config.useVisualization] True to use chart.js library for data visualization.
+   * @param {boolean} [config.loadChart] True to use chart.js library for data visualization.
    * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
    * @param {Array} [config.watches] Collection of watches.
    * @param {boolean} [loadConfigFromStore = true] True to load the config from local storage.
@@ -2091,6 +2091,16 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
     function get() {
       return this._status === SupervisorStatus.Busy;
+    }
+    /**
+     * Returns the current status.
+     * @returns {string}
+     */
+
+  }, {
+    key: "status",
+    get: function get() {
+      return this._status;
     }
     /**
      * Returns the total no. of requests of the current session.
@@ -2310,9 +2320,9 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "useVisualization",
+    key: "loadChart",
     get: function get() {
-      return this._useVisualization;
+      return this._loadChart;
     }
     /**
      * Returns `true` if keyboard events enabled.
@@ -2367,7 +2377,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           sortBy = _ref.sortBy,
           usePerformance = _ref.usePerformance,
           monkeyPatchFetch = _ref.monkeyPatchFetch,
-          useVisualization = _ref.useVisualization,
+          loadChart = _ref.loadChart,
           keyboardEvents = _ref.keyboardEvents,
           watches = _ref.watches;
 
@@ -2381,7 +2391,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       Array.isArray(sortBy) && (this._sortBy = sortBy);
       typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
       typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-      typeof useVisualization === 'boolean' && (this._useVisualization = useVisualization);
+      typeof loadChart === 'boolean' && (this._loadChart = loadChart);
       typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
       Array.isArray(watches) && (this._watches = new Map(this._watches)); // Listen to the `request-end` event to display request details based on the properties.
 
@@ -2427,7 +2437,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         _this._triggerEvent(SupervisorEvents.READY);
       };
 
-      if (this._useVisualization) {
+      if (this._loadChart) {
         loadScript(CHARTJS_LIB_PATH, initReporterAndFireEvent, initReporterAndFireEvent);
         return;
       }
@@ -3680,6 +3690,7 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_httpSupervisor", null);
 
+    this._render = this._render.bind(this);
     this._onStart = this._onStart.bind(this);
     this._onStop = this._onStop.bind(this);
     this._updateTotalRequestsCount = this._updateTotalRequestsCount.bind(this);
@@ -3703,11 +3714,77 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
   }, {
     key: "render",
     value: function render() {
-      var _this = this;
+      if (this._httpSupervisor.status === SupervisorStatus.Retired) {
+        return;
+      }
 
       if (this._el) {
         return;
       }
+
+      if (!document.body) {
+        window.addEventListener('DOMContentLoaded', this._render);
+        return;
+      }
+
+      this._render();
+    }
+    /**
+     * Shows the widget.
+     */
+
+  }, {
+    key: "show",
+    value: function show() {
+      this._el.style.display = 'block';
+    }
+    /**
+     * Hides the widget.
+     */
+
+  }, {
+    key: "hide",
+    value: function hide() {
+      this._el.style.display = 'none';
+    }
+    /**
+     * Destroys the element.
+     */
+
+  }, {
+    key: "destroy",
+    value: function destroy() {
+      window.removeEventListener('DOMContentLoaded', this._render);
+
+      this._httpSupervisor.off(SupervisorEvents.START, this._onStart);
+
+      this._httpSupervisor.off(SupervisorEvents.STOP, this._onStop);
+
+      this._httpSupervisor.off(SupervisorEvents.CLEAR, this._updateTotalRequestsCount);
+
+      this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
+
+      this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
+
+      this._httpSupervisor.off(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
+
+      this._httpSupervisor = null;
+
+      this._el.cleanup();
+
+      this._el.remove();
+
+      this._el = null;
+    }
+    /**
+     * Renders the web component.
+     * @private
+     */
+
+  }, {
+    key: "_render",
+    value: function _render() {
+      var _this = this;
 
       document.body.appendChild(this._el = document.createElement('http-supervisor-widget'));
       var _this$_httpSupervisor = this._httpSupervisor,
@@ -3717,7 +3794,9 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
           alertOnExceedQuota = _this$_httpSupervisor.alertOnExceedQuota,
           quota = _this$_httpSupervisor.quota,
           usePerformance = _this$_httpSupervisor.usePerformance,
-          keyboardEvents = _this$_httpSupervisor.keyboardEvents;
+          keyboardEvents = _this$_httpSupervisor.keyboardEvents,
+          onGoingCallsCount = _this$_httpSupervisor.onGoingCallsCount,
+          status = _this$_httpSupervisor.status;
 
       this._el.setState({
         domains: domains,
@@ -3822,51 +3901,16 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
       this._el.subscribe('keyboardEventsChange', function (ctrl) {
         return _this._httpSupervisor.keyboardEvents = ctrl.checked;
       });
-    }
-    /**
-     * Shows the widget.
-     */
 
-  }, {
-    key: "show",
-    value: function show() {
-      this._el.style.display = 'block';
-    }
-    /**
-     * Hides the widget.
-     */
+      if (status === SupervisorStatus.Busy) {
+        this._onStart();
+      } else {
+        this._onStop();
+      }
 
-  }, {
-    key: "hide",
-    value: function hide() {
-      this._el.style.display = 'none';
-    }
-    /**
-     * Destroys the element.
-     */
+      this._updateLabelsCount();
 
-  }, {
-    key: "destroy",
-    value: function destroy() {
-      this._httpSupervisor.off(SupervisorEvents.START, this._onStart);
-
-      this._httpSupervisor.off(SupervisorEvents.STOP, this._onStop);
-
-      this._httpSupervisor.off(SupervisorEvents.CLEAR, this._updateTotalRequestsCount);
-
-      this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
-
-      this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
-
-      this._httpSupervisor.off(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
-
-      this._httpSupervisor = null;
-
-      this._el.cleanup();
-
-      this._el.remove();
-
-      this._el = null;
+      this._updateTotalRequestsCount();
     }
     /**
      * Supervisor start handler.
@@ -4255,12 +4299,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
    */
 
   /**
-   * True to visualize data through charts.
-   * @type {boolean}
-   * @private
-   */
-
-  /**
    * Canvas element used for chart generation.
    * @type {HTMLCanvasElement}
    * @private
@@ -4293,8 +4331,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_fieldsToDisplay", new Set(['id', 'url', 'partWithQuery', 'method', 'payload', 'payloadSize', 'duration', 'responseStatus', 'response', 'responseSize', 'error', 'errorDescription', 'exceedsQuota']));
 
-    defineProperty_default()(this, "_useVisualization", true);
-
     defineProperty_default()(this, "_canvasEl", null);
 
     defineProperty_default()(this, "_chartFontSize", 9);
@@ -4314,12 +4350,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   createClass_default()(ConsoleReporter, [{
     key: "init",
     value: function init(httpSupervisor) {
-      this._useVisualization = !!(httpSupervisor.useVisualization && window.Chart);
-
-      if (!this._useVisualization) {
-        return;
-      }
-
       window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
       this._canvasEl = document.createElement('canvas');
       this._canvasEl.style.width = "".concat(this._chartWidth, "px");
@@ -4401,7 +4431,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     value: function visualize(chartOptions) {
       var _this = this;
 
-      if (!this._useVisualization) {
+      if (!window.Chart) {
         this.print(Messages.CHART_NOT_FOUND, Colors.ERROR, true);
         return;
       }
