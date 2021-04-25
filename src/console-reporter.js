@@ -30,6 +30,8 @@ export default class ConsoleReporter {
     'exceedsQuota'
   ]);
 
+  _lockConsole = true;
+
   /**
    * Canvas element used for chart generation.
    * @type {HTMLCanvasElement}
@@ -59,6 +61,13 @@ export default class ConsoleReporter {
   _chartWidth = 500;
 
   /**
+   * Native console object.
+   * @type {Console}
+   * @private
+   */
+  _originalConsole = window.console;
+
+  /**
    * Ctor.
    * @param {Object} fieldsToDisplay
    */
@@ -71,7 +80,9 @@ export default class ConsoleReporter {
    * @param {HttpSupervisor} httpSupervisor
    */
   init(httpSupervisor) {
-    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
+    const { lockConsole } = httpSupervisor;
+    this._lockConsole = lockConsole;
+    this._lockConsole && this.acquireLock();
 
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;
@@ -79,6 +90,10 @@ export default class ConsoleReporter {
     this._canvasEl.style.display = 'none';
 
     document.body.appendChild(this._canvasEl);
+  }
+
+  initChart() {
+    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
   }
 
   printStatusMessage(message) {
@@ -256,7 +271,7 @@ export default class ConsoleReporter {
     }
 
     setTimeout(() => {
-      console.screenshot(this._canvasEl, .5, .35);
+      this._invokeConsole('screenshot', this._canvasEl, .5, .35);
       myChart.destroy();
       myChart = null;
     }, 500);
@@ -305,7 +320,7 @@ export default class ConsoleReporter {
     const styles = [`color: ${color}`];
     bold && styles.push(`font-weight: bold`);
     otherStyles && styles.push(otherStyles);
-    console.log(`%c${message}`, styles.join(';'));
+    this._invokeConsole('log', `%c${message}`, styles.join(';'));
   }
 
   /**
@@ -331,11 +346,11 @@ export default class ConsoleReporter {
    */
   printKeyValue(head, value) {
     if (value !== null && typeof value === 'object') {
-      console.log(`%c${this._getTitleWithSpaces(head)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
+      this._invokeConsole('log', `%c${this._getTitleWithSpaces(head)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
       return;
     }
 
-    console.log(`%c${this._getTitleWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
+    this._invokeConsole('log', `%c${this._getTitleWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
   }
 
   /**
@@ -351,7 +366,7 @@ export default class ConsoleReporter {
       index < Object.keys(obj).length - 1 && styles.push(`color: ${Colors.MEDIUM_GRAY}`);
     });
 
-    console.log(msgs.join('%c | '), ...styles);
+    this._invokeConsole('log', msgs.join('%c | '), ...styles);
   }
 
   /**
@@ -359,7 +374,7 @@ export default class ConsoleReporter {
    * @param messages
    */
   printMultiple(...messages) {
-    console.log(...messages);
+    this._invokeConsole('log', ...messages);
   }
 
   /**
@@ -368,7 +383,7 @@ export default class ConsoleReporter {
    * @param displayFields
    */
   table(array, displayFields) {
-    array.length && console.table(array, displayFields);
+    array.length && this._invokeConsole('table', array, displayFields);
   }
 
   /**
@@ -377,28 +392,56 @@ export default class ConsoleReporter {
    * @param args
    */
   groupStart(group, ...args) {
-    console.group(group, ...args);
+    this._invokeConsole('group', group, ...args);
   }
 
   /**
    * Ends the active group.
    */
   groupEnd() {
-    console.groupEnd();
+    this._invokeConsole('groupEnd');
   }
 
   /**
    * Clears the console.
    */
   clear() {
-    console.clear();
+    this._invokeConsole('clear');
   }
 
   /**
    * Creates empty line.
    */
   break() {
-    console.log(`\n`);
+    this._invokeConsole('log', '\n');
+  }
+
+  /**
+   * Locks the dev console.
+   */
+  acquireLock() {
+    window.console = new Proxy(window.console, {
+      get(target, propKey, receiver) {
+        const origMethod = target[propKey];
+        return function (...args) {
+          if (args[0] !== 'http-supervisor') {
+            return;
+          }
+
+          args.shift();
+          origMethod.apply(this, args);
+        };
+      }
+    });
+    this._lockConsole = true;
+  }
+
+  /**
+   * Releases the lock on dev console.
+   */
+  releaseLock() {
+    window.console = this._originalConsole;
+    this._lockConsole = false;
   }
 
   destroy() {
@@ -454,7 +497,7 @@ export default class ConsoleReporter {
         borderColor = Colors.WARN_MEDIUM;
       }
 
-      console.groupCollapsed(`%c${requestOrCollection.method}  ${requestOrCollection.path} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `padding: 5px; border-left: solid 4px ${borderColor};`);
+      this._invokeConsole('groupCollapsed', `%c${requestOrCollection.method}  ${requestOrCollection.path} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `padding: 5px; border-left: solid 4px ${borderColor};`);
       this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
       this.printKeyValue(Messages.PATH, requestOrCollection.path);
@@ -470,7 +513,7 @@ export default class ConsoleReporter {
       this.printKeyValue(Messages.EXCEEDS_QUOTA, requestOrCollection.exceedsQuota ? 'Yes' : 'No');
       this.printKeyValue(Messages.INITIATOR_TYPE, requestOrCollection.initiatorType);
       this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, requestOrCollection.payloadByPerformance ? 'Yes' : 'No');
-      console.groupEnd();
+      this._invokeConsole('groupEnd');
       return;
     }
 
@@ -480,24 +523,24 @@ export default class ConsoleReporter {
 
     if (requestOrCollection.hasGroups) {
       requestOrCollection.groups.forEach(group => {
-        const { name, groupedBy, items } = group;
+        const { name, groupedBy, count } = group;
 
         if (typeof name === 'undefined') {
-          this.groupStart(`- %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
+          this.groupStart(`- %c[${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         } else if (name !== null && typeof name === 'object') {
-          this.groupStart(`${groupedBy}: %c[${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
+          this.groupStart(`${groupedBy}: %c[${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
         } else {
           let groupName = name;
 
           if (typeof name === 'number') {
-            if (['payloadSize', 'responseSize'].indexOf(groupedBy) > -1) {
+            if (['payloadSize', 'responseSize'].has(groupedBy)) {
               groupName = formatBytes(name);
             } else if (groupedBy === 'duration') {
               groupName = formatTime(name);
             }
           }
 
-          this.groupStart(`${groupName} %c- [${items.length}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
+          this.groupStart(`${groupName} %c- [${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         }
 
         this._reportObject(group, fieldsToDisplay);
@@ -538,5 +581,13 @@ export default class ConsoleReporter {
 
   _channelValue(x, y, values) {
     return x < 0 && y < 0 ? values[0] : x < 0 ? values[1] : y < 0 ? values[2] : values[3];
+  }
+
+  _invokeConsole(method, ...args) {
+    if (this._lockConsole) {
+      args.unshift('http-supervisor');
+    }
+
+    console[method].call(console, ...args);
   }
 }

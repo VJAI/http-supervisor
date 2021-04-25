@@ -1,0 +1,31 @@
+{
+  "name": "Http Supervisor",
+  "version": "0.0.1",
+  "manifest_version": 2,
+  "description": "An addon that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort and query requests based upon a variety of parameters.",
+  "homepage_url": "https://github.com/vjai/http-supervisor",
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://eng-ecom.apttuscloud.io/*"],
+      "js": ["http-supervisor.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": { 
+    "16": "16.png",
+    "48": "48.png",
+    "128": "128.png" 
+  },
+  "browser_action": {
+    "default_title": "Http Supervisor"
+  },
+  "permissions": [
+    "activeTab", "declarativeContent", "storage"
+  ]
+}

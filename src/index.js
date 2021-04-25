@@ -1,4 +1,3 @@
-import './polyfill';
 import HttpSupervisor       from './http-supervisor';
 import HttpSupervisorWidget from './http-supervisor-widget';
 import ConsoleReporter      from './console-reporter';

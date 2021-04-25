@@ -3,7 +3,7 @@ import { matchCriteria } from './util';
 /**
  * Represents a collection of records that can be group-able, sortable and searchable.
  */
-export default class Collection {
+export default class Collection extends Array {
 
   /**
    * The name of the collection.
@@ -11,13 +11,6 @@ export default class Collection {
    * @private
    */
   _name = null;
-
-  /**
-   * The items belongs to the collection.
-   * @type {Array}
-   * @private
-   */
-  _items = [];
 
   /**
    * Original items passed in ctor.
@@ -81,7 +74,7 @@ export default class Collection {
    * @returns {boolean}
    */
   get hasItems() {
-    return !!(this._items && this._items.length);
+    return this.length > 0;
   }
 
   /**
@@ -97,7 +90,7 @@ export default class Collection {
    * @returns {Array<*>}
    */
   get items() {
-    return this.hasItems ? [...this._items] : null;
+    return this.hasItems ? [...this] : null;
   }
 
   /**
@@ -137,7 +130,7 @@ export default class Collection {
    * @returns {number}
    */
   get count() {
-    return this.hasItems ? this._items.length : 0;
+    return this.hasItems ? this.length : 0;
   }
 
   /**
@@ -145,7 +138,7 @@ export default class Collection {
    * @returns {*}
    */
   get first() {
-    return this.hasItems ? this._items[0] : null;
+    return this.hasItems ? this[0] : null;
   }
 
   /**
@@ -153,17 +146,22 @@ export default class Collection {
    * @returns {*}
    */
   get last() {
-    return this.hasItems ? this._items[this.count - 1] : null;
+    return this.hasItems ? this[this.count - 1] : null;
   }
 
   /**
    * Constructor.
    */
   constructor(items, name, groupedBy) {
-    this._items = items;
+    super();
+    this.push(...items);
     this._name = name || '-';
     this._originalItems = [...items];
     this._groupedBy = groupedBy;
+  }
+
+  [Symbol.iterator]() {
+    return [...this];
   }
 
   /**
@@ -179,7 +177,7 @@ export default class Collection {
     this._groupArgs = args;
     this._groups = [];
     this._childrenGroupedBy = args.shift();
-    const obj = this._items.groupBy(this._childrenGroupedBy);
+    const obj = this._customGroupBy(this._childrenGroupedBy);
 
     obj.forEach((key, value) => {
       const group = new Collection(key, value, this._childrenGroupedBy);
@@ -220,7 +218,7 @@ export default class Collection {
       return this;
     }
 
-    this._items.sort((r1, r2) => {
+    this.sort((r1, r2) => {
       for (let i = 0; i < args.length; i++) {
         const { field, dir } = args[i], v1 = r1[field], v2 = r2[field];
         if (v1 < v1) return dir === 'asc' ? -1 : 1;
@@ -255,7 +253,9 @@ export default class Collection {
     }
 
     this._query = args;
-    this._items = this._items.filter(r => matchCriteria(args, r));
+    const items = [...this];
+    this.length = 0;
+    this.push(...items.filter(r => matchCriteria(args, r)));
     this._groups.forEach(group => group.search(...args));
 
     return this;
@@ -277,6 +277,37 @@ export default class Collection {
    * @private
    */
   _resetItems() {
-    this._items = [...this._originalItems];
+    this.splice(0, this.length);
+    this.push(...this._originalItems);
+  }
+
+  /**
+   * Groups the array.
+   * @param key
+   * @private
+   */
+  _customGroupBy(key) {
+    return this.reduce(function (rv, x) {
+      const groupName = x[key];
+      let hasGroup, newValue, groupKey;
+
+      if (typeof groupName !== 'object') {
+        groupKey = groupName;
+        hasGroup = rv.has(groupName);
+      } else {
+        groupKey = [...rv.keys()].find(k => JSON.stringify(k) === JSON.stringify(groupName));
+        hasGroup = !!groupKey;
+        groupKey = groupKey || groupName;
+      }
+
+      if (hasGroup) {
+        newValue = [...rv.get(groupKey), x];
+      } else {
+        newValue = [x];
+      }
+
+      rv.set(groupKey, newValue);
+      return rv;
+    }, new Map());
   }
 }

@@ -1022,9 +1022,9 @@ function matchCriteria(criteria, object) {
     } else if (operator === '^') {
       results.push(typeof object[field] === 'string' && v.endsWith(value));
     } else if (operator === 'contains') {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
     } else if (operator === '!contains') {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) === -1);
+      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
     }
   });
   return results.filter(function (r) {
@@ -2786,7 +2786,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           return;
         }
 
-        if (['payloadSize', 'responseSize'].indexOf(field) > -1) {
+        if (['payloadSize', 'responseSize'].has(field)) {
           x.value = convertBytes(value);
         } else if (field === 'duration') {
           x.value = convertTime(value);

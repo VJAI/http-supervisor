@@ -141,6 +141,20 @@ export default class HttpSupervisor {
   _keyboardEvents = true;
 
   /**
+   * True to persist config in local storage.
+   * @type {boolean}
+   * @private
+   */
+  _persistConfig = true;
+
+  /**
+   * True to lock dev console.
+   * @type {boolean}
+   * @private
+   */
+  _lockConsole = true;
+
+  /**
    * Collection of captured requests.
    * @type {Set}
    * @private
@@ -423,6 +437,50 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns the value of persist config.
+   * @returns {boolean}
+   */
+  get persistConfig() {
+    return this._persistConfig;
+  }
+
+  /**
+   * Sets the persist config.
+   * @param value
+   */
+  set persistConfig(value) {
+    this._persistConfig = value;
+  }
+
+  /**
+   * Returns the lock console status.
+   * @returns {boolean}
+   */
+  get lockConsole() {
+    return this._lockConsole;
+  }
+
+  /**
+   * Locks console or not.
+   * @param value
+   */
+  set lockConsole(value) {
+    this._lockConsole = value;
+
+    if (!this._reporter) {
+      return;
+    }
+
+    if (value === true && this._reporter.acquireLock) {
+      this._reporter.acquireLock();
+    }
+
+    if (value === false && this._reporter.releaseLock) {
+      this._reporter.releaseLock();
+    }
+  }
+
+  /**
    * Returns the current on-going calls count.
    * @returns {number}
    */
@@ -456,7 +514,9 @@ export default class HttpSupervisor {
    * @param {boolean} [config.monkeyPatchFetch] True to monkey patch fetch requests.
    * @param {boolean} [config.loadChart] True to use chart.js library for data visualization.
    * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
+   * @param {boolean} [config.persistConfig] True to persist config in local storage.
    * @param {Array} [config.watches] Collection of watches.
+   * @param {boolean} [config.lockConsole] True to lock console.
    * @param {boolean} [loadConfigFromStore = true] True to load the config from local storage.
    */
   init(config = {}, loadConfigFromStore = true) {
@@ -479,7 +539,9 @@ export default class HttpSupervisor {
       monkeyPatchFetch,
       loadChart,
       keyboardEvents,
-      watches
+      watches,
+      persistConfig,
+      lockConsole
     } = { ...storedConfig, ...config };
 
     Array.isArray(domains) && (this._domains = new Set(domains));
@@ -494,7 +556,9 @@ export default class HttpSupervisor {
     typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
     typeof loadChart === 'boolean' && (this._loadChart = loadChart);
     typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
+    typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
     Array.isArray(watches) && (this._watches = new Map(this._watches));
+    typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
 
     // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
@@ -525,19 +589,20 @@ export default class HttpSupervisor {
     this._render();
     this._monkeyPatch();
     this._status = SupervisorStatus.Idle;
+    this._reporter.init(this);
     this.start();
 
-    const initReporterAndFireEvent = () => {
-      this._reporter.init(this);
+    const initChart = () => {
+      this._reporter.initChart();
       this._triggerEvent(SupervisorEvents.READY);
     };
 
     if (this._loadChart) {
-      loadScript(CHARTJS_LIB_PATH, initReporterAndFireEvent, initReporterAndFireEvent);
+      loadScript(CHARTJS_LIB_PATH, initChart, initChart);
       return;
     }
 
-    initReporterAndFireEvent();
+    initChart();
   }
 
   /**
@@ -781,7 +846,7 @@ export default class HttpSupervisor {
         return;
       }
 
-      if (['payloadSize', 'responseSize'].indexOf(field) > -1) {
+      if (['payloadSize', 'responseSize'].has(field)) {
         x.value = convertBytes(value);
       } else if (field === 'duration') {
         x.value = convertTime(value);
@@ -1434,6 +1499,10 @@ export default class HttpSupervisor {
    * Stores the configuration in local storage.
    */
   _updateStorage() {
+    if (!this._persistConfig) {
+      return;
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       traceEachRequest: this._traceEachRequest,
       alertOnError: this._alertOnError,

@@ -149,9 +149,9 @@ export function matchCriteria(criteria, object) {
     } else if (operator === '^') {
       results.push(typeof object[field] === 'string' && v.endsWith(value));
     } else if (operator === 'contains') {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
     } else if (operator === '!contains') {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) === -1);
+      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
     }
   });
 
