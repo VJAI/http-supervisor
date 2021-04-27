@@ -130,3 +130,10 @@ export const HTTP_REQUEST_INFO_DISPLAY_NAMES = {
   exceedsQuota: Messages.EXCEEDS_QUOTA,
   payloadByPerformance: Messages.PAYLOAD_SIZE_BY_PERFORMANCE
 };
+
+export const REQUEST_TYPE = {
+  GET: 'GET',
+  POST: 'POST',
+  PUT: 'PUT',
+  DELETE: 'DELETE'
+};

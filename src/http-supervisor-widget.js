@@ -470,10 +470,10 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('maxPayloadSizeChange', (ctrl) => this._httpSupervisor.quota = { maxPayloadSize: parseInt(ctrl.value) });
     this._el.subscribe('maxResponseSizeChange', (ctrl) => this._httpSupervisor.quota = { maxResponseSize: parseInt(ctrl.value) });
     this._el.subscribe('maxDurationChange', (ctrl) => this._httpSupervisor.quota = { maxDuration: parseInt(ctrl.value) });
-    this._el.subscribe('responseSizeChart', () => this._httpSupervisor.displayResponseSizeChart());
-    this._el.subscribe('responseTimeChart', () => this._httpSupervisor.displayResponseTimeChart());
-    this._el.subscribe('responseSizeTimeChart', () => this._httpSupervisor.displaySizeTimeChart());
-    this._el.subscribe('responseSizeDistributionChart', () => this._httpSupervisor.displaySizeDistribution());
+    this._el.subscribe('responseSizeChart', () => this._httpSupervisor.sizeChart());
+    this._el.subscribe('responseTimeChart', () => this._httpSupervisor.timeChart());
+    this._el.subscribe('responseSizeTimeChart', () => this._httpSupervisor.sizeTimeChart());
+    this._el.subscribe('responseSizeDistributionChart', () => this._httpSupervisor.sizeDistributionChart());
     this._el.subscribe('domainsChange', (ctrl) => this._httpSupervisor.domains = ctrl.value.split(',').map(x => x.trim()));
     this._el.subscribe('keyboardEventsChange', ctrl => this._httpSupervisor.keyboardEvents = ctrl.checked);
 

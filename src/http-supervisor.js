@@ -10,8 +10,8 @@ import {
   XHR_METADATA_KEY,
   InitiatorType,
   CHARTJS_LIB_PATH,
-  STORAGE_KEY
-}                      from './constants';
+  STORAGE_KEY, REQUEST_TYPE
+} from './constants';
 import {
   idGenerator,
   convertBytes,
@@ -646,30 +646,6 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Prints the log to the passed reporter.
-   */
-  print() {
-    const collection = new Collection([...this._requests])
-      .groupBy(...this._groupBy)
-      .sortBy(...this._sortBy);
-
-    this._reporter.report({
-      totalRequests: this.totalRequests,
-      getRequestsCount: this.getRequestsByType('GET').count,
-      postRequestsCount: this.getRequestsByType('POST').count,
-      putRequestsCount: this.getRequestsByType('PUT').count,
-      deleteRequestsCount: this.getRequestsByType('DELETE').count,
-      failedRequests: this.getFailedRequests().count,
-      requestsExceededQuota: this.getRequestsExceededQuota().count,
-      maxPayloadSize: this.maxPayloadSize(),
-      maxResponseSize: this.maxResponseSize(),
-      maxDuration: this.maxDuration(),
-      totalPayloadSize: this.getTotalPayloadSize(),
-      totalResponseSize: this.getTotalResponseSize()
-    }, collection);
-  }
-
-  /**
    * Subscribes to the passed event.
    * @param {string} eventName The event name.
    * @param {function} handler The event handler.
@@ -713,95 +689,76 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns the captured requests.
-   * @returns {Collection}
-   */
-  requests() {
-    return new Collection([...this._requests]);
-  }
-
-  /**
-   * Returns request of the id.
-   * @param {number} id The request id.
+   * Returns request for the passed arg (id/url).
+   * @param {number} arg The request arg.
    * @returns {HttpRequestInfo}
    */
-  getRequestById(id) {
-    return [...this._requests].find(r => r.id === id);
+  get(arg) {
+    if (typeof arg === 'number') {
+      return [...this._requests].find(r => r.id === arg);
+    }
+
+    if (typeof arg === 'string') {
+      return this.query(arg).first;
+    }
+
+    return this.first();
   }
 
   /**
-   * Filters the requests based on the passed type and returns as collection.
-   * @param {string} method The request method (GET / POST etc.)
-   * @returns {Collection}
-   */
-  getRequestsByType(method) {
-    return this.requests().search({ field: 'method', operator: '=', value: method });
-  }
-
-  /**
-   * Returns requests initiated for the passed url.
-   * @param {string} url The absolute or relative url.
-   * @returns {Collection}
-   */
-  getRequestsByUrl(url) {
-    return this.requests().search({ field: isAbsolute(url) ? 'url' : 'path', operator: '=', value: url });
-  }
-
-  /**
-   * Returns requests matches the passed status code.
-   * @param {number} status The status code.
-   * @returns {Collection}
-   */
-  getRequestsOfStatus(status) {
-    return this.requests().search({ field: 'responseStatus', operator: '=', value: status });
-  }
-
-  /**
-   * Returns the failed requests.
-   * @returns {Collection}
-   */
-  getFailedRequests() {
-    return this.requests().search({ field: 'error', operator: '=', value: true });
-  }
-
-  /**
-   * Returns the requests that exceeded the quota.
-   * @returns {Collection}
-   */
-  getRequestsExceededQuota() {
-    return this.requests().search({ field: 'exceedsQuota', operator: '=', value: true });
-  }
-
-  /**
-   * Returns the last failed request.
+   * Returns the first request.
    * @returns {HttpRequestInfo}
    */
-  getLastFailedRequest() {
-    return this.getFailedRequests().last;
+  first() {
+    return this.query().first;
   }
 
   /**
    * Returns the last request.
    * @returns {HttpRequestInfo}
    */
-  getLastRequest() {
-    return this.requests().last;
+  last() {
+    return this.query().last;
+  }
+
+  /**
+   * Returns the failed requests.
+   * @returns {Collection}
+   */
+  failed() {
+    return this.query('error', '=', true);
+  }
+
+  /**
+   * Returns the requests that exceeded the quota.
+   * @returns {Collection}
+   */
+  exceeded() {
+    return this.query('exceedsQuota', '=', true);
+  }
+
+  /**
+   * Returns the last failed request.
+   * @returns {HttpRequestInfo}
+   */
+  lastFailed() {
+    return this.failed().last;
   }
 
   /**
    * Returns the request that has maximum response size.
    * @returns {HttpRequestInfo}
    */
-  getMaxSizeRequest() {
-    return this.requests().sortBy({ field: 'responseSize', dir: 'desc' }).first;
+  maxSizeRequest() {
+    return this.sort({ field: 'responseSize', dir: 'desc' }).first;
   }
 
   /**
    * Returns the request that took maximum time to complete.
    * @returns {HttpRequestInfo}
    */
-  getMaxDurationRequest() {
-    return this.requests().sortBy({ field: 'duration', dir: 'desc' }).first;
+  maxDurationRequest() {
+    return this.sort({ field: 'duration', dir: 'desc' }).first;
   }
 
   /**
@@ -809,8 +766,8 @@ export default class HttpSupervisor {
    * @param {...string} groupArgs The group fields.
    * @returns {Collection}
    */
-  groupRequests(...groupArgs) {
-    return this.requests().groupBy(...groupArgs);
+  group(...groupArgs) {
+    return this.query(null, groupArgs);
   }
 
   /**
@@ -818,78 +775,73 @@ export default class HttpSupervisor {
    * @param {...*} sortArgs The sort parameters.
    * @returns {Collection}
    */
-  sortRequests(...sortArgs) {
-    return this.requests().sortBy(...sortArgs);
+  sort(...sortArgs) {
+    return this.query(null, null, sortArgs);
   }
 
   /**
-   * Groups and sorts the requests.
-   * @param {Array<string>} groupArgs Array of fields.
-   * @param {Array<*>} sortArgs Array of sort parameters.
+   * Search requests based on the passed arguments. Also, sorts and groups.
+   * @param {...*} args The query, group and sort arguments.
    * @returns {Collection}
    */
-  groupSortRequests(groupArgs, sortArgs) {
-    return this.groupRequests(...groupArgs).sortBy(...sortArgs);
-  }
+  query(...args) {
+    if (args.length === 0) {
+      return new Collection([...this._requests]);
+    }
 
-  /**
-   * Filters requests based on the passed query.
-   * @param {...*} query The search query.
-   * @returns {Collection}
-   */
-  searchRequests(...query) {
-    const q = [...query];
-    q.forEach(x => {
-      const { field, value } = x;
+    if (args.length === 1 && ['number', 'string'].has(typeof args[0])) {
+      const [arg] = args;
+      let query;
 
-      if (typeof value !== 'string') {
-        return;
+      if (typeof arg === 'string') {
+        if (REQUEST_TYPE.hasOwnProperty(arg)) {
+          query = { field: 'method', operator: '=', value: arg };
+        } else {
+          query = { field: isAbsolute(arg) ? 'url' : 'path', operator: '=', value: arg };
+        }
+      } else {
+        query = { field: 'responseStatus', operator: '=', value: arg }
       }
 
-      if (['payloadSize', 'responseSize'].has(field)) {
-        x.value = convertBytes(value);
-      } else if (field === 'duration') {
-        x.value = convertTime(value);
-      }
-    });
+      return this.query(query);
+    }
 
-    return this.requests().search(...query);
-  }
+    if (Array.isArray(args[0] || args[1] || args[2])) {
+      const [query, groupArgs, sortArgs] = args;
+      return this.query(...(query || [])).groupBy(...(groupArgs || [])).sortBy(...(sortArgs || []));
+    }
 
-  /**
-   * Returns requests that contains the passed string.
-   * @param {string} part The url part.
-   * @returns {Collection}
-   */
-  searchRequestsContainsUrl(part) {
-    return this.requests().search({ field: 'url', operator: 'contains', value: part });
-  }
+    if (typeof args[0] === 'object') {
+      const q = [];
+      args.forEach(x => {
+        let { field, value, operator } = x;
 
-  /**
-   * Returns requests that contains response size greater than the passed value.
-   * @param {number} size The size in bytes.
-   * @returns {Collection}
-   */
-  searchRequestsOfSizeGreaterThan(size) {
-    return this.requests().search({ field: 'responseSize', operator: '>=', value: size });
-  }
+        if (typeof value !== 'string') {
+          q.push(x);
+          return;
+        }
 
-  /**
-   * Get requests matches the query; group and sort the results based on the passed parameters.
-   * @param {Array<*>} query The search queries.
-   * @param {Array<string>} groupArgs The group arguments.
-   * @param {Array<string>} sortArgs The sort parameters.
-   * @returns {Collection}
-   */
-  searchGroupSortRequests(query, groupArgs, sortArgs) {
-    return this.searchRequests(query).groupBy(...groupArgs).sortBy(...sortArgs);
+        if (['payloadSize', 'responseSize'].has(field)) {
+          value = convertBytes(value);
+        } else if (field === 'duration') {
+          value = convertTime(value);
+        }
+
+        q.push({ field, value, operator });
+      });
+
+      return this.query().search(...q);
+    }
+
+    const [field, operator, value] = args;
+    return this.query({ field, operator, value });
   }
 
   /**
    * Returns the total payload size summing all requests.
    * @returns {number}
    */
-  getTotalPayloadSize() {
+  totalPayload() {
     return [...this._requests].reduce((a, b) => a + b.payloadSize, 0);
   }
 
@@ -897,7 +849,7 @@ export default class HttpSupervisor {
    * Returns the total response size summing all requests.
    * @returns {number}
    */
-  getTotalResponseSize() {
+  totalSize() {
     return [...this._requests].reduce((a, b) => a + b.responseSize, 0);
   }
 
@@ -905,7 +857,7 @@ export default class HttpSupervisor {
    * Returns the max payload size of the requests.
    * @returns {number}
    */
-  maxPayloadSize() {
+  maxPayload() {
     return Math.max(...[...this._requests].map(r => r.payloadSize));
   }
 
@@ -913,7 +865,7 @@ export default class HttpSupervisor {
    * Returns the max response size of the requests.
    * @returns {number}
    */
-  maxResponseSize() {
+  maxResponse() {
     return Math.max(...[...this._requests].map(r => r.responseSize));
   }
 
@@ -926,171 +878,123 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Prints all the requests in the passed reporter.
-   * @param {Array<string>} displayFields The fields to display.
+   * Prints the requests based on the passed arguments.
    */
-  printRequests(displayFields) {
-    this._reporter.report(this.requests(), displayFields);
-  }
+  print(...args) {
+    const [firstArg, secondArg, thirdArg, fourthArg] = args;
 
-  /**
-   * Prints the request for the passed id.
-   * @param id
-   */
-  printRequestById(id) {
-    this._reporter.report(this.getRequestById(id));
-  }
+    if (typeof firstArg === 'number') {
+      args.forEach(arg => this._reporter.report(this.get(arg)));
+      return;
+    }
 
-  /**
-   * Prints the requests matched the passed method (GET, POST etc.).
-   * @param {string} method
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  printRequestsByType(method, displayFields) {
-    this._reporter.report(this.getRequestsByType(method), displayFields);
-  }
+    if (typeof firstArg === 'string') {
+      const [, displayFields] = args;
+      let query;
 
-  /**
-   * Prints the requests that's been issued against the passed url.
-   * @param {string} url The absolute or relative url.
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  printRequestsByUrl(url, displayFields) {
-    this._reporter.report(this.getRequestsByUrl(url), displayFields);
-  }
+      if (REQUEST_TYPE.hasOwnProperty(firstArg)) {
+        query = { field: 'method', operator: '=', value: firstArg };
+      } else {
+        query = { field: isAbsolute(firstArg) ? 'url' : 'path', operator: '=', value: firstArg };
+      }
 
-  /**
-   * Print requests that has the passed response status.
-   * @param {number} status The status code.
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  printRequestsOfStatus(status, displayFields) {
-    this._reporter.report(this.getRequestsOfStatus(status), displayFields);
+      this._reporter.report(this.query(query), displayFields);
+      return;
+    }
+
+    if (firstArg instanceof HttpRequestInfo) {
+      args.forEach(arg => this._reporter.report(arg));
+      return;
+    }
+
+    if (firstArg instanceof Collection) {
+      this._reporter.report(firstArg, secondArg);
+      return;
+    }
+
+    if (firstArg && firstArg.displayFields) {
+      this._reporter.report(this.query(), firstArg.displayFields);
+      return;
+    }
+
+    if (Array.isArray(firstArg || secondArg || thirdArg)) {
+      const lastArg = args[args.length - 1];
+
+      let displayFields;
+      if (!Array.isArray(lastArg) && typeof lastArg === 'object') {
+        args.pop();
+        displayFields = lastArg.displayFields;
+      }
+
+      const [query, groupArgs, sortArgs] = args;
+      this._reporter.report(this.query(query, groupArgs, sortArgs), displayFields);
+      return;
+    }
+
+    this._reporter.report({
+      totalRequests: this.totalRequests,
+      getRequestsCount: this.query(REQUEST_TYPE.GET).count,
+      postRequestsCount: this.query(REQUEST_TYPE.POST).count,
+      putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
+      deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
+      failedRequests: this.failed().count,
+      requestsExceededQuota: this.exceeded().count,
+      maxPayloadSize: this.maxPayload(),
+      maxResponseSize: this.maxResponse(),
+      maxDuration: this.maxDuration(),
+      totalPayloadSize: this.totalPayload(),
+      totalResponseSize: this.totalSize()
+    }, this.query(null, this._groupBy, this._sortBy));
   }
 
   /**
    * Prints failed requests.
    * @param {Array<string>} displayFields The fields to display.
    */
-  printFailedRequests(displayFields) {
-    this._reporter.report(this.getFailedRequests(), displayFields);
+  printFailed(displayFields) {
+    this._reporter.report(this.failed(), displayFields);
   }
 
   /**
    * Prints requests exceeds quota.
    * @param {Array<string>} displayFields The fields to display.
    */
-  printRequestsExceededQuota(displayFields) {
-    this._reporter.report(this.getRequestsExceededQuota(), displayFields);
+  printExceeded(displayFields) {
+    this._reporter.report(this.exceeded(), displayFields);
   }
 
   /**
    * Prints the last failed request.
    */
-  printLastFailedRequest() {
-    this._reporter.report(this.getLastFailedRequest());
+  printLastFailed() {
+    this._reporter.report(this.lastFailed());
   }
 
   /**
    * Prints the last request.
    */
-  printLastRequest() {
-    this._reporter.report(this.getLastRequest());
+  printLast() {
+    this._reporter.report(this.last());
   }
 
   /**
    * Prints the request that has maximum size.
    */
   printMaxSizeRequest() {
-    this._reporter.report(this.getMaxSizeRequest());
+    this._reporter.report(this.maxSizeRequest());
   }
 
   /**
    * Prints the request that took maximum time.
    */
   printMaxDurationRequest() {
-    this._reporter.report(this.getMaxDurationRequest());
-  }
-
-  /**
-   * Groups and prints the requests.
-   * @param {...string|Array<string>} args The group and display arguments.
-   */
-  groupAndPrintRequests(...args) {
-    if (Array.isArray(args[0])) {
-      return this._reporter.report(this.groupRequests(...args[0]), args[1]);
-    }
-
-    this._reporter.report(this.groupRequests(...args));
-  }
-
-  /**
-   * Sorts and prints the requests.
-   * @param {...string|Array<string>} args The group and sort arguments.
-   */
-  sortAndPrintRequests(...args) {
-    if (Array.isArray(args[0])) {
-      return this._reporter.report(this.sortRequests(...args[0]), args[1]);
-    }
-
-    this._reporter.report(this.sortRequests(...args));
-  }
-
-  /**
-   * Groups, sorts and prints the requests.
-   * @param {Array<string>} groupArgs Array of fields.
-   * @param {Array<*>} sortArgs Array of sort parameters.
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  groupSortAndPrintRequests(groupArgs, sortArgs, displayFields) {
-    this._reporter.report(this.groupSortRequests(groupArgs, sortArgs), displayFields);
-  }
-
-  /**
-   * Searches and prints the requests matches the search query.
-   * @param {...*} args The search query and display fields parameters.
-   */
-  searchAndPrintRequests(...args) {
-    if (Array.isArray(args[0])) {
-      return this._reporter.report(this.searchRequests(...args[0]), args[1]);
-    }
-
-    this._reporter.report(this.searchRequests(...args));
-  }
-
-  /**
-   * Print requests that has url contains the passed string.
-   * @param part The url part.
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  printRequestsContainsUrl(part, displayFields) {
-    this._reporter.report(this.searchRequestsContainsUrl(part), displayFields);
-  }
-
-  /**
-   * Print requests that has response size greater than the passed value.
-   * @param {number} size The size in bytes.
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  printRequestsOfSizeGreaterThan(size, displayFields) {
-    this._reporter.report(this.searchRequestsOfSizeGreaterThan(size), displayFields);
-  }
-
-  /**
-   * Searches and then groups, sorts and finally prints the collection.
-   * @param {Array<*>} query The search queries.
-   * @param {Array<string>} groupArgs The group arguments.
-   * @param {Array<string>} sortArgs The sort parameters.
-   * @param {Array<string>} displayFields The fields to display.
-   */
-  searchGroupSortAndPrintRequests(query, groupArgs, sortArgs, displayFields) {
-    this._reporter.report(this.searchGroupSortRequests(...query, ...groupArgs, ...sortArgs), displayFields);
+    this._reporter.report(this.maxDurationRequest());
   }
 
   /**
    * Displays the bar chart of responsive size.
    */
-  displayResponseSizeChart() {
+  sizeChart() {
     const labels = [...this._requests].map(r => r.id),
       data = [...this._requests].map(r => r.responseSize);
 
@@ -1106,7 +1010,7 @@ export default class HttpSupervisor {
   /**
    * Displays the bar chart of responsive size.
    */
-  displayResponseTimeChart() {
+  timeChart() {
     const labels = [...this._requests].map(r => r.id),
       data = [...this._requests].map(r => r.duration);
 
@@ -1122,7 +1026,7 @@ export default class HttpSupervisor {
   /**
    * Displays bubble chart for response size and time.
    */
-  displaySizeTimeChart() {
+  sizeTimeChart() {
     const data = [...this._requests].map(r => ({
       x: r.id,
       y: r.responseSize,
@@ -1140,7 +1044,7 @@ export default class HttpSupervisor {
   /**
    * Displays the response size distribution.
    */
-  displaySizeDistribution() {
+  sizeDistributionChart() {
     const labels = [...this._requests].map(r => r.path),
       data = [...this._requests].map(r => r.responseSize);
 
@@ -1189,9 +1093,28 @@ export default class HttpSupervisor {
    * @param {...*} args The watch arguments.
    * @returns {number}
    */
-  watchOn(...args) {
+  watch(...args) {
+    if (args.length === 0) {
+     return -1;
+    }
+
     const watchId = this._watchId();
-    this._watches.set(watchId, args);
+
+    if (args.length === 1 && typeof args[0] === 'string') {
+      const [arg] = args;
+      let watchArgs;
+
+      if (REQUEST_TYPE.hasOwnProperty(arg)) {
+        watchArgs = { field: 'method', operator: '=', value: arg };
+      } else {
+        watchArgs = { field: isAbsolute(arg) ? 'url' : 'path', operator: '=', value: arg };
+      }
+
+      this._watches.set(watchId, watchArgs);
+    } else {
+      this._watches.set(watchId, args);
+    }
+
     this._updateStorage();
     return watchId;
   }
@@ -1201,7 +1124,7 @@ export default class HttpSupervisor {
    * @param {number} watchId The watch id.
    */
   removeWatch(watchId) {
-    this._watches.remove(watchId);
+    this._watches.delete(watchId);
     this._updateStorage();
   }
 
@@ -1274,7 +1197,7 @@ export default class HttpSupervisor {
     const id = this._id();
 
     let [url, options = {}] = [...arguments],
-      { method = 'GET', body } = options;
+      { method = REQUEST_TYPE.GET, body } = options;
 
     const payload = safeParse(body);
     const requestInfo = new HttpRequestInfo(id, url, method, payload);

@@ -221,7 +221,7 @@ export default class Collection extends Array {
     this.sort((r1, r2) => {
       for (let i = 0; i < args.length; i++) {
         const { field, dir } = args[i], v1 = r1[field], v2 = r2[field];
-        if (v1 < v1) return dir === 'asc' ? -1 : 1;
+        if (v1 < v2) return dir === 'asc' ? -1 : 1;
         if (v1 > v2) return dir === 'asc' ? 1 : -1;
       }
 

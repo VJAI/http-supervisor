@@ -62,7 +62,7 @@ function sendCall6() {
   fetch('https://jsonplaceholder.typicode.com/comments1');
 }
 
-httpSupervisor.init({
+http.init({
   domains: ['https://jsonplaceholder.typicode.com'],
   traceEachRequest: false,
   alertOnExceedQuota: false,

@@ -2513,13 +2513,13 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         postRequestsCount: this.getRequestsByType('POST').count,
         putRequestsCount: this.getRequestsByType('PUT').count,
         deleteRequestsCount: this.getRequestsByType('DELETE').count,
-        failedRequests: this.getFailedRequests().count,
-        requestsExceededQuota: this.getRequestsExceededQuota().count,
+        failedRequests: this.failed().count,
+        requestsExceededQuota: this.exceeded().count,
         maxPayloadSize: this.maxPayloadSize(),
         maxResponseSize: this.maxResponseSize(),
         maxDuration: this.maxDuration(),
-        totalPayloadSize: this.getTotalPayloadSize(),
-        totalResponseSize: this.getTotalResponseSize()
+        totalPayloadSize: this.totalPayloadSize(),
+        totalResponseSize: this.totalResponseSize()
       }, collection);
     }
     /**
@@ -2684,7 +2684,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "getLastFailedRequest",
     value: function getLastFailedRequest() {
-      return this.getFailedRequests().last;
+      return this.failed().last;
     }
     /**
      * Returns the last request.
@@ -2760,7 +2760,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     value: function groupSortRequests(groupArgs, sortArgs) {
       var _this$groupRequests;
 
-      return (_this$groupRequests = this.groupRequests.apply(this, toConsumableArray_default()(groupArgs))).sortBy.apply(_this$groupRequests, toConsumableArray_default()(sortArgs));
+      return (_this$groupRequests = this.group.apply(this, toConsumableArray_default()(groupArgs))).sortBy.apply(_this$groupRequests, toConsumableArray_default()(sortArgs));
     }
     /**
      * Filters requests based on the passed query.
@@ -2837,7 +2837,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     value: function searchGroupSortRequests(query, groupArgs, sortArgs) {
       var _this$searchRequests$, _this$searchRequests;
 
-      return (_this$searchRequests$ = (_this$searchRequests = this.searchRequests(query)).groupBy.apply(_this$searchRequests, toConsumableArray_default()(groupArgs))).sortBy.apply(_this$searchRequests$, toConsumableArray_default()(sortArgs));
+      return (_this$searchRequests$ = (_this$searchRequests = this.query(query)).groupBy.apply(_this$searchRequests, toConsumableArray_default()(groupArgs))).sortBy.apply(_this$searchRequests$, toConsumableArray_default()(sortArgs));
     }
     /**
      * Returns the total payload size summing all requests.
@@ -2917,7 +2917,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printRequestById",
     value: function printRequestById(id) {
-      this._reporter.report(this.getRequestById(id));
+      this._reporter.report(this.request(id));
     }
     /**
      * Prints the requests matched the passed method (GET, POST etc.).
@@ -2960,7 +2960,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printFailedRequests",
     value: function printFailedRequests(displayFields) {
-      this._reporter.report(this.getFailedRequests(), displayFields);
+      this._reporter.report(this.failed(), displayFields);
     }
     /**
      * Prints requests exceeds quota.
@@ -2970,7 +2970,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printRequestsExceededQuota",
     value: function printRequestsExceededQuota(displayFields) {
-      this._reporter.report(this.getRequestsExceededQuota(), displayFields);
+      this._reporter.report(this.exceeded(), displayFields);
     }
     /**
      * Prints the last failed request.
@@ -2979,7 +2979,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printLastFailedRequest",
     value: function printLastFailedRequest() {
-      this._reporter.report(this.getLastFailedRequest());
+      this._reporter.report(this.lastFailed());
     }
     /**
      * Prints the last request.
@@ -2988,7 +2988,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printLastRequest",
     value: function printLastRequest() {
-      this._reporter.report(this.getLastRequest());
+      this._reporter.report(this.last());
     }
     /**
      * Prints the request that has maximum size.
@@ -2997,7 +2997,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printMaxSizeRequest",
     value: function printMaxSizeRequest() {
-      this._reporter.report(this.getMaxSizeRequest());
+      this._reporter.report(this.maxSizeRequest());
     }
     /**
      * Prints the request that took maximum time.
@@ -3006,7 +3006,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printMaxDurationRequest",
     value: function printMaxDurationRequest() {
-      this._reporter.report(this.getMaxDurationRequest());
+      this._reporter.report(this.maxDurationRequest());
     }
     /**
      * Groups and prints the requests.
@@ -3017,10 +3017,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     key: "groupAndPrintRequests",
     value: function groupAndPrintRequests() {
       if (Array.isArray(arguments.length <= 0 ? undefined : arguments[0])) {
-        return this._reporter.report(this.groupRequests.apply(this, toConsumableArray_default()(arguments.length <= 0 ? undefined : arguments[0])), arguments.length <= 1 ? undefined : arguments[1]);
+        return this._reporter.report(this.group.apply(this, toConsumableArray_default()(arguments.length <= 0 ? undefined : arguments[0])), arguments.length <= 1 ? undefined : arguments[1]);
       }
 
-      this._reporter.report(this.groupRequests.apply(this, arguments));
+      this._reporter.report(this.group.apply(this, arguments));
     }
     /**
      * Sorts and prints the requests.
@@ -3031,10 +3031,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     key: "sortAndPrintRequests",
     value: function sortAndPrintRequests() {
       if (Array.isArray(arguments.length <= 0 ? undefined : arguments[0])) {
-        return this._reporter.report(this.sortRequests.apply(this, toConsumableArray_default()(arguments.length <= 0 ? undefined : arguments[0])), arguments.length <= 1 ? undefined : arguments[1]);
+        return this._reporter.report(this.sort.apply(this, toConsumableArray_default()(arguments.length <= 0 ? undefined : arguments[0])), arguments.length <= 1 ? undefined : arguments[1]);
       }
 
-      this._reporter.report(this.sortRequests.apply(this, arguments));
+      this._reporter.report(this.sort.apply(this, arguments));
     }
     /**
      * Groups, sorts and prints the requests.
@@ -3046,7 +3046,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "groupSortAndPrintRequests",
     value: function groupSortAndPrintRequests(groupArgs, sortArgs, displayFields) {
-      this._reporter.report(this.groupSortRequests(groupArgs, sortArgs), displayFields);
+      this._reporter.report(this.arrange(groupArgs, sortArgs), displayFields);
     }
     /**
      * Searches and prints the requests matches the search query.
@@ -3057,10 +3057,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     key: "searchAndPrintRequests",
     value: function searchAndPrintRequests() {
       if (Array.isArray(arguments.length <= 0 ? undefined : arguments[0])) {
-        return this._reporter.report(this.searchRequests.apply(this, toConsumableArray_default()(arguments.length <= 0 ? undefined : arguments[0])), arguments.length <= 1 ? undefined : arguments[1]);
+        return this._reporter.report(this.query.apply(this, toConsumableArray_default()(arguments.length <= 0 ? undefined : arguments[0])), arguments.length <= 1 ? undefined : arguments[1]);
       }
 
-      this._reporter.report(this.searchRequests.apply(this, arguments));
+      this._reporter.report(this.query.apply(this, arguments));
     }
     /**
      * Print requests that has url contains the passed string.
@@ -3095,7 +3095,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "searchGroupSortAndPrintRequests",
     value: function searchGroupSortAndPrintRequests(query, groupArgs, sortArgs, displayFields) {
-      this._reporter.report(this.searchGroupSortRequests.apply(this, toConsumableArray_default()(query).concat(toConsumableArray_default()(groupArgs), toConsumableArray_default()(sortArgs))), displayFields);
+      this._reporter.report(this.searchAndArrange.apply(this, toConsumableArray_default()(query).concat(toConsumableArray_default()(groupArgs), toConsumableArray_default()(sortArgs))), displayFields);
     }
     /**
      * Displays the bar chart of responsive size.
@@ -3589,7 +3589,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_isExceededQuota",
     value: function _isExceededQuota(request) {
-      return request.payloadSize > this._quota.maxPayloadSize || request.responseSize > this._quota.maxResponseSize || request.duration > this._quota.maxDuration;
+      return request.payloadSize > this._quota.maxPayload || request.responseSize > this._quota.maxResponse || request.duration > this._quota.maxDuration;
     }
     /**
      * Creates URL object.
@@ -3887,19 +3887,19 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
       });
 
       this._el.subscribe('responseSizeChart', function () {
-        return _this._httpSupervisor.displayResponseSizeChart();
+        return _this._httpSupervisor.sizeChart();
       });
 
       this._el.subscribe('responseTimeChart', function () {
-        return _this._httpSupervisor.displayResponseTimeChart();
+        return _this._httpSupervisor.timeChart();
       });
 
       this._el.subscribe('responseSizeTimeChart', function () {
-        return _this._httpSupervisor.displaySizeTimeChart();
+        return _this._httpSupervisor.sizeTimeChart();
       });
 
       this._el.subscribe('responseSizeDistributionChart', function () {
-        return _this._httpSupervisor.displaySizeDistribution();
+        return _this._httpSupervisor.sizeDistributionChart();
       });
 
       this._el.subscribe('domainsChange', function (ctrl) {
@@ -4772,11 +4772,11 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           deleteRequestsCount = _ref3.deleteRequestsCount,
           failedRequests = _ref3.failedRequests,
           requestsExceededQuota = _ref3.requestsExceededQuota,
-          maxPayloadSize = _ref3.maxPayloadSize,
-          maxResponseSize = _ref3.maxResponseSize,
+          maxPayloadSize = _ref3.maxPayload,
+          maxResponseSize = _ref3.maxResponse,
           maxDuration = _ref3.maxDuration,
-          totalPayloadSize = _ref3.totalPayloadSize,
-          totalResponseSize = _ref3.totalResponseSize;
+          totalPayloadSize = _ref3.totalPayload,
+          totalResponseSize = _ref3.totalSize;
       this.printKeyValueMany((_this$printKeyValueMa = {}, defineProperty_default()(_this$printKeyValueMa, Messages.TOTAL_REQUESTS, totalRequests), defineProperty_default()(_this$printKeyValueMa, "GET", getRequestsCount), defineProperty_default()(_this$printKeyValueMa, "POST", postRequestsCount), defineProperty_default()(_this$printKeyValueMa, "PUT", putRequestsCount), defineProperty_default()(_this$printKeyValueMa, "DELETE", deleteRequestsCount), _this$printKeyValueMa));
       this.printKeyValue(Messages.FAILED_REQUESTS, failedRequests);
       this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, requestsExceededQuota);

@@ -1,4 +1,4 @@
-import httpSupervisor from './src';
+import http from './src';
 
 function makeAjaxCalls() {
   sendCall1();
@@ -84,8 +84,8 @@ function sendCall8() {
   xhr.send();
 }
 
-window.httpSupervisor = httpSupervisor;
-httpSupervisor.init({
+window.http = http;
+http.init({
   domains: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
   traceEachRequest: true
 });

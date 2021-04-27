@@ -108,7 +108,7 @@ export default class ConsoleReporter {
    */
   report(arg1, arg2, arg3) {
     if (arguments.length === 1) {
-      if (arg1 === null) {
+      if (!arg1) {
         this.print(Messages.NO_REQUEST, Colors.INFO, true);
         return;
       } else if (arg1 instanceof HttpRequestInfo || arg1 instanceof Collection) {
