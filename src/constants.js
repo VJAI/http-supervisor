@@ -28,8 +28,6 @@ export const Messages = {
   REQUEST_NO: 'Request No',
   URL: 'Url',
   PATH: 'Path',
-  PATH_WITH_QUERY: 'Path',
-  PART_WITH_QUERY: 'Path',
   METHOD: 'Type',
   PAYLOAD: 'Payload',
   PAYLOAD_SIZE: 'Payload Size',
@@ -63,6 +61,7 @@ export const Colors = {
   BLACK: '#000',
   GRAY: '#aaa',
   MEDIUM_GRAY: '#ccc',
+  LIGHT_GRAY: '#eee',
   ERROR_MEDIUM: '#ff6e92',
   WARN_MEDIUM: '#e3b842'
 };
@@ -114,8 +113,7 @@ export const HTTP_REQUEST_INFO_DISPLAY_NAMES = {
   id: Messages.REQUEST_NO,
   url: Messages.URL,
   path: Messages.PATH,
-  pathWithQuery: Messages.PATH_WITH_QUERY,
-  partWithQuery: Messages.PART_WITH_QUERY,
+  part: Messages.PATH,
   method: Messages.METHOD,
   payload: Messages.PAYLOAD,
   payloadSize: Messages.PAYLOAD_SIZE_WITH_BYTES,

@@ -2120,7 +2120,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "domains",
     get: function get() {
-      return this._domains ? toConsumableArray_default()(this._domains) : null;
+      return this._include ? toConsumableArray_default()(this._include) : null;
     }
     /**
      * Set the domains.
@@ -2367,7 +2367,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       var storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
 
       var _storedConfig$config = _objectSpread(_objectSpread({}, storedConfig), config),
-          domains = _storedConfig$config.domains,
+          domains = _storedConfig$config.include,
           renderUI = _storedConfig$config.renderUI,
           traceEachRequest = _storedConfig$config.traceEachRequest,
           alertOnError = _storedConfig$config.alertOnError,
@@ -3798,7 +3798,7 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
 
       document.body.appendChild(this._el = document.createElement('http-supervisor-widget'));
       var _this$_httpSupervisor = this._httpSupervisor,
-          domains = _this$_httpSupervisor.domains,
+          domains = _this$_httpSupervisor.include,
           traceEachRequest = _this$_httpSupervisor.traceEachRequest,
           alertOnError = _this$_httpSupervisor.alertOnError,
           alertOnExceedQuota = _this$_httpSupervisor.alertOnExceedQuota,
@@ -3903,7 +3903,7 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
       });
 
       this._el.subscribe('domainsChange', function (ctrl) {
-        return _this._httpSupervisor.domains = ctrl.value.split(',').map(function (x) {
+        return _this._httpSupervisor.include = ctrl.value.split(',').map(function (x) {
           return x.trim();
         });
       });
@@ -4139,7 +4139,7 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
   createClass_default()(HtmlSupervisorWidgetElement, [{
     key: "setState",
     value: function setState(_ref2) {
-      var domains = _ref2.domains,
+      var domains = _ref2.include,
           traceEachRequest = _ref2.traceEachRequest,
           alertOnError = _ref2.alertOnError,
           alertOnExceedQuota = _ref2.alertOnExceedQuota,

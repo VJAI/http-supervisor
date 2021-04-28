@@ -11,7 +11,7 @@ import {
   InitiatorType,
   CHARTJS_LIB_PATH,
   STORAGE_KEY, REQUEST_TYPE
-} from './constants';
+}                      from './constants';
 import {
   idGenerator,
   convertBytes,
@@ -25,6 +25,7 @@ import {
   isJsonResponse,
   safeParse
 }                      from './util';
+import { Session }     from './session';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify query, group, sort, export, visualize requests and much more.
@@ -53,11 +54,18 @@ export default class HttpSupervisor {
   _eventEmitter = null;
 
   /**
-   * The domains to monitor.
+   * The url that matches these patterns will be captured.
    * @type {Set}
    * @private
    */
-  _domains = null;
+  _include = null;
+
+  /**
+   * The url that matches these patterns will be ignored.
+   * @type {Set}
+   * @private
+   */
+  _exclude = null;
 
   /**
    * True to render UI.
@@ -76,6 +84,13 @@ export default class HttpSupervisor {
     maxResponseSize: 10240, // 10kb
     maxDuration: 1000 // 1s
   };
+
+  /**
+   * True to not display any messages in console or the passed reporter.
+   * @type {boolean}
+   * @private
+   */
+  _silent = false;
 
   /**
    * Displays each completed request.
@@ -99,11 +114,18 @@ export default class HttpSupervisor {
   _alertOnExceedQuota = true;
 
   /**
+   * True to alert on request start.
+   * @type {boolean}
+   * @private
+   */
+  _alertOnRequestStart = false;
+
+  /**
    * Grouping parameters used in displaying requests.
    * @type {string[]}
    * @private
    */
-  _groupBy = ['path', 'method'];
+  _groupBy = ['part', 'method'];
 
   /**
    * Sorting parameters used in displaying requests.
@@ -152,14 +174,28 @@ export default class HttpSupervisor {
    * @type {boolean}
    * @private
    */
-  _lockConsole = true;
+  _lockConsole = false;
+
+  /**
+   * The endpoint to POST the call logs.
+   * @type {string}
+   * @private
+   */
+  _broadcastEndpoint = null;
 
   /**
    * Collection of captured requests.
    * @type {Set}
    * @private
    */
-  _requests = new Set();
+  _requests = new Session();
+
+  /**
+   * Collection of recorded sessions.
+   * @type {Map}
+   * @private
+   */
+  _sessions = new Map();
 
   /**
    * Collection of watches.
@@ -197,6 +233,20 @@ export default class HttpSupervisor {
   _watchId = idGenerator(1);
 
   /**
+   * The id generator function for sessions.
+   * @type {function}
+   * @private
+   */
+  _sessionId = idGenerator(1);
+
+  /**
+   * The current active session id.
+   * @type {number}
+   * @private
+   */
+  _activeSessionId = null;
+
+  /**
    * Native `fetch` method.
    * @type {function}
    * @private
@@ -216,6 +266,13 @@ export default class HttpSupervisor {
    * @private
    */
   _nativeSend = XMLHttpRequest.prototype.send;
+
+  /**
+   * XMLHttpRequest native `setRequestHeader` method.
+   * @type {function}
+   * @private
+   */
+  _nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
 
   /**
    * Returns `true` if busy.
@@ -242,18 +299,34 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Returns the passed domains.
+   * Returns the url patters to monitor.
    * @returns {Array}
    */
-  get domains() {
-    return this._domains ? [...this._domains] : null;
+  get include() {
+    return this._include ? [...this._include] : null;
   }
 
   /**
-   * Set the domains.
+   * Set the url patterns to monitor.
    */
-  set domains(value) {
-    this._domains = new Set(value || []);
+  set include(value) {
+    this._include = new Set(value || []);
+    this._updateStorage();
+  }
+
+  /**
+   * Returns the url patters to ignore.
+   * @returns {Array}
+   */
+  get exclude() {
+    return this._exclude ? [...this._exclude] : null;
+  }
+
+  /**
+   * Set the url patters to ignore.
+   */
+  set exclude(value) {
+    this._exclude = new Set(value || []);
     this._updateStorage();
   }
 
@@ -274,6 +347,23 @@ export default class HttpSupervisor {
     } else {
       this._widget.hide();
     }
+  }
+
+  /**
+   * Returns true if no outputs in console.
+   * @return {boolean}
+   */
+  get silent() {
+    return this._silent;
+  }
+
+  /**
+   * Enables/disables the silent flag.
+   * @param value
+   */
+  set silent(value) {
+    this._silent = value;
+    this._updateStorage();
   }
 
   /**
@@ -324,6 +414,22 @@ export default class HttpSupervisor {
    */
   set alertOnExceedQuota(value) {
     this._alertOnExceedQuota = value;
+    this._updateStorage();
+  }
+
+  /**
+   * Returns true if printing at request start is enabled.
+   */
+  get alertOnRequestStart() {
+    return this._alertOnRequestStart;
+  }
+
+  /**
+   * Setting `true` prints the request start message.
+   * @param value
+   */
+  set alertOnRequestStart(value) {
+    this._alertOnRequestStart = value;
     this._updateStorage();
   }
 
@@ -450,6 +556,7 @@ export default class HttpSupervisor {
    */
   set persistConfig(value) {
     this._persistConfig = value;
+    !value && this.clearStore();
   }
 
   /**
@@ -466,6 +573,7 @@ export default class HttpSupervisor {
    */
   set lockConsole(value) {
     this._lockConsole = value;
+    this._updateStorage();
 
     if (!this._reporter) {
       return;
@@ -502,11 +610,13 @@ export default class HttpSupervisor {
   /**
    * Initialize the supervisor.
    * @param {object} [config] The configuration parameters.
-   * @param {Array<string>} [config.domains] Array of domains to monitor.
+   * @param {Array<string>} [config.include] Array of url globs to monitor.
+   * @param {Array<string>} [config.exclude] Array of url globs to ignore.
    * @param {boolean} [config.renderUI] Passing `true` will render UI.
    * @param {boolean} [config.traceEachRequest] Passing `true` will print each request.
    * @param {boolean} [config.alertOnError] Passing `true` will print error requests.
    * @param {boolean} [config.alertOnExceedQuota] Passing `true` will print requests that exceeds quota.
+   * @param {boolean} [config.alertOnRequestStart] True to alert on request start.
    * @param {object} [config.quota] Request Quota.
    * @param {Array} [config.groupBy] Grouping parameters used in displaying requests.
    * @param {Array} [config.sortBy] Sorting parameters used in displaying requests.
@@ -527,11 +637,14 @@ export default class HttpSupervisor {
     const storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
 
     const {
-      domains,
+      include,
+      exclude,
       renderUI,
       traceEachRequest,
       alertOnError,
       alertOnExceedQuota,
+      alertOnRequestStart,
+      silent,
       quota,
       groupBy,
       sortBy,
@@ -541,14 +654,18 @@ export default class HttpSupervisor {
       keyboardEvents,
       watches,
       persistConfig,
-      lockConsole
+      lockConsole,
+      broadcastEndpoint
     } = { ...storedConfig, ...config };
 
-    Array.isArray(domains) && (this._domains = new Set(domains));
+    Array.isArray(include) && (this._include = new Set(include));
+    Array.isArray(exclude) && (this._exclude = new Set(exclude));
     typeof renderUI === 'boolean' && (this._renderUI = renderUI);
+    typeof silent === 'boolean' && (this._silent = silent);
     typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
     typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
     typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
+    typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
     typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
     Array.isArray(groupBy) && (this._groupBy = groupBy);
     Array.isArray(sortBy) && (this._sortBy = sortBy);
@@ -559,9 +676,14 @@ export default class HttpSupervisor {
     typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
     Array.isArray(watches) && (this._watches = new Map(this._watches));
     typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
+    typeof broadcastEndpoint === 'boolean' && (this._broadcastEndpoint = broadcastEndpoint);
 
     // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
+      if (this._silent) {
+        return;
+      }
+
       if (this._traceEachRequest) {
         this._reporter.report(request);
         return;
@@ -676,6 +798,8 @@ export default class HttpSupervisor {
     this._triggerEvent(SupervisorEvents.RETIRE);
     this._eventEmitter.destroy();
     this._eventEmitter = null;
+    this._watches = null;
+    this._sessions = null;
     clearStore && this.clearStore();
     this._status = SupervisorStatus.Retired;
   }
@@ -1095,7 +1219,7 @@ export default class HttpSupervisor {
    */
   watch(...args) {
     if (args.length === 0) {
-     return -1;
+      return -1;
     }
 
     const watchId = this._watchId();
@@ -1144,6 +1268,93 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Re-issues ajax request for the passed http request.
+   * @param id
+   * @param type
+   */
+  fire(id, type = InitiatorType.XHR) {
+    const request = this.get(id);
+    request && request.fire(type);
+  }
+
+  /**
+   * Creates a new session.
+   * @return {number}
+   */
+  record() {
+    if (this._activeSessionId) {
+      this.end();
+    }
+
+    const session = new Session();
+    session.id = this._activeSessionId = this._sessionId();
+    this._sessions.set(session.id, session);
+    return this._activeSessionId;
+  }
+
+  /**
+   * Ends the current session.
+   */
+  end() {
+    this._activeSessionId = null;
+  }
+
+  /**
+   * Returns session for the passed id.
+   * @param id
+   * @return {any}
+   */
+  getSession(id) {
+    return this._sessions.get(id);
+  }
+
+  /**
+   * Plays the passed session.
+   * @param id
+   */
+  play(id) {
+    throw new Error('Not Implemented');
+  }
+
+  /**
+   * Removes the passes session.
+   * @param id
+   */
+  removeSession(id) {
+    this._sessions.delete(id);
+  }
+
+  /**
+   * Clear all sessions.
+   */
+  clearSessions() {
+    this._sessions.clear();
+  }
+
+  /**
+   * Broadcast the current requests log to a remote endpoint.
+   */
+  broadcast() {
+    throw new Error('Not Implemented');
+  }
+
+  /**
+   * Returns `true` if the passed url is allowed to monitor.
+   * @param url
+   */
+  canAllowUrl(url) {
+    if (this._exclude !== null && [...this._exclude].filter(pattern => this._isUrlMatch(pattern, url)).length) {
+      return false;
+    }
+
+    if (this._exclude !== null && [...this._exclude].filter(pattern => this._isUrlMatch(pattern, xhr[XHR_METADATA_KEY].url)).length === 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Render the UI.
    * @private
    */
@@ -1162,7 +1373,8 @@ export default class HttpSupervisor {
    */
   _monkeyPatch() {
     const open = this._open.bind(this),
-      send = this._send.bind(this);
+      send = this._send.bind(this),
+      setRequestHeader = this._setRequestHeader.bind(this);
 
     this._monkeyPatchFetch && (window.fetch = this._fetch.bind(this));
 
@@ -1172,6 +1384,10 @@ export default class HttpSupervisor {
 
     XMLHttpRequest.prototype.send = function () {
       send(this, ...arguments);
+    };
+
+    XMLHttpRequest.prototype.setRequestHeader = function () {
+      setRequestHeader(this, ...arguments);
     };
   }
 
@@ -1183,6 +1399,7 @@ export default class HttpSupervisor {
     this._monkeyPatchFetch && (window.fetch = this._nativeFetch);
     XMLHttpRequest.prototype.open = this._nativeOpen;
     XMLHttpRequest.prototype.send = this._nativeSend;
+    XMLHttpRequest.prototype.setRequestHeader = this._nativeSetRequestHeader;
   }
 
   /**
@@ -1197,18 +1414,21 @@ export default class HttpSupervisor {
     const id = this._id();
 
     let [url, options = {}] = [...arguments],
-      { method = REQUEST_TYPE.GET, body } = options;
+      { method = REQUEST_TYPE.GET, body, headers } = options;
 
     const payload = safeParse(body);
     const requestInfo = new HttpRequestInfo(id, url, method, payload);
     requestInfo.initiatorType = InitiatorType.FETCH;
     requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
-    this._requests.add(requestInfo);
+    headers && (requestInfo.requestHeaders = new Map(Object.entries(headers)));
+    this._addRequest(requestInfo);
 
     return new Promise((resolve, reject) => {
       this._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
 
       let response;
+
+      this._alertOnRequestStart && this._reporter.report(requestInfo);
 
       // Make the fetch call and capture the response info.
       this._nativeFetch.call(window, this._isPerformanceSupported() ? this._appendRequestIdToUrl(url, id) : url, options)
@@ -1225,6 +1445,7 @@ export default class HttpSupervisor {
         })
         .finally(() => {
           requestInfo.responseStatus = response ? response.status : 500;
+          requestInfo.responseHeaders = new Map(Object.entries(response.headers.entries()));
           this._fillParametersAndFireEvents(requestInfo, response);
         });
     });
@@ -1275,7 +1496,7 @@ export default class HttpSupervisor {
     xhr[XHR_METADATA_KEY].payload = safeParse(payload);
     parameters.shift();
 
-    if (this._domains !== null && !this._domains.has(url.origin)) {
+    if (!this.canAllowUrl(xhr[XHR_METADATA_KEY].url)) {
       this._nativeSend.call(xhr, ...parameters);
       return;
     }
@@ -1285,10 +1506,28 @@ export default class HttpSupervisor {
 
     // Capture the request.
     const requestInfo = this._createRequest(xhr);
-    this._requests.add(requestInfo);
+    this._addRequest(requestInfo);
 
     // Listen to `onreadystatechange` event to capture the response info.
     xhr.addEventListener('readystatechange', () => {
+      if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
+        const headers = xhr.getAllResponseHeaders(),
+          arr = headers.trim().split(/[\r\n]+/),
+          headersSet = new Map();
+
+        arr.forEach(function (line) {
+          const parts = line.split(': '),
+            header = parts.shift(),
+            value = parts.join(': ');
+
+          headersSet.set(header, value);
+        });
+
+        requestInfo.requestHeaders = headersSet;
+
+        return;
+      }
+
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         return;
       }
@@ -1299,8 +1538,30 @@ export default class HttpSupervisor {
       this._fillParametersAndFireEvents(requestInfo, xhr);
     });
 
+    this._alertOnRequestStart && this._reporter.report(requestInfo);
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);
+  }
+
+  /**
+   * Captures request header info.
+   * @private
+   */
+  _setRequestHeader() {
+    if (!this.busy) {
+      return;
+    }
+
+    const parameters = [...arguments],
+      [xhr, header, value] = parameters;
+
+    parameters.shift();
+
+    const { reqHeaders = new Map() } = xhr[XHR_METADATA_KEY];
+    reqHeaders.set(header, value);
+    xhr[XHR_METADATA_KEY].reqHeaders = reqHeaders;
+
+    this._nativeSetRequestHeader.call(xhr, ...parameters);
   }
 
   /**
@@ -1331,10 +1592,20 @@ export default class HttpSupervisor {
 
     requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
     requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
+    requestInfo.pending = false;
 
     requestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, requestInfo, xhrOrResponse);
     requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo, xhrOrResponse);
     this._triggerEvent(SupervisorEvents.REQUEST_END, requestInfo, xhrOrResponse);
+  }
+
+  /**
+   * https://stackoverflow.com/questions/24558442/is-there-something-like-glob-but-for-urls-in-javascript
+   * @private
+   */
+  _isUrlMatch(pattern, input) {
+    const re = new RegExp(pattern.replace(/([.?+^$[\]\\(){}|\/-])/g, "\\$1").replace(/\*/g, '.*'));
+    return re.test(input);
   }
 
   /**
@@ -1366,14 +1637,26 @@ export default class HttpSupervisor {
       id,
       url,
       method,
-      payload
+      payload,
+      reqHeaders
     } = xhr[XHR_METADATA_KEY];
 
     const httpRequestInfo = new HttpRequestInfo(id, url, method, payload);
     httpRequestInfo.initiatorType = InitiatorType.XHR;
     httpRequestInfo.payloadSize = byteSize(payload ? JSON.stringify(payload) : '');
+    reqHeaders && (httpRequestInfo.requestHeaders = reqHeaders);
 
     return httpRequestInfo;
+  }
+
+  /**
+   * Adds the request to collection.
+   * @param request
+   * @private
+   */
+  _addRequest(request) {
+    this._requests.add(request);
+    this._activeSessionId && this._sessions.get(this._activeSessionId).add(request);
   }
 
   /**
@@ -1427,13 +1710,23 @@ export default class HttpSupervisor {
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      include: this._include !== null ? [...this._include] : null,
+      exclude: this._exclude !== null ? [...this._exclude] : null,
+      silent: this._silent,
       traceEachRequest: this._traceEachRequest,
       alertOnError: this._alertOnError,
       alertOnExceedQuota: this._alertOnExceedQuota,
+      alertOnRequestStart: this._alertOnRequestStart,
+      renderUI: this._renderUI,
+      groupBy: this._groupBy,
+      sortBy: this._sortBy,
+      keyboardEvents: this._keyboardEvents,
+      lockConsole: this._lockConsole,
       usePerformance: this._usePerformance,
       quota: this._quota,
-      domains: [...this._domains],
-      watches: JSON.stringify([...this._watches.entries()])
+      broadcastEndpoint: this._broadcastEndpoint,
+      watches: JSON.stringify([...this._watches.entries()]),
+      sessions: JSON.stringify([...this._sessions.entries()])
     }));
   }
 

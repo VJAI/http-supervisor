@@ -1,10 +1,17 @@
-import { isAbsolute }    from './util';
-import { InitiatorType } from './constants';
+import { isAbsolute }                  from './util';
+import { InitiatorType, REQUEST_TYPE } from './constants';
 
 /**
  * Holds the http request information.
  */
 export default class HttpRequestInfo {
+
+  /**
+   * The URL object.
+   * @type {URL}
+   * @private
+   */
+  _urlObj = null;
 
   /**
    * The request no.
@@ -13,22 +20,51 @@ export default class HttpRequestInfo {
   id = -1;
 
   /**
-   * The full url of the request.
-   * @type {string}
+   * Returns the full url of the request.
+   * @return {string}
    */
-  url = null;
+  get url() {
+    return this._urlObj ? this._urlObj.toString() : null;
+  }
 
   /**
-   * The path in the url excluding domain.
-   * @type {string}
+   * Returns the domain.
+   * @return {string}
    */
-  path = null;
+  get domain() {
+    return this._urlObj ? this._urlObj.origin : null;
+  }
+
+  /**
+   * Returns the path.
+   * @return {string}
+   */
+  get path() {
+    return this._urlObj ? this._urlObj.pathname : null;
+  }
 
   /**
    * The query in the url.
    * @type {string}
    */
-  query = null;
+  get query() {
+    return this._urlObj ? this._urlObj.search : null;
+  }
+
+  /**
+   * The path in the url excluding domain.
+   * @type {string}
+   */
+  get part() {
+    if (!this._urlObj) {
+      return null;
+    }
+
+    const pathParts = this.path.split('/'),
+      lastPart = `/${pathParts[pathParts.length - 1]}` || '/';
+
+    return this.query ? `${lastPart}${this.query}` : lastPart;
+  }
 
   /**
    * The request type (GET, POST etc.)
@@ -85,25 +121,6 @@ export default class HttpRequestInfo {
   responseSize = 0;
 
   /**
-   * Returns path with query.
-   * @type {string}
-   */
-  get pathWithQuery() {
-    return this.query ? `${this.path}${this.query}` : this.path;
-  }
-
-  /**
-   * Returns the path's last part and query.
-   * @type {string}
-   */
-  get partWithQuery() {
-    const pathParts = (this.path || []).split('/'),
-      lastPart = `/${pathParts[pathParts.length - 1]}` || '/';
-
-    return this.query ? `${lastPart}${this.query}` : lastPart;
-  }
-
-  /**
    * True if the request error-ed out.
    * @type {boolean}
    */
@@ -138,17 +155,52 @@ export default class HttpRequestInfo {
   payloadByPerformance = true;
 
   /**
+   * Request Headers.
+   * @type {Map}
+   */
+  requestHeaders = new Map();
+
+  /**
+   * Response Headers.
+   * @type {Map}
+   */
+  responseHeaders = new Map();
+
+  /**
+   * True if the request is pending.
+   * @type {boolean}
+   */
+  pending = true;
+
+  /**
    * Constructor.
    */
   constructor(id, url, method, payload) {
     this.id = id;
-    this.url = url;
-    if (url) {
-      const urlObject = isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin);
-      this.path = urlObject.pathname;
-      this.query = urlObject.search;
-    }
+    url && (this._urlObj = isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin));
     this.method = method;
     this.payload = payload;
+  }
+
+  /**
+   * Issues AJAX request using the property values.
+   * @param type
+   * @return {XMLHttpRequest}
+   */
+  fire(type = 'xhr') {
+    if (type === 'xhr') {
+      const request = new XMLHttpRequest();
+      request.open(this.method, this.url);
+      Object.entries(this.requestHeaders).forEach(([header, value]) => request.setRequestHeader(header, value));
+      this.method !== REQUEST_TYPE.GET && this.payload ? request.send(JSON.stringify(this.payload)) : request.send();
+      return request;
+    }
+
+    const requestOptions = {
+      method: this.method,
+      headers: null
+    };
+
+    window.fetch(this.url, requestOptions);
   }
 }

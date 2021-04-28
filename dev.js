@@ -23,7 +23,8 @@ function makeAjaxCalls() {
 
 function sendCall1() {
   const xhr = new XMLHttpRequest();
-  xhr.open('GET', 'https://jsonplaceholder.typicode.com/users');
+  xhr.open('GET', 'https://jsonplaceholder.typicode.com/users?fake=1');
+  xhr.setRequestHeader('x-auth-token', '123');
   xhr.send();
 }
 
@@ -87,7 +88,8 @@ function sendCall8() {
 window.http = http;
 http.init({
   domains: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
-  traceEachRequest: true
+  traceEachRequest: true,
+  alertOnRequestStart: false
 });
 makeAjaxCalls();
 setTimeout(makeAjaxCalls, 100);

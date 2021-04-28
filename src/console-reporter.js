@@ -17,7 +17,7 @@ export default class ConsoleReporter {
   _fieldsToDisplay = new Set([
     'id',
     'url',
-    'partWithQuery',
+    'part',
     'method',
     'payload',
     'payloadSize',
@@ -491,16 +491,18 @@ export default class ConsoleReporter {
 
     if (requestOrCollection instanceof HttpRequestInfo) {
       let borderColor = Colors.GRAY;
-      if (requestOrCollection.error) {
+      if (requestOrCollection.pending) {
+        borderColor = Colors.LIGHT_GRAY;
+      } else if (requestOrCollection.error) {
         borderColor = Colors.ERROR_MEDIUM;
       } else if (requestOrCollection.exceedsQuota) {
         borderColor = Colors.WARN_MEDIUM;
       }
 
-      this._invokeConsole('groupCollapsed', `%c${requestOrCollection.method}  ${requestOrCollection.path} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `padding: 5px; border-left: solid 4px ${borderColor};`);
+      this._invokeConsole('groupCollapsed', `%c#${requestOrCollection.id} %c${requestOrCollection.method}  ${requestOrCollection.part} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: ${Colors.INFO}`);
       this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
-      this.printKeyValue(Messages.PATH, requestOrCollection.path);
+      this.printKeyValue(Messages.PATH, requestOrCollection.part);
       this.printKeyValue(Messages.METHOD, requestOrCollection.method);
       this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
       this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));

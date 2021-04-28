@@ -72,6 +72,11 @@ template.innerHTML = `
     border-right: solid 1px var(--border-color);
   }
 
+  .counts-label {
+    width: auto;
+    padding: 0 8px;
+  }
+
   .popover-overlay {
     position: fixed;
     top: 0;
@@ -228,8 +233,8 @@ template.innerHTML = `
         <path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z"/>
       </svg>
   </button>
-   <span>
-     0
+   <span class="counts-label">
+     0 / 0
    </span>
    <button>
      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-three-dots-vertical" viewBox="0 0 16 16">
@@ -428,7 +433,7 @@ export default class HttpSupervisorWidget {
     document.body.appendChild(this._el = document.createElement('http-supervisor-widget'));
 
     const {
-      domains,
+      include,
       traceEachRequest,
       alertOnError,
       alertOnExceedQuota,
@@ -440,7 +445,7 @@ export default class HttpSupervisorWidget {
     } = this._httpSupervisor;
 
     this._el.setState({
-      domains,
+      include: include,
       traceEachRequest,
       alertOnError,
       alertOnExceedQuota,
@@ -474,7 +479,7 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('responseTimeChart', () => this._httpSupervisor.timeChart());
     this._el.subscribe('responseSizeTimeChart', () => this._httpSupervisor.sizeTimeChart());
     this._el.subscribe('responseSizeDistributionChart', () => this._httpSupervisor.sizeDistributionChart());
-    this._el.subscribe('domainsChange', (ctrl) => this._httpSupervisor.domains = ctrl.value.split(',').map(x => x.trim()));
+    this._el.subscribe('domainsChange', (ctrl) => this._httpSupervisor.include = ctrl.value.split(',').map(x => x.trim()));
     this._el.subscribe('keyboardEventsChange', ctrl => this._httpSupervisor.keyboardEvents = ctrl.checked);
 
     if (status === SupervisorStatus.Busy) {
@@ -505,7 +510,7 @@ export default class HttpSupervisorWidget {
    * Update the calls counter label.
    */
   _updateLabelsCount() {
-    this._el.updateCalls(this._httpSupervisor.onGoingCallsCount);
+    this._el.updateCalls(this._httpSupervisor.onGoingCallsCount, this._httpSupervisor.totalRequests);
   }
 
   /**
@@ -519,6 +524,8 @@ export default class HttpSupervisorWidget {
     } else {
       this._el.logIsEmpty();
     }
+
+    this._el.updateCalls(this._httpSupervisor.onGoingCallsCount, this._httpSupervisor.totalRequests);
   }
 }
 
@@ -690,8 +697,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     this._stopButton.style.display = 'none';
   }
 
-  updateCalls(count) {
-    this._callsCountLabel.innerText = count.toString();
+  updateCalls(count1, count2) {
+    this._callsCountLabel.innerText = `${count1} / ${count2}`;;
   }
 
   logIsEmpty() {
