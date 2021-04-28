@@ -1,4 +1,4 @@
-import { isAbsolute }                  from './util';
+import { isAbsolute, mapToJson }       from './util';
 import { InitiatorType, REQUEST_TYPE } from './constants';
 
 /**
@@ -185,22 +185,29 @@ export default class HttpRequestInfo {
   /**
    * Issues AJAX request using the property values.
    * @param type
-   * @return {XMLHttpRequest}
+   * @param reqOptions
+   * @return {*}
    */
-  fire(type = 'xhr') {
+  fire(type = 'xhr', reqOptions = {}) {
     if (type === 'xhr') {
-      const request = new XMLHttpRequest();
-      request.open(this.method, this.url);
-      Object.entries(this.requestHeaders).forEach(([header, value]) => request.setRequestHeader(header, value));
-      this.method !== REQUEST_TYPE.GET && this.payload ? request.send(JSON.stringify(this.payload)) : request.send();
-      return request;
+      const {
+        onReadyStateChange
+      } = reqOptions;
+      const xhr = new XMLHttpRequest();
+      onReadyStateChange && xhr.addEventListener('readystatechange', onReadyStateChange);
+      xhr.open(this.method, this.url);
+      Object.entries(this.requestHeaders).forEach(([header, value]) => xhr.setRequestHeader(header, value));
+      this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
+      return xhr;
     }
 
     const requestOptions = {
       method: this.method,
-      headers: null
+      headers: mapToJson(this.requestHeaders)
     };
 
-    window.fetch(this.url, requestOptions);
+    this.method !== REQUEST_TYPE.GET && this.payload && (requestOptions.body = JSON.stringify(this.payload));
+
+    return window.fetch(this.url, requestOptions);
   }
 }

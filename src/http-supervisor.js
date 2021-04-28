@@ -205,6 +205,13 @@ export default class HttpSupervisor {
   _watches = new Map();
 
   /**
+   * Collection of interrupts.
+   * @type {Map}
+   * @private
+   */
+  _interrupts = new Map();
+
+  /**
    * Current status of the supervisor.
    * @type {string}
    * @private
@@ -799,6 +806,7 @@ export default class HttpSupervisor {
     this._eventEmitter.destroy();
     this._eventEmitter = null;
     this._watches = null;
+    this._interrupts = null;
     this._sessions = null;
     clearStore && this.clearStore();
     this._status = SupervisorStatus.Retired;
@@ -1183,20 +1191,30 @@ export default class HttpSupervisor {
 
   /**
    * Exports the requests to excel.
+   * @param [collection]
+   * @param [type]
+   * Ref: https://stackoverflow.com/questions/34156282/how-do-i-save-json-to-local-text-file
    */
-  export() {
-    if (this.totalRequests === 0) {
+  export(collection = new Collection([...this._requests]), type = 'csv') {
+    if (collection.count === 0) {
       window.alert('No Requests to export');
       return;
     }
 
-    let csvString = `Request No,URL,Path,Type,Payload Size (bytes),Duration (ms),Status,Size (bytes),Is Error(?),Error Description,Exceeds Quota (?)\r\n`;
-    [...this._requests].forEach(r => {
-      csvString += `${r.id},${r.url},${r.path},${r.method},${r.payloadSize || 0},${r.duration || 0},${r.responseStatus},${r.responseSize},${r.error},${r.errorDescription},${r.exceedsQuota}\r\n`;
-    });
+    let href;
 
-    csvString += `\r\n`;
-    csvString = `data:application/csv,${encodeURIComponent(csvString)}`;
+    if (type === 'csv') {
+      href = `Request No,URL,Path,Type,Payload Size (bytes),Duration (ms),Status,Size (bytes),Is Error(?),Error Description,Exceeds Quota (?)\r\n`;
+      [...collection].forEach(r => {
+        href += `${r.id},${r.url},${r.path},${r.method},${r.payloadSize || 0},${r.duration || 0},${r.responseStatus},${r.responseSize},${r.error},${r.errorDescription},${r.exceedsQuota}\r\n`;
+      });
+
+      href += `\r\n`;
+      href = `data:application/csv,${encodeURIComponent(csvString)}`;
+    } else {
+      const file = new Blob([[...collection]], { type: 'text/plain' });
+      href = URL.createObjectURL(file);
+    }
 
     let exportLink = document.querySelector('#http-supervisor-export');
 
@@ -1206,8 +1224,8 @@ export default class HttpSupervisor {
 
     exportLink = document.createElement('a');
     exportLink.id = 'http-supervisor-export';
-    exportLink.setAttribute('href', csvString);
-    exportLink.setAttribute('download', 'HttpSupervisorRequestsLog.csv');
+    exportLink.setAttribute('href', href);
+    exportLink.setAttribute('download', `HttpSupervisorRequestsLog.csv`);
     document.body.appendChild(exportLink);
     exportLink.click();
   }
@@ -1261,6 +1279,30 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Add an interrupt to an url/pattern.
+   * @param pattern
+   * @param callback
+   */
+  interrupt(pattern, callback) {
+    this._interrupts.set(pattern, callback);
+  }
+
+  /**
+   * Remove interrupt.
+   * @param pattern
+   */
+  removeInterrupt(pattern) {
+    this._interrupts.delete(pattern);
+  }
+
+  /**
+   * Clear all interrupts.
+   */
+  clearInterrupts() {
+    this._interrupts.clear();
+  }
+
+  /**
    * Removes the stored config from session storage.
    */
   clearStore() {
@@ -1271,10 +1313,11 @@ export default class HttpSupervisor {
    * Re-issues ajax request for the passed http request.
    * @param id
    * @param type
+   * @param reqOptions
    */
-  fire(id, type = InitiatorType.XHR) {
+  fire(id, type = InitiatorType.XHR, reqOptions = {}) {
     const request = this.get(id);
-    request && request.fire(type);
+    request && request.fire(type, reqOptions);
   }
 
   /**

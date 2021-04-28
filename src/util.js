@@ -186,3 +186,19 @@ export function safeParse(string) {
   }
   return json;
 }
+
+/**
+ * Converts JS map to plain object.
+ * @param map
+ */
+export function mapToJson(map) {
+  const object = {};
+
+  map.forEach((value, key) => {
+    const keys = key.split('.'),
+      last = keys.pop();
+    keys.reduce((r, a) => r[a] = r[a] || {}, object)[last] = value;
+  });
+
+  return object;
+}
