@@ -1,5 +1,5 @@
-import { isAbsolute, mapToJson }       from './util';
-import { InitiatorType, REQUEST_TYPE } from './constants';
+import { byteSize, isAbsolute, mapToJson } from './util';
+import { InitiatorType, REQUEST_TYPE }     from './constants';
 
 /**
  * Holds the http request information.
@@ -20,11 +20,32 @@ export default class HttpRequestInfo {
   id = -1;
 
   /**
-   * Returns the full url of the request.
+   * The url.
+   * @type {string}
+   * @private
+   */
+  _url = null;
+
+  /**
+   * Returns the url.
    * @return {string}
    */
   get url() {
     return this._urlObj ? this._urlObj.toString() : null;
+  }
+
+  /**
+   * Sets the url.
+   * @param value
+   */
+  set url(value) {
+    this._url = value;
+
+    if (value) {
+      this._urlObj = isAbsolute(value) ? new URL(value) : new URL(value, document.location.origin);
+    } else {
+      this._urlObj = null;
+    }
   }
 
   /**
@@ -177,7 +198,7 @@ export default class HttpRequestInfo {
    */
   constructor(id, url, method, payload) {
     this.id = id;
-    url && (this._urlObj = isAbsolute(url) ? new URL(url) : new URL(url, document.location.origin));
+    this.url = url;
     this.method = method;
     this.payload = payload;
   }

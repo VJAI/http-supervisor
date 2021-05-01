@@ -87,7 +87,7 @@ function sendCall8() {
 
 window.http = http;
 http.init({
-  domains: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
+  include: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
   traceEachRequest: true,
   alertOnRequestStart: false
 });

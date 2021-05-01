@@ -45,7 +45,9 @@ export const Messages = {
   PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size?',
   CHART_NOT_FOUND: 'Chart.js library not found',
   TIME_START: 'Time Start',
-  TIME_END: 'Time End'
+  TIME_END: 'Time End',
+  IMPORTED_SUCCESS: 'Configuration Imported Successsfully!',
+  IMPORTED_FAILURE: 'Failed to import configuration!'
 };
 
 /**
@@ -88,7 +90,8 @@ export const SupervisorEvents = {
   REQUEST_START: 'request-start',
   REQUEST_END: 'request-end',
   REQUEST_ERROR: 'request-error',
-  EXCEEDS_QUOTA: 'exceeds-quota'
+  EXCEEDS_QUOTA: 'exceeds-quota',
+  CONFIG_CHANGE: 'config-change'
 };
 
 /**
@@ -96,19 +99,41 @@ export const SupervisorEvents = {
  */
 export const FAKE = new Proxy({}, { get: function () { return function () { }; } });
 
+/**
+ * The property name used in xhr object to store additional request info.
+ * @type {string}
+ */
 export const XHR_METADATA_KEY = '__supervisor__';
 
+/**
+ * The query string added to request for capturing accurate size and response time.
+ * @type {string}
+ */
 export const SUPERVISOR_QUERY_KEY = 'hs_rid';
 
+/**
+ * Different ajax methods.
+ */
 export const InitiatorType = {
   XHR: 'xhr',
   FETCH: 'fetch'
 };
 
+/**
+ * Chartjs cdn lib path.
+ * @type {string}
+ */
 export const CHARTJS_LIB_PATH = 'https://cdn.jsdelivr.net/npm/chart.js';
 
+/**
+ * Storage key for storing supervisor configuration.
+ * @type {string}
+ */
 export const STORAGE_KEY = 'http-supervisor';
 
+/**
+ * Display labels for `HttpRequestInfo` class props.
+ */
 export const HTTP_REQUEST_INFO_DISPLAY_NAMES = {
   id: Messages.REQUEST_NO,
   url: Messages.URL,
@@ -129,9 +154,38 @@ export const HTTP_REQUEST_INFO_DISPLAY_NAMES = {
   payloadByPerformance: Messages.PAYLOAD_SIZE_BY_PERFORMANCE
 };
 
+/**
+ * Different HTTP request methods.
+ */
 export const REQUEST_TYPE = {
   GET: 'GET',
   POST: 'POST',
   PUT: 'PUT',
   DELETE: 'DELETE'
+};
+
+/**
+ * Search operators.
+ */
+export const SEARCH_OPERATOR = {
+  EQUALS: '=',
+  NOT_EQUALS: '!=',
+  LESS: '<',
+  GREATER: '>',
+  LESS_EQUAL: '<=',
+  GREATER_EQUAL: '>=',
+  STARTS_WITH: '~',
+  ENDS_WITH: '^',
+  CONTAINS: 'contains',
+  NOT_CONTAINS: '!contains',
+  MATCHES: 'matches',
+  NOT_MATCHES: '!matches'
+};
+
+/**
+ * Export file types.
+ */
+export const FILE_TYPE = {
+  CSV: 'csv',
+  JSON: 'json'
 };

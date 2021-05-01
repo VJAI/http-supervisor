@@ -1,4 +1,6 @@
 // Polyfill
+import { SEARCH_OPERATOR } from './constants';
+
 Array.prototype.has = function (item) {
   return this.indexOf(item) > -1;
 };
@@ -137,26 +139,30 @@ export function matchCriteria(criteria, object) {
   criteria.forEach(({ field, operator, value }) => {
     const v = object[field];
 
-    if (operator === '=') {
+    if (operator === SEARCH_OPERATOR.EQUALS) {
       results.push(v === value);
-    } else if (operator === '!=') {
+    } else if (operator === SEARCH_OPERATOR.NOT_EQUALS) {
       results.push(v !== value);
-    } else if (operator === '<') {
+    } else if (operator === SEARCH_OPERATOR.LESS) {
       results.push(v < value);
-    } else if (operator === '>') {
+    } else if (operator === SEARCH_OPERATOR.GREATER) {
       results.push(v > value);
-    } else if (operator === '<=') {
+    } else if (operator === SEARCH_OPERATOR.LESS_EQUAL) {
       results.push(v <= value);
-    } else if (operator === '>=') {
+    } else if (operator === SEARCH_OPERATOR.GREATER_EQUAL) {
       results.push(v >= value);
-    } else if (operator === '~') {
+    } else if (operator === SEARCH_OPERATOR.STARTS_WITH) {
       results.push(typeof object[field] === 'string' && v.startsWith(value));
-    } else if (operator === '^') {
+    } else if (operator === SEARCH_OPERATOR.ENDS_WITH) {
       results.push(typeof object[field] === 'string' && v.endsWith(value));
-    } else if (operator === 'contains') {
+    } else if (operator === SEARCH_OPERATOR.CONTAINS) {
       results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
-    } else if (operator === '!contains') {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
+    } else if (operator === SEARCH_OPERATOR.NOT_CONTAINS) {
+      results.push(typeof object[field] === 'string' && !v.toLowerCase().has(value.toLowerCase()));
+    } else if (operator === SEARCH_OPERATOR.MATCHES) {
+      results.push(typeof object[field] === 'string' && matchesGlob(value, v));
+    } else if (operator === SEARCH_OPERATOR.NOT_MATCHES) {
+      results.push(typeof object[field] === 'string' && !matchesGlob(value, v));
     }
   });
 
@@ -201,4 +207,27 @@ export function mapToJson(map) {
   });
 
   return object;
+}
+
+/**
+ * https://stackoverflow.com/questions/24558442/is-there-something-like-glob-but-for-urls-in-javascript
+ * @private
+ */
+export function matchesGlob(pattern, input) {
+  const re = new RegExp(pattern.toLowerCase().replace(/([.?+^$[\]\\(){}|\/-])/g, "\\$1").replace(/\*/g, '.*'));
+  return re.test(input.toLowerCase());
+}
+
+/**
+ * Copies text to clipboard.
+ * @param content
+ */
+export function copyText(content) {
+  const input = document.createElement('input');
+  document.body.appendChild(input);
+  input.value = content;
+  input.select();
+  input.setSelectionRange(0, 99999);
+  document.execCommand('copy');
+  input.remove();
 }

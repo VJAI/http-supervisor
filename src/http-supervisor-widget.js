@@ -179,15 +179,15 @@ template.innerHTML = `
   }
 
   .popover-content .fourth {
-    border: none;
-    padding: 0;
-    display: none;
     margin-bottom: 0;
-    grid-template-columns: 1fr;
   }
 
   .popover-content .fourth.active {
     display: grid;
+  }
+  
+  .fourth .span2 {
+    grid-column: 1 / span 2;
   }
 
   .advanced-container {
@@ -324,12 +324,20 @@ template.innerHTML = `
       </div>
 
       <fieldset class="fourth">
-        <div>
-          <label>Domains:</label>
+        <div class="span2">
+          <label>Include:</label>
+          <input type="text" style="flex-grow: 1" />
+        </div>
+        <div class="span2">
+          <label>Exclude:</label>
           <input type="text" style="flex-grow: 1" />
         </div>
         <div>
           <label>Keyboard Events:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
+          <label>Persist Config:</label>
           <input type="checkbox" />
         </div>
       </fieldset>
@@ -364,6 +372,7 @@ export default class HttpSupervisorWidget {
     this._onStop = this._onStop.bind(this);
     this._updateTotalRequestsCount = this._updateTotalRequestsCount.bind(this);
     this._updateLabelsCount = this._updateLabelsCount.bind(this);
+    this._updateUI = this._updateUI.bind(this);
   }
 
   /**
@@ -419,6 +428,7 @@ export default class HttpSupervisorWidget {
     this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
     this._httpSupervisor.off(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
     this._httpSupervisor.off(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
+    this._httpSupervisor.off(SupervisorEvents.CONFIG_CHANGE, this._updateUI);
     this._httpSupervisor = null;
     this._el.cleanup();
     this._el.remove();
@@ -433,26 +443,10 @@ export default class HttpSupervisorWidget {
     document.body.appendChild(this._el = document.createElement('http-supervisor-widget'));
 
     const {
-      include,
-      traceEachRequest,
-      alertOnError,
-      alertOnExceedQuota,
-      quota,
-      usePerformance,
-      keyboardEvents,
-      onGoingCallsCount,
       status
     } = this._httpSupervisor;
 
-    this._el.setState({
-      include: include,
-      traceEachRequest,
-      alertOnError,
-      alertOnExceedQuota,
-      quota,
-      usePerformance,
-      keyboardEvents
-    });
+    this._updateUI();
 
     // Listen to supervisor events.
     this._httpSupervisor.on(SupervisorEvents.START, this._onStart);
@@ -461,6 +455,7 @@ export default class HttpSupervisorWidget {
     this._httpSupervisor.on(SupervisorEvents.REQUEST_START, this._updateLabelsCount);
     this._httpSupervisor.on(SupervisorEvents.REQUEST_START, this._updateTotalRequestsCount);
     this._httpSupervisor.on(SupervisorEvents.REQUEST_END, this._updateLabelsCount);
+    this._httpSupervisor.on(SupervisorEvents.CONFIG_CHANGE, this._updateUI);
 
     // Listen to web component events.
     this._el.subscribe('start', () => this._httpSupervisor.start());
@@ -479,8 +474,10 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('responseTimeChart', () => this._httpSupervisor.timeChart());
     this._el.subscribe('responseSizeTimeChart', () => this._httpSupervisor.sizeTimeChart());
     this._el.subscribe('responseSizeDistributionChart', () => this._httpSupervisor.sizeDistributionChart());
-    this._el.subscribe('domainsChange', (ctrl) => this._httpSupervisor.include = ctrl.value.split(',').map(x => x.trim()));
+    this._el.subscribe('includeChange', (ctrl) => this._httpSupervisor.include = ctrl.value.split(',').map(x => x.trim()));
+    this._el.subscribe('excludeChange', (ctrl) => this._httpSupervisor.exclude = ctrl.value.split(',').map(x => x.trim()));
     this._el.subscribe('keyboardEventsChange', ctrl => this._httpSupervisor.keyboardEvents = ctrl.checked);
+    this._el.subscribe('persistConfigChange', ctrl => this._httpSupervisor.persistConfig = ctrl.checked);
 
     if (status === SupervisorStatus.Busy) {
       this._onStart();
@@ -490,6 +487,34 @@ export default class HttpSupervisorWidget {
 
     this._updateLabelsCount();
     this._updateTotalRequestsCount();
+  }
+
+  _updateUI() {
+    const {
+      include,
+      exclude,
+      traceEachRequest,
+      alertOnError,
+      alertOnExceedQuota,
+      quota,
+      usePerformance,
+      keyboardEvents,
+      persistConfig,
+      onGoingCallsCount,
+      status
+    } = this._httpSupervisor;
+
+    this._el.setState({
+      include,
+      exclude,
+      traceEachRequest,
+      alertOnError,
+      alertOnExceedQuota,
+      quota,
+      usePerformance,
+      keyboardEvents,
+      persistConfig
+    });
   }
 
   /**
@@ -558,8 +583,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _responseTimeChartButton = null;
   _responseSizeTimeChartButton = null;
   _responseSizeDistributionChartButton = null;
-  _domainsTextbox = null;
+  _includeTextbox = null;
+  _excludeTextbox = null;
   _keyboardEventsCheckbox = null;
+  _persistConfigCheckbox = null;
   _expandButton = null;
   _collapisbleFieldSet = null;
 
@@ -591,8 +618,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._responseTimeChartButton,
       this._responseSizeTimeChartButton,
       this._responseSizeDistributionChartButton,
-      this._domainsTextbox,
-      this._keyboardEventsCheckbox
+      this._includeTextbox,
+      this._excludeTextbox,
+      this._keyboardEventsCheckbox,
+      this._persistConfigCheckbox
     ] = [
       ...Array.from(shadowRoot.querySelector('.http-supervisor-container').children),
       ...Array.from(this._popover.querySelectorAll('input,button'))
@@ -615,8 +644,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       responseTimeChart: this._responseTimeChartButton,
       responseSizeTimeChart: this._responseSizeTimeChartButton,
       responseSizeDistributionChart: this._responseSizeDistributionChartButton,
-      domainsChange: this._domainsTextbox,
-      keyboardEventsChange: this._keyboardEventsCheckbox
+      includeChange: this._includeTextbox,
+      excludeChange: this._excludeTextbox,
+      keyboardEventsChange: this._keyboardEventsCheckbox,
+      persistConfigChange: this._persistConfigCheckbox
     };
 
     this._expandButton = shadowRoot.querySelector('.expand');
@@ -656,15 +687,18 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   }
 
   setState({
-    domains,
+    include,
+    exclude,
     traceEachRequest,
     alertOnError,
     alertOnExceedQuota,
     quota,
     usePerformance,
-    keyboardEvents
+    keyboardEvents,
+    persistConfig
   }) {
-    Array.isArray(domains) && (this._domainsTextbox.value = domains.join(','));
+    Array.isArray(include) && (this._includeTextbox.value = include.join(','));
+    Array.isArray(exclude) && (this._excludeTextbox.value = exclude.join(','));
     this._traceEachRequestCheckbox.checked = traceEachRequest;
     this._alertOnErrorCheckbox.checked = alertOnError;
     this._alertOnQuotaExceedCheckbox.checked = alertOnExceedQuota;
@@ -673,6 +707,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     this._maxDurationTextbox.value = quota.maxDuration;
     this._usePerformanceAPICheckbox.checked = usePerformance;
     this._keyboardEventsCheckbox.checked = keyboardEvents;
+    this._persistConfigCheckbox.checked = persistConfig;
     keyboardEvents && this._listenToKeyPressEvent();
   }
 

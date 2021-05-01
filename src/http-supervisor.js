@@ -10,8 +10,11 @@ import {
   XHR_METADATA_KEY,
   InitiatorType,
   CHARTJS_LIB_PATH,
-  STORAGE_KEY, REQUEST_TYPE
-}                      from './constants';
+  STORAGE_KEY,
+  REQUEST_TYPE,
+  SEARCH_OPERATOR,
+  FILE_TYPE
+} from './constants';
 import {
   idGenerator,
   convertBytes,
@@ -23,8 +26,10 @@ import {
   formatTime,
   matchCriteria,
   isJsonResponse,
-  safeParse
-}                      from './util';
+  safeParse,
+  matchesGlob,
+  copyText
+} from './util';
 import { Session }     from './session';
 
 /**
@@ -177,13 +182,6 @@ export default class HttpSupervisor {
   _lockConsole = false;
 
   /**
-   * The endpoint to POST the call logs.
-   * @type {string}
-   * @private
-   */
-  _broadcastEndpoint = null;
-
-  /**
    * Collection of captured requests.
    * @type {Set}
    * @private
@@ -203,13 +201,6 @@ export default class HttpSupervisor {
    * @private
    */
   _watches = new Map();
-
-  /**
-   * Collection of interrupts.
-   * @type {Map}
-   * @private
-   */
-  _interrupts = new Map();
 
   /**
    * Current status of the supervisor.
@@ -642,48 +633,7 @@ export default class HttpSupervisor {
     }
 
     const storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
-
-    const {
-      include,
-      exclude,
-      renderUI,
-      traceEachRequest,
-      alertOnError,
-      alertOnExceedQuota,
-      alertOnRequestStart,
-      silent,
-      quota,
-      groupBy,
-      sortBy,
-      usePerformance,
-      monkeyPatchFetch,
-      loadChart,
-      keyboardEvents,
-      watches,
-      persistConfig,
-      lockConsole,
-      broadcastEndpoint
-    } = { ...storedConfig, ...config };
-
-    Array.isArray(include) && (this._include = new Set(include));
-    Array.isArray(exclude) && (this._exclude = new Set(exclude));
-    typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-    typeof silent === 'boolean' && (this._silent = silent);
-    typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
-    typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
-    typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
-    typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
-    typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
-    Array.isArray(groupBy) && (this._groupBy = groupBy);
-    Array.isArray(sortBy) && (this._sortBy = sortBy);
-    typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
-    typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-    typeof loadChart === 'boolean' && (this._loadChart = loadChart);
-    typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
-    typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
-    Array.isArray(watches) && (this._watches = new Map(this._watches));
-    typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
-    typeof broadcastEndpoint === 'boolean' && (this._broadcastEndpoint = broadcastEndpoint);
+    this._setConfig({ ...storedConfig, ...config });
 
     // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
@@ -806,7 +756,6 @@ export default class HttpSupervisor {
     this._eventEmitter.destroy();
     this._eventEmitter = null;
     this._watches = null;
-    this._interrupts = null;
     this._sessions = null;
     clearStore && this.clearStore();
     this._status = SupervisorStatus.Retired;
@@ -858,7 +807,7 @@ export default class HttpSupervisor {
    * @returns {Collection}
    */
   failed() {
-    return this.query('error', '=', true);
+    return this.query('error', SEARCH_OPERATOR.EQUALS, true);
   }
 
   /**
@@ -866,7 +815,7 @@ export default class HttpSupervisor {
    * @returns {Collection}
    */
   exceeded() {
-    return this.query('exceedsQuota', '=', true);
+    return this.query('exceedsQuota', SEARCH_OPERATOR.EQUALS, true);
   }
 
   /**
@@ -927,12 +876,14 @@ export default class HttpSupervisor {
 
       if (typeof arg === 'string') {
         if (REQUEST_TYPE.hasOwnProperty(arg)) {
-          query = { field: 'method', operator: '=', value: arg };
+          query = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: arg };
+        } else if (arg.indexOf('*') > -1) {
+          query = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: arg };
         } else {
-          query = { field: isAbsolute(arg) ? 'url' : 'path', operator: '=', value: arg };
+          query = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.EQUALS, value: arg };
         }
       } else {
-        query = { field: 'responseStatus', operator: '=', value: arg }
+        query = { field: 'responseStatus', operator: SEARCH_OPERATOR.EQUALS, value: arg }
       }
 
       return this.query(query);
@@ -1025,9 +976,11 @@ export default class HttpSupervisor {
       let query;
 
       if (REQUEST_TYPE.hasOwnProperty(firstArg)) {
-        query = { field: 'method', operator: '=', value: firstArg };
+        query = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: firstArg };
+      } else if (firstArg.indexOf('*') > -1) {
+        query = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: firstArg };
       } else {
-        query = { field: isAbsolute(firstArg) ? 'url' : 'path', operator: '=', value: firstArg };
+        query = { field: isAbsolute(firstArg) ? 'url' : 'path', operator: SEARCH_OPERATOR.EQUALS, value: firstArg };
       }
 
       this._reporter.report(this.query(query), displayFields);
@@ -1190,12 +1143,71 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Imports config.
+   */
+  import() {
+    const fileInput = document.createElement('input');
+    fileInput.setAttribute('type', 'file');
+    fileInput.setAttribute('accept', '.json');
+    fileInput.style.opacity = '0';
+    fileInput.addEventListener('change', () => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const content = JSON.parse(event.target.result || '{}');
+        if (!content.config) {
+          window.alert(Messages.IMPORTED_FAILURE);
+          return;
+        }
+        this._setConfig(content.config);
+        this._updateStorage();
+        window.alert(Messages.IMPORTED_SUCCESS);
+        this._triggerEvent(SupervisorEvents.CONFIG_CHANGE, content.config);
+      };
+      reader.readAsText(fileInput.files[0]);
+      fileInput.remove();
+    });
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  }
+
+  /**
    * Exports the requests to excel.
-   * @param [collection]
-   * @param [type]
    * Ref: https://stackoverflow.com/questions/34156282/how-do-i-save-json-to-local-text-file
    */
-  export(collection = new Collection([...this._requests]), type = 'csv') {
+  export(...args) {
+    let collection,
+      type,
+      exportConfig = false,
+      defaultColl = new Collection([...this._requests]),
+      fileName;
+
+    if (args.length === 0) {
+      collection = defaultColl;
+      type = FILE_TYPE.CSV;
+    }
+
+    if (args.length === 1) {
+      if (args[0] instanceof Collection) {
+        collection = args[0];
+        type = FILE_TYPE.CSV;
+      } else {
+        collection = defaultColl;
+        type = args[0];
+      }
+    }
+
+    if (args.length > 1) {
+      if (args[0] instanceof Collection) {
+        collection = args[0];
+        type = args[1];
+        exportConfig = args[2];
+      } else {
+        collection = defaultColl;
+        type = args[0];
+        exportConfig = args[1];
+      }
+    }
+
     if (collection.count === 0) {
       window.alert('No Requests to export');
       return;
@@ -1203,16 +1215,29 @@ export default class HttpSupervisor {
 
     let href;
 
-    if (type === 'csv') {
+    if (type === FILE_TYPE.CSV) {
       href = `Request No,URL,Path,Type,Payload Size (bytes),Duration (ms),Status,Size (bytes),Is Error(?),Error Description,Exceeds Quota (?)\r\n`;
       [...collection].forEach(r => {
         href += `${r.id},${r.url},${r.path},${r.method},${r.payloadSize || 0},${r.duration || 0},${r.responseStatus},${r.responseSize},${r.error},${r.errorDescription},${r.exceedsQuota}\r\n`;
       });
 
       href += `\r\n`;
-      href = `data:application/csv,${encodeURIComponent(csvString)}`;
+      href = `data:application/csv,${encodeURIComponent(href)}`;
+      fileName = `HttpSupervisorRequestsLog.csv`;
     } else {
-      const file = new Blob([[...collection]], { type: 'text/plain' });
+      let content;
+      if (exportConfig) {
+        content = {
+          config: this._getConfig()
+        };
+        fileName = `HttpSupervisorConfiguration.json`;
+      } else {
+        content = {
+          requests: [...collection]
+        };
+        fileName = `HttpSupervisorRequestsLog.json`;
+      }
+      const file = new Blob([JSON.stringify(content)], { type: 'text/plain' });
       href = URL.createObjectURL(file);
     }
 
@@ -1225,7 +1250,7 @@ export default class HttpSupervisor {
     exportLink = document.createElement('a');
     exportLink.id = 'http-supervisor-export';
     exportLink.setAttribute('href', href);
-    exportLink.setAttribute('download', `HttpSupervisorRequestsLog.csv`);
+    exportLink.setAttribute('download', fileName);
     document.body.appendChild(exportLink);
     exportLink.click();
   }
@@ -1247,9 +1272,11 @@ export default class HttpSupervisor {
       let watchArgs;
 
       if (REQUEST_TYPE.hasOwnProperty(arg)) {
-        watchArgs = { field: 'method', operator: '=', value: arg };
+        watchArgs = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: arg };
+      } else if (arg.indexOf('*') > -1) {
+        watchArgs = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: arg };
       } else {
-        watchArgs = { field: isAbsolute(arg) ? 'url' : 'path', operator: '=', value: arg };
+        watchArgs = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.EQUALS, value: arg };
       }
 
       this._watches.set(watchId, watchArgs);
@@ -1276,30 +1303,6 @@ export default class HttpSupervisor {
   clearWatches() {
     this._watches.clear();
     this._updateStorage();
-  }
-
-  /**
-   * Add an interrupt to an url/pattern.
-   * @param pattern
-   * @param callback
-   */
-  interrupt(pattern, callback) {
-    this._interrupts.set(pattern, callback);
-  }
-
-  /**
-   * Remove interrupt.
-   * @param pattern
-   */
-  removeInterrupt(pattern) {
-    this._interrupts.delete(pattern);
-  }
-
-  /**
-   * Clear all interrupts.
-   */
-  clearInterrupts() {
-    this._interrupts.clear();
   }
 
   /**
@@ -1352,14 +1355,6 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Plays the passed session.
-   * @param id
-   */
-  play(id) {
-    throw new Error('Not Implemented');
-  }
-
-  /**
    * Removes the passes session.
    * @param id
    */
@@ -1375,10 +1370,39 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Broadcast the current requests log to a remote endpoint.
+   * Copies the response, payload or the complete request to clipboard.
    */
-  broadcast() {
-    throw new Error('Not Implemented');
+  copy(id, content = 'response') {
+    const req = this.get(id);
+
+    if (!req) {
+      return;
+    }
+
+    let text;
+
+    switch (content) {
+      case 'response':
+        text = JSON.stringify(req.response);
+        break;
+
+      case 'payload':
+        text = JSON.stringify(req.payload);
+        break;
+
+      case 'all':
+        text = JSON.stringify(req);
+        break;
+    }
+
+    copyText(text);
+  }
+
+  /**
+   * Clears the copied content.
+   */
+  clearCopy() {
+    copyText('');
   }
 
   /**
@@ -1386,11 +1410,11 @@ export default class HttpSupervisor {
    * @param url
    */
   canAllowUrl(url) {
-    if (this._exclude !== null && [...this._exclude].filter(pattern => this._isUrlMatch(pattern, url)).length) {
+    if (this._exclude !== null && [...this._exclude].filter(pattern => matchesGlob(pattern, url)).length) {
       return false;
     }
 
-    if (this._exclude !== null && [...this._exclude].filter(pattern => this._isUrlMatch(pattern, xhr[XHR_METADATA_KEY].url)).length === 0) {
+    if (this._exclude !== null && [...this._exclude].filter(pattern => matchesGlob(pattern, xhr[XHR_METADATA_KEY].url)).length === 0) {
       return false;
     }
 
@@ -1417,7 +1441,8 @@ export default class HttpSupervisor {
   _monkeyPatch() {
     const open = this._open.bind(this),
       send = this._send.bind(this),
-      setRequestHeader = this._setRequestHeader.bind(this);
+      setRequestHeader = this._setRequestHeader.bind(this),
+      idFunc = this._id.bind(this);
 
     this._monkeyPatchFetch && (window.fetch = this._fetch.bind(this));
 
@@ -1462,7 +1487,6 @@ export default class HttpSupervisor {
     const payload = safeParse(body);
     const requestInfo = new HttpRequestInfo(id, url, method, payload);
     requestInfo.initiatorType = InitiatorType.FETCH;
-    requestInfo.payloadSize = byteSize(JSON.stringify(payload) || '');
     headers && (requestInfo.requestHeaders = new Map(Object.entries(headers)));
     this._addRequest(requestInfo);
 
@@ -1514,11 +1538,10 @@ export default class HttpSupervisor {
       parameters[1] = this._appendRequestIdToUrl(url, id);
     }
 
-    xhr[XHR_METADATA_KEY] = {
-      id: id,
-      method: method.toUpperCase(),
-      url: url.toLowerCase()
-    };
+    const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo(id);
+    httpRequestInfo.url = url.toLowerCase();
+    httpRequestInfo.method = method.toUpperCase();
+    xhr[XHR_METADATA_KEY] = httpRequestInfo;
 
     this._nativeOpen.call(xhr, ...parameters);
   }
@@ -1533,10 +1556,8 @@ export default class HttpSupervisor {
     }
 
     const parameters = [...arguments],
-      [xhr, payload] = parameters,
-      url = this._createUrl(xhr[XHR_METADATA_KEY].url);
+      [xhr, payload] = parameters;
 
-    xhr[XHR_METADATA_KEY].payload = safeParse(payload);
     parameters.shift();
 
     if (!this.canAllowUrl(xhr[XHR_METADATA_KEY].url)) {
@@ -1547,9 +1568,12 @@ export default class HttpSupervisor {
     // Increment the call counter.
     this._increment();
 
-    // Capture the request.
-    const requestInfo = this._createRequest(xhr);
-    this._addRequest(requestInfo);
+    // Update the request.
+    const httpRequestInfo = xhr[XHR_METADATA_KEY];
+    httpRequestInfo.initiatorType = InitiatorType.XHR;
+    httpRequestInfo.payload = safeParse(payload);
+    httpRequestInfo.payloadSize = byteSize(httpRequestInfo.payload ? JSON.stringify(httpRequestInfo.payload) : '');
+    this._addRequest(httpRequestInfo);
 
     // Listen to `onreadystatechange` event to capture the response info.
     xhr.addEventListener('readystatechange', () => {
@@ -1566,7 +1590,7 @@ export default class HttpSupervisor {
           headersSet.set(header, value);
         });
 
-        requestInfo.requestHeaders = headersSet;
+        httpRequestInfo.responseHeaders = headersSet;
 
         return;
       }
@@ -1576,14 +1600,14 @@ export default class HttpSupervisor {
       }
 
       this._decrement();
-      requestInfo.responseStatus = xhr.status;
-      requestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
-      this._fillParametersAndFireEvents(requestInfo, xhr);
+      httpRequestInfo.responseStatus = xhr.status;
+      httpRequestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
+      this._fillParametersAndFireEvents(httpRequestInfo, xhr);
     });
 
-    this._alertOnRequestStart && this._reporter.report(requestInfo);
+    this._alertOnRequestStart && this._reporter.report(httpRequestInfo);
     this._nativeSend.call(xhr, ...parameters);
-    this._triggerEvent(SupervisorEvents.REQUEST_START, requestInfo, xhr);
+    this._triggerEvent(SupervisorEvents.REQUEST_START, httpRequestInfo, xhr);
   }
 
   /**
@@ -1600,9 +1624,11 @@ export default class HttpSupervisor {
 
     parameters.shift();
 
-    const { reqHeaders = new Map() } = xhr[XHR_METADATA_KEY];
+    const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo(this._id());
+    const { reqHeaders = new Map() } = httpRequestInfo;
     reqHeaders.set(header, value);
-    xhr[XHR_METADATA_KEY].reqHeaders = reqHeaders;
+    httpRequestInfo.requestHeaders = reqHeaders;
+    xhr[XHR_METADATA_KEY] = httpRequestInfo;
 
     this._nativeSetRequestHeader.call(xhr, ...parameters);
   }
@@ -1611,44 +1637,35 @@ export default class HttpSupervisor {
    * Fill duration and size parameters from response.
    * @private
    */
-  _fillParametersAndFireEvents(requestInfo, xhrOrResponse) {
+  _fillParametersAndFireEvents(httpRequestInfo, xhrOrResponse) {
     let performanceEntry;
 
     // If performance API is well supported read the duration and size leveraging it.
     if (this._isPerformanceSupported()) {
-      const urlName = this._appendRequestIdToUrl(requestInfo.url, requestInfo.id);
+      const urlName = this._appendRequestIdToUrl(httpRequestInfo.url, httpRequestInfo.id);
       performanceEntry = performance.getEntriesByType('resource').find(e => e.name === urlName);
     }
 
-    const responseSize = byteSize(JSON.stringify(requestInfo.response || ''));
+    const responseSize = byteSize(JSON.stringify(httpRequestInfo.response || ''));
 
     if (performanceEntry) {
-      requestInfo.timeStart = performanceEntry.startTime;
-      requestInfo.timeEnd = performanceEntry.responseEnd;
-      requestInfo.payloadByPerformance = !!performanceEntry.transferSize;
-      requestInfo.responseSize = requestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
+      httpRequestInfo.timeStart = performanceEntry.startTime;
+      httpRequestInfo.timeEnd = performanceEntry.responseEnd;
+      httpRequestInfo.payloadByPerformance = !!performanceEntry.transferSize;
+      httpRequestInfo.responseSize = httpRequestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
     } else {
-      requestInfo.payloadByPerformance = false;
-      requestInfo.timeEnd = performance.now();
-      requestInfo.responseSize = responseSize;
+      httpRequestInfo.payloadByPerformance = false;
+      httpRequestInfo.timeEnd = performance.now();
+      httpRequestInfo.responseSize = responseSize;
     }
 
-    requestInfo.duration = Math.round(requestInfo.timeEnd - requestInfo.timeStart);
-    requestInfo.exceedsQuota = this._isExceededQuota(requestInfo);
-    requestInfo.pending = false;
+    httpRequestInfo.duration = Math.round(httpRequestInfo.timeEnd - httpRequestInfo.timeStart);
+    httpRequestInfo.exceedsQuota = this._isExceededQuota(httpRequestInfo);
+    httpRequestInfo.pending = false;
 
-    requestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, requestInfo, xhrOrResponse);
-    requestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, requestInfo, xhrOrResponse);
-    this._triggerEvent(SupervisorEvents.REQUEST_END, requestInfo, xhrOrResponse);
-  }
-
-  /**
-   * https://stackoverflow.com/questions/24558442/is-there-something-like-glob-but-for-urls-in-javascript
-   * @private
-   */
-  _isUrlMatch(pattern, input) {
-    const re = new RegExp(pattern.replace(/([.?+^$[\]\\(){}|\/-])/g, "\\$1").replace(/\*/g, '.*'));
-    return re.test(input);
+    httpRequestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, httpRequestInfo, xhrOrResponse);
+    httpRequestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, httpRequestInfo, xhrOrResponse);
+    this._triggerEvent(SupervisorEvents.REQUEST_END, httpRequestInfo, xhrOrResponse);
   }
 
   /**
@@ -1669,27 +1686,6 @@ export default class HttpSupervisor {
     }
 
     this._callsCount--;
-  }
-
-  /**
-   * Creates request object from the XHR object.
-   * @private
-   */
-  _createRequest(xhr) {
-    const {
-      id,
-      url,
-      method,
-      payload,
-      reqHeaders
-    } = xhr[XHR_METADATA_KEY];
-
-    const httpRequestInfo = new HttpRequestInfo(id, url, method, payload);
-    httpRequestInfo.initiatorType = InitiatorType.XHR;
-    httpRequestInfo.payloadSize = byteSize(payload ? JSON.stringify(payload) : '');
-    reqHeaders && (httpRequestInfo.requestHeaders = reqHeaders);
-
-    return httpRequestInfo;
   }
 
   /**
@@ -1752,7 +1748,15 @@ export default class HttpSupervisor {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this._getConfig()));
+  }
+
+  /**
+   * Returns the configuration of supervisor.
+   * @private
+   */
+  _getConfig() {
+    return {
       include: this._include !== null ? [...this._include] : null,
       exclude: this._exclude !== null ? [...this._exclude] : null,
       silent: this._silent,
@@ -1767,10 +1771,56 @@ export default class HttpSupervisor {
       lockConsole: this._lockConsole,
       usePerformance: this._usePerformance,
       quota: this._quota,
-      broadcastEndpoint: this._broadcastEndpoint,
       watches: JSON.stringify([...this._watches.entries()]),
       sessions: JSON.stringify([...this._sessions.entries()])
-    }));
+    };
+  }
+
+  /**
+   * Sets the configuration of supervisor.
+   * @param config
+   * @private
+   */
+  _setConfig(config) {
+    const {
+      include,
+      exclude,
+      renderUI,
+      traceEachRequest,
+      alertOnError,
+      alertOnExceedQuota,
+      alertOnRequestStart,
+      silent,
+      quota,
+      groupBy,
+      sortBy,
+      usePerformance,
+      monkeyPatchFetch,
+      loadChart,
+      keyboardEvents,
+      watches,
+      persistConfig,
+      lockConsole
+    } = config;
+
+    Array.isArray(include) && (this._include = new Set(include));
+    Array.isArray(exclude) && (this._exclude = new Set(exclude));
+    typeof renderUI === 'boolean' && (this._renderUI = renderUI);
+    typeof silent === 'boolean' && (this._silent = silent);
+    typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
+    typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
+    typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
+    typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
+    typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
+    Array.isArray(groupBy) && (this._groupBy = groupBy);
+    Array.isArray(sortBy) && (this._sortBy = sortBy);
+    typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
+    typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
+    typeof loadChart === 'boolean' && (this._loadChart = loadChart);
+    typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
+    typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
+    Array.isArray(watches) && (this._watches = new Map(this._watches));
+    typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
   }
 
   /**
