@@ -95,7 +95,7 @@ export default class HttpRequestInfo {
 
   /**
    * The request payload.
-   * @type {any}
+   * @type {*}
    */
   payload = null;
 
@@ -125,7 +125,7 @@ export default class HttpRequestInfo {
 
   /**
    * The response data.
-   * @type {any}
+   * @type {*}
    */
   response = null;
 
@@ -151,7 +151,7 @@ export default class HttpRequestInfo {
 
   /**
    * The error description.
-   * @type {string}
+   * @type {*}
    */
   get errorDescription() {
     return this.error ? this.response : null;

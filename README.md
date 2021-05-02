@@ -33,7 +33,9 @@ Last but not least it also provides visualization support using the chart.js lib
 ## Features
 
 - Auditing Requests By Setting Quota
-- Searching, Grouping And Sorting Requests
+- Searching Requests Based On Different Criteria
+- Nested Grouping
+- Multi Sorting
 - Printing Requests
 - Exporting Requests As CSV
 - Exporting / Importing Configuration
@@ -118,7 +120,7 @@ const requests = http.sort({ field: 'method', dir: 'asc' }, { field: 'responseSi
 You can group and sub-group requests.
 
 ```js
-const requests = http.group('path', 'method');
+const requests = http.group('part', 'method');
 ```
 
 There are also methods available that helps to group and sort in the same call.
@@ -294,7 +296,7 @@ Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`
 
 #### `groupBy`
 
-Gets/sets the group parameters that is used while displaying requests in console on calling `print` method. As default the requests are grouped by "part" and "method" (properties of `HttpRequestInfo` class; you'll see all the members of the class in API section).
+Gets/sets the group parameters that is used while displaying requests in console on calling `print` method. As default the requests are grouped by `part` and `method` (properties of `HttpRequestInfo` class; you'll see all the members of the class in API section).
 
 #### `sortBy`
 
@@ -332,25 +334,159 @@ Returns the numbers of calls in progress.
 
 ### `HttpSupervisor` Methods
 
-**init(config, loadConfigFromStore = true)** - Configures the supervisor. You can pass the following parameters to the `config` object: `domains`, `renderUI`, `traceEachRequest`, `alertOnError`, `alertOnExceedQuota`, `quota`, `groupBy`, `sortBy`, `usePerformance`, `monkeyPatchFetch`, `loadChart` and `keyboardEvents`. Passing `true` for `loadConfigFromStore` loads the config from local storage.
+#### `init(config: object, loadConfigFromStore = true)`
 
-**start()** - Starts network monitoring.
+Configures the supervisor. You can pass the following parameters to the `config` object:
 
-**stop()** - Stops network monitoring.
+- `include` (Array<string>) - Array of url glob patterns to monitor.
+- `exclude` (Array<string>) - Array of url glob patterns to ignore.
+- `renderUI` (boolean) - Passing `true` will render UI.
+- `traceEachRequest` (boolean) - Passing `true` will print each request.
+- `alertOnError` (boolean) - Passing `true` will print error requests.
+- `alertOnExceedQuota` (boolean) - Passing `true` will print requests that exceeds quota.
+- `alertOnRequestStart` (boolean) - True to alert on request start.
+- `quota` (object) - Request Quota. It's an object that can have three properties: `maxPayloadSize`, `maxResponseSize` and `maxDuration`. Any request that exceeds any of this value is assumed to be exceeded quota.
+- `groupBy` (Array<string>) - Grouping parameters used in displaying requests.
+- `sortBy` (Array<{field: string, dir: 'asc' | 'desc'}>) - Sorting parameters used in displaying requests.
+- `usePerformance` (boolean) - True to use performance.getEntriesByType for accurate duration and payload info.
+- `monkeyPatchFetch` (boolean) - True to monkey patch fetch requests.
+- `loadChart` (boolean) - True to use chart.js library for data visualization.
+- `keyboardEvents` (boolean) - True to use keyboard events for operating control panel.
+- `persistConfig` (boolean) - True to persist config in local storage.
+- `watches` (Array<{field: string, operator: string, value: any}>) - Collection of watches.
+- `lockConsole` (boolean) - True to lock developer console so except supervisor other scripts can't print messages in console.
 
-**clear()** - Clears the requests log.
+Passing `true` for `loadConfigFromStore` loads the config from local storage.
+
+Example
+
+```js
+http.init({
+  include: ['http://api.domain.com/v1/*'],
+  exclude: ['*/token'],
+  traceEachRequest: true,
+  groupBy: ['part', 'method'],
+  sortBy: [{ field: 'payloadSize', dir: 'asc' }]
+});
+```
+
+#### `start()`
+
+Starts network monitoring.
+
+#### `stop()`
+
+Stops network monitoring.
+
+#### `clear()`
+
+Clears the requests log.
 
 **print()** - Prints the log to the passed reporter.
 
-**on(eventName, handler)** - Subscribes to the passed event.
+#### `on(eventName: string, handler: function)`
 
-**off(eventName, handler)** - Un-subscribes from the passed event.
+Subscribes to the passed event. Below are the events emitted.
 
-**retire()** - Retires the supervisor.
+- `ready` - Fired when the supervisor is ready.
+- `start` - Fired when the supervisor is started.
+- `stop` - Fired when the supervisor is stopped.
+- `clear` - Fired when the captured requests log is cleared.
+- `retire` - Fired when the supervisor is destroyed.
+- `request-start` - Fired when a HTTP request is started.
+- `request-end` - Fired when a HTTP request is finished.
+- `request-error` - Fired when a HTTP request errors out.
+- `exceeds-quota` - Fired when a HTTP request exceeds quota.
+- `config-change` - Fired when the configuration of the supervisor is changed.
 
-**report(collection)** - Displays the passed collection using the reporter.
+#### `off(eventName: string, handler: function)`
 
-**requests()** - Returns the captured requests.
+Un-subscribes from the passed event.
+
+#### `retire(clearStore = false)`
+
+Retires the supervisor. Passing `clearStore` as `true` will clear the stored configuration from browser storage.
+
+#### `get(arg)`
+
+Returns request for the passed id or url.
+
+```js
+const firstRequest = http.get(1);
+const tokenRequest = http.get('/token');
+```
+
+Returns object of type `HttpRequestInfo`. The `HttpRequestInfo` class is the one that captures all the information related to a single request.
+
+Below are the properties of this class.
+
+- `id` (number) - Unique id of the request.
+- `url` (string) - The url of the request.
+- `domain` (string) - The domain of the request.
+- `path` (string) - The path from the url.
+- `part` (string) - The last part of the path from url with search query.
+- `method` (GET | POST | PUT | DELETE) - HTTP request method.
+- `payload` (object) - The request payload.
+- `payloadSize` (number) - The request payload size.
+- `timeStart` (number) - The request start time.
+- `timeEnd` (number) - The request end time.
+- `duration` (number) - Time taken by the request.
+- `response` (*) - The response of the request.
+- `responseSize` (number) - The response size.
+- `responseStatus` (number) - The response status.
+- `error` (boolean) - True if the request error-ed out.
+- `errorDescription` (*) -  The error description same as the response.
+- `exceedsQuota` (boolean) - True if the request exceeds quota.
+- `initiatorType` (xhr | fetch) - Whether the ajax call is triggered by xhr or fetch.
+- `payloadByPerformance` (number) - True if the payload size is determined using performance api.
+- `requestHeaders` (Map) - Request Headers.
+- `responseHeaders` (Map) - Response Headers.
+- `pending` (boolean) - True if the request is pending.
+
+Below are the constructor and methods of this class.
+
+- `constructor(id, url, method, payload)`
+- `fire(type = 'xhr', reqOptions = {})` - Issues AJAX request using the property values.
+
+#### `first()`
+
+Returns the first request from the log.
+
+#### `last()`
+
+Returns the last request from the log.
+
+#### `failed()`
+
+Returns the failed requests.
+
+#### `exceeded()`
+
+Returns the requests that exceeded the quota.
+
+#### `lastFailed()`
+
+Returns the last failed request.
+
+#### `maxSizeRequest()`
+
+Returns the request that has maximum response size.
+
+#### `maxDurationRequest()`
+
+Returns the request that took maximum time to complete.
+
+#### `group(...args)`
+
+Groups the requests based on the passed fields.
+
+Examples:
+
+
+
+#### `query()`
+
+Returns the captured requests.
 
 **getRequestsByType(method)** - Filters the requests based on the passed type and returns as collection.
 

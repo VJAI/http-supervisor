@@ -608,8 +608,8 @@ export default class HttpSupervisor {
   /**
    * Initialize the supervisor.
    * @param {object} [config] The configuration parameters.
-   * @param {Array<string>} [config.include] Array of url globs to monitor.
-   * @param {Array<string>} [config.exclude] Array of url globs to ignore.
+   * @param {Array<string>} [config.include] Array of url glob patterns to monitor.
+   * @param {Array<string>} [config.exclude] Array of url glob patterns to ignore.
    * @param {boolean} [config.renderUI] Passing `true` will render UI.
    * @param {boolean} [config.traceEachRequest] Passing `true` will print each request.
    * @param {boolean} [config.alertOnError] Passing `true` will print error requests.
@@ -762,14 +762,6 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Displays the passed collection using the reporter.
-   * @param {Collection} collection
-   */
-  report(collection) {
-    this._reporter.report(collection);
-  }
-
-  /**
    * Returns request for the passed arg (id/url).
    * @param {number} arg The request arg.
    * @returns {HttpRequestInfo}
@@ -857,7 +849,14 @@ export default class HttpSupervisor {
    * @returns {Collection}
    */
   sort(...sortArgs) {
-    return this.query(null, null, sortArgs);
+    let args = [...sortArgs];
+
+    if (typeof sortArgs[0] === 'string') {
+      args = [{ field: sortArgs[0] , dir: sortArgs[1] }];
+    }
+
+
+    return this.query(null, null, args);
   }
 
   /**
