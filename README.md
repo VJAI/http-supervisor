@@ -537,6 +537,8 @@ Passing multiple search conditions.
 const maxSizeGetRequests = http.query([{ field: 'method', operator: '=', value: 'GET' }, { field: 'responseSize', operator: '>', value: '10 kb' }];
 ```
 
+The different operators you can utilize are: "=", "!=", ">", "<", ">=", "<=", "~" (starts with), "^" (ends with), "contains", "!contains", "matches" and "!matches". 
+
 #### `totalPayload()`
 
 Returns the total payload size summing all requests.
@@ -661,6 +663,13 @@ http.export(collection, 'json'); // Export the passed collection as JSON
 
 Alert on console the request that matches the passed arguments.
 
+Example:
+
+```js
+http.watch('*/token'); // watch any request that is fired for url matching "/token".
+http.watch({ field: 'responseSize', operator: '>', value: '10 kb' }); // watch any request that exceeds 10 kb.
+```
+
 #### `removeWatch(watchId)`
 
 Remove the watch for the passed id.
@@ -708,7 +717,7 @@ Clears the copied content.
 
 ## Contact
 
-[PrideParrot](http://prideparrot.com/contact)
+[http://prideparrot.com/contact](http://prideparrot.com/contact)
 
 
 ## License
