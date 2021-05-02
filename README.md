@@ -59,7 +59,7 @@ The `init` method helps to configure and initialize the tool. You should call th
 
 ```js
 http.init({
-  domains: ['https://my.api.com'],
+  include: ['https://my.api.com'],
   alertOnError: true
 })
 ```
@@ -240,7 +240,11 @@ http.timeChart()
 
 ### `HttpSupervisor` Properties
 
-**busy** - Returns `true` if the supervisor is busy audit.
+`**busy**`
+
+Returns `true` if the supervisor is busy audit.
+
+**status**
 
 **totalRequests** - Returns the total count of requests.
 
