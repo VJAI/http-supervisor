@@ -382,8 +382,6 @@ Stops network monitoring.
 
 Clears the requests log.
 
-**print()** - Prints the log to the passed reporter.
-
 #### `on(eventName: string, handler: function)`
 
 Subscribes to the passed event. Below are the events emitted.
@@ -482,109 +480,231 @@ Groups the requests based on the passed fields.
 
 Examples:
 
+```js
+const groupedByMethod = http.group('method');
+const groupedByUrlMethodPayload = http.group('url', 'method', 'payload');
+```
 
+The output of the above method is of type `Collection` which is a custom class that extends Array and had methods to do multi-sorting, nested grouping and searching.
+
+#### `sort(...args)`
+
+Sorts the requests based on the passed arguments.
+
+Examples:
+
+```js
+const sortedByResponseSize = http.sort('responseSize', 'asc');
+const sortedByResponseSize = http.sort({ field: 'responseSize', dir: 'asc' });
+const multiSorted = http.sort([{ field: 'id', dir: 'asc' }, { field: 'responseSize', dir: 'asc' }]);
+
+```
 
 #### `query()`
 
-Returns the captured requests.
+Returns the captured requests performing sorting, grouping as well.
 
-**getRequestsByType(method)** - Filters the requests based on the passed type and returns as collection.
+Calling the `query` method without passing any argument returns all the requests.
 
-**getRequestsByUrl(url)** - Returns requests initiated for the passed url.
+```js
+const allRequests = http.query();
+```
 
-**getRequestsOfStatus(status)** - Returns requests matches the passed status code.
+Passing a string as input returns the requests that contains/matches the url.
 
-**getFailedRequests()** - Returns the failed requests.
+```js
+const requestsContainsTokenInUrl = http.query('/token');
+const requestMatchesApi = http.query('*/api/*');
+```
 
-**getRequestsExceededQuota()** - Returns the requests that exceeded the quota.
+If the string matches the HTTP request method then it returns all the requests of that type.
 
-**getLastFailedRequest()** - Returns the last failed request.
+```js
+const getRequests = http.query('GET');
+```
 
-**getLastRequest()** - Returns the last request.
+Passing search query.
 
-**getMaxSizeRequest()** - Returns the request that has maximum response size.
+```js
+const requests = http.query('method', '=', 'GET');
+```
 
-**getMaxDurationRequest()** - Returns the request that took maximum time to complete.
+The above method returns all the requests of method "GET".
 
-**groupRequests(...groupArgs)** - Groups the requests based on the passed arguments.
+Passing multiple search conditions.
 
-**sortRequests(...sortArgs)** - Sorts the requests based on the passed arguments.
+```js
+const maxSizeGetRequests = http.query([{ field: 'method', operator: '=', value: 'GET' }, { field: 'responseSize', operator: '>', value: '10 kb' }];
+```
 
-**groupSortRequests(groupArgs, sortArgs)** - Groups and sorts the requests.
+#### `totalPayload()`
 
-**searchRequests(...query)** - Filters requests based on the passed query.
+Returns the total payload size summing all requests.
 
-**searchRequestsContainsUrl(part)** - Returns requests that contains the passed string.
+#### `totalSize()`
 
-**searchRequestsOfSizeGreaterThan(size)** - Returns requests that contains response size greater than the passed value.
+Returns the total response size summing all requests.
 
-**searchGroupSortRequests(query, groupArgs, sortArgs)** - Get requests matches the query; group and sort the results based on the passed parameters.
+#### `maxPayload()`
 
-**getTotalPayloadSize()** - Returns the total payload size summing all requests.
+Returns the max payload size of the requests.
 
-**getTotalResponseSize()** - Returns the total response size summing all requests.
+#### `maxResponse()`
 
-**maxPayloadSize()** - Returns the max payload size of the requests.
+Returns the max response size of the requests.
 
-**maxResponseSize()** - Returns the max response size of the requests.
+#### `maxDuration()`
 
-**maxDuration()** - Returns the max duration.
+Returns the max duration.
 
-**printRequests()** - Prints all the requests in the passed reporter.
+#### `print(...args)`
 
-**printRequestById(id)** - Prints the request for the passed id.
+Prints the requests after searching, grouping and sorting. We can also pass a request or collection to the method and it prints it.
 
-**printRequestsByType(method)** - Prints the requests matched the passed method (GET, POST etc.).
+Printing a request by passing the id.
 
-**printRequestsByUrl(url)** - Prints the requests that's been issued against the passed url.
+```js
+http.print(1);
+```
 
-**printRequestsOfStatus(status)** - Print requests that has the passed response status.
+Printing all the POST requests.
 
-**printFailedRequests()** - Prints failed requests.
+```js
+http.print('POST');
+```
 
-**printRequestsExceededQuota()** - Prints requests exceeds quota.
+Printing all the request that matches "token".
 
-**printLastFailedRequest()** - Prints the last failed request.
+```js
+http.print('*/token');
+```
 
-**printLastRequest()** - Prints the last request.
+Printing all the requests with the default `groupBy` and `sortBy` properties.
 
-**printRequestsExceededQuota()** - Prints requests exceeds quota.
+```js
+http.print();
+```
 
-**printMaxSizeRequest()** - Prints the request that has maximum size.
+Printing a subset fields of all the requests.
 
-**printMaxDurationRequest()** - Prints the request that took maximum time.
+```js
+http.print({ displayFields: ['url', 'method', 'response'] });
+```
 
-**groupAndPrintRequests(...groupArgs)** - Groups and prints the requests.
+Printing requests after searching, grouping and sorting.
 
-**sortAndPrintRequests(...sortArgs)** - Sorts and prints the requests.
+```js
+http.print(
+  [{field: 'method', operator: '=', value: 'GET'}], // search
+  ['url', 'method'], // group
+  [{ field: 'responseSize', dir: 'desc' }] //sort
+);
+```
 
-**groupSortAndPrintRequests(groupArgs, sortArgs)** - Groups, sorts and prints the requests.
+#### `printFailed(displayFields?)`
 
-**searchAndPrintRequests(...query)** - Searches and prints the requests matches the search query.
+Prints failed requests. Passing an array of fields as second parameter will only display those fields in the console.
 
-**printRequestsContainsUrl(part)** - Print requests that has url contains the passed string.
+#### `printExceeded(displayFields)`
 
-**printRequestsOfSizeGreaterThan(size)** - Print requests that has response size greater than the passed value.
+Prints requests exceeds quota.
 
-**searchGroupSortAndPrintRequests(query, groupArgs, sortArgs)** - Searches and then groups, sorts and finally prints the collection.
+#### `printLastFailed()`
 
-**displayResponseSizeChart()** - Displays the bar chart of responsive size.
+Prints the last failed request.
 
-**displayResponseTimeChart()** - Displays the bar chart of responsive size.
+#### `printLast()`
 
-**displaySizeTimeChart()** - Displays bubble chart for response size and time.
+Prints the last request.
 
-**displaySizeDistribution()** - Displays the response size distribution.
+#### `printMaxSizeRequest()`
 
-**export()** - Export requests to a CSV file.
+Prints the request that has maximum size.
 
-**watchOn(...args)** - Alert request that matches the passed arguments.
+#### `printMaxDurationRequest()`
 
-**removeWatch(watchId)** - Remove the watch for the passed id.
+Prints the request that took maximum time.
 
-**clearWatches()** - Clear all watches.
+#### `sizeChart()`
 
-**clearStore()** - Removes the stored config from session storage.
+Displays the bar chart of responsive size.
+
+#### `timeChart()`
+
+Displays the bar chart of responsive size.
+
+#### `sizeTimeChart()`
+
+Displays bubble chart for response size and time.
+
+#### `sizeDistributionChart()`
+
+Displays the response size distribution.
+
+#### `import()`
+
+Calling this method will opens the system file dialog and selecting a persisted configuration file will imports the configuration to the supervisor.
+
+### `export(...args)`
+
+Export requests as a CSV / JSON file.
+
+```js
+http.export(); // Export as CSV
+http.export('json'); // Export as JSON
+http.export('json', true); // Export the configuration as JSON
+http.export(collection); // Export the passed collection as CSV
+http.export(collection, 'json'); // Export the passed collection as JSON
+```
+
+#### `watchOn(...args)`
+
+Alert on console the request that matches the passed arguments.
+
+#### `removeWatch(watchId)`
+
+Remove the watch for the passed id.
+
+#### `clearWatches()`
+
+Clear all watches.
+
+#### `clearStore()`
+
+Removes the stored config from session storage.
+
+#### `fire(id, type = InitiatorType.XHR, reqOptions = {})`
+
+Re-issues ajax request for the passed http request.
+
+#### `record()`
+
+Creates a new session.
+
+#### `end()`
+
+Ends the current session.
+
+#### `getSession(id)`
+
+Returns session for the passed id.
+
+#### `removeSession(id)`
+
+Removes the passes session.
+
+#### `clearSessions()`
+
+Clear all sessions.
+
+#### `copy(id, content = 'response')`
+
+Copies the response, payload or the complete request to clipboard.
+
+#### `clearCopy()`
+
+Clears the copied content.
+
 
 ## License
 
