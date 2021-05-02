@@ -240,7 +240,7 @@ http.timeChart()
 
 ### `HttpSupervisor` Properties
 
-`**busy**`
+#### `busy`
 
 Returns `true` if the supervisor is busy audit.
 
