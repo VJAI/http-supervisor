@@ -244,34 +244,90 @@ http.timeChart()
 
 Returns `true` if the supervisor is busy audit.
 
-**status**
+#### `status`
 
-**totalRequests** - Returns the total count of requests.
+Returns the current status of the supervisor. It could be one of these values: "busy", "idle", "not-ready" or "retired".
 
-**domains** - Returns the domains that's configured to audit.
+#### `totalRequests`
+ 
+Returns the total count of requests.
 
-**renderUI** - Returns `true` if ui is required.
+#### `include`
 
-**traceEachRequest** - Gets/sets whether each request need to be printed in console.
+Gets/sets the url patters to monitor. As default monitors all requests.
 
-**alertOnError** - Gets/sets whether we need to display the request on error in console.
+#### `exclude` 
 
-**alertOnExceedQuota** - Gets/sets whether to display requests exceeded quota in console.
+Gets/sets the url patters to ignore.
 
-**quota** - Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`. The default values are 1 kb, 10 kb and 1 second respectively.
+#### `renderUI`
+ 
+Returns `true` if ui is required. As default the value is `true`.
 
-**groupBy** - Returns the array of grouping parameters.
+#### `displayUI`
 
-**sortBy** - Returns the array of sorting parameters.
+Shows/hides UI if `renderUI` is set as `true`.
 
-**usePerformance** - Leveraged `performance.getEntriesByType` API for calculating more precise duration and resource size. Using this feature 
-will add a new query parameter (hs_rid) in the url.
+#### `silent`
 
-**monkeyPatchFetch** - `True` to Intercept fetch requests.
+Gets/sets whether to display any messages to console or not. As default the value is `false`.
 
-**loadChart** - `True` to use chart.js library for data visualization.
+#### `traceEachRequest`
 
-**keyboardEvents** - `True` to use keyboard events for operating control panel.
+Gets/sets whether each request need to be printed in console. As default the value is `false`.
+
+#### `alertOnError` 
+
+Gets/sets whether we need to display the request on error in console. As default the value is `true`.
+
+#### `alertOnExceedQuota`
+
+Gets/sets whether to display requests exceeded quota in console. As default the value is `true`.
+
+#### `alertOnRequestStart`
+
+Gets/sets whether to alert the request info in console on request starting stage. As default the value is `false`.
+
+#### `quota`
+
+Gets/sets the quota. It's an object that takes three parameters `maxPayloadSize`, `maxResponseSize` and `maxDuration`. The default values are 10 kb, 10 kb and 1 second respectively.
+
+#### `groupBy`
+
+Gets/sets the group parameters that is used while displaying requests in console on calling `print` method. As default the requests are grouped by "part" and "method" (properties of `HttpRequestInfo` class; you'll see all the members of the class in API section).
+
+#### `sortBy`
+
+Gets/sets the sort parameters that is used while displaying requests in console. As default the requests are sorted by `id` in ascending order.
+
+#### `usePerformance`
+
+Gets/sets whether to use `performance.getEntriesByType` API for calculating more precise duration and resource size. Using this feature 
+will add a new query parameter "hs_rid" in the url. As default the value is `true`.
+
+#### `monkeyPatchFetch`
+
+Gets/sets whether to monkey patch `window.fetch` method to capture fetch requests. As default the value is `true`.
+
+#### `loadChart`
+
+Returns `true` if visualization is enabled. As default the value is `true`.
+
+#### `keyboardEvents` 
+
+Gets/sets whether to control the supervisor through keyboard events. As default the value is `true`.
+
+#### `persistConfig`
+
+Gets/sets whether to persist configuration in browser storage. As default the value is `true`.
+
+#### `lockConsole`
+
+Gets/sets whether to lock developer console. Doing this will block all other messages to console by other scripts until the lock is released. As default the value is `false`.
+
+#### `onGoingCallsCount`
+
+Returns the numbers of calls in progress.
 
 
 ### `HttpSupervisor` Methods
