@@ -706,6 +706,11 @@ Copies the response, payload or the complete request to clipboard.
 Clears the copied content.
 
 
+## Contact
+
+[PrideParrot](http://prideparrot.com/contact)
+
+
 ## License
 
 MIT
