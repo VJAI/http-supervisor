@@ -904,10 +904,12 @@ export default class HttpSupervisor {
           return;
         }
 
-        if (['payloadSize', 'responseSize'].has(field)) {
-          value = convertBytes(value);
-        } else if (field === 'duration') {
-          value = convertTime(value);
+        if (typeof value === 'string') {
+          if (['payloadSize', 'responseSize'].has(field)) {
+            value = convertBytes(value);
+          } else if (field === 'duration') {
+            value = convertTime(value);
+          }
         }
 
         q.push({ field, value, operator });

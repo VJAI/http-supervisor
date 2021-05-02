@@ -2,14 +2,20 @@
 
 ## Intro
 
-A simple tool that helps to audit HTTP requests (fetch and XHR) and identify the requests that exceeds the set quota. It also helps to group, sort, query and export requests.
+A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort, search and export requests.
 
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
-to manage requests.
+to work with requests from developer console.
 
 Last but not least it also provides visualization support using the chart.js library.
 
-[DEMO](https://vjai.github.io/http-supervisor/)
+
+## Demo
+
+[https://vjai.github.io/http-supervisor/](https://vjai.github.io/http-supervisor/)
+
+
+## Screenshots
 
 ### UI with controls
 
@@ -23,6 +29,19 @@ Last but not least it also provides visualization support using the chart.js lib
 
 ![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/visualization.png)
 
+
+## Features
+
+- Auditing Requests By Setting Quota
+- Searching, Grouping And Sorting Requests
+- Printing Requests
+- Exporting Requests As CSV
+- Exporting / Importing Configuration
+- Visualization Through Charts
+- Watching Requests
+- Copying Requests
+
+
 ## Install
 
 Currently it's available in `npm`. There are plans to make it available as a browser addon.
@@ -31,31 +50,15 @@ Currently it's available in `npm`. There are plans to make it available as a bro
 npm i http-supervisor --save-dev
 ``` 
 
-## Usage
+The library exports a single object called `http` through which you can control the audit and manage the requests.
 
-Reference the script at the end of the body. Invoke `httpSupervisor.init()` to start the tool.
-
-```html
-<html>
-  <body>
-    ...
-    <script src="node_modules/http-supervisor/http.supervisor-1.2.0.js"></script>
-    <script>
-      httpSupervisor.init();
-    </script>
-  </body>
-</html>
-```
-
-The library exports a single object called `httpSupervisor` through which you can control the audit.
 
 ## Initializing Supervisor
 
-The `init` method helps to configure and initialize the tool with parameters passed as input. You should call this method 
-to start the audit and it can be called only once.
+The `init` method helps to configure and initialize the tool. You should call this method to start the audit and it can be called only once.
 
 ```js
-httpSupervisor.init({
+http.init({
   domains: ['https://my.api.com'],
   alertOnError: true
 })
@@ -63,75 +66,175 @@ httpSupervisor.init({
 
 You can pass a bunch of parameters to the `init` method to configure the tool which you can see at the API section.
 
+
 ## Starting Audit
 
 Calling the `init` method start the audit. If you stopped it for some reason and you can restart it by calling the `start` method.
 
 ```js
-httpSupervisor.start();
+http.start();
 ```
+
 
 ## Stopping Audit
 
 You can temporarily stop auditing by calling `stop` method.
 
 ```js
-httpSupervisor.stop();
+http.stop();
 ```
 
-## Printing Requests
 
-The library provides bunch of methods to print the requests. Calling the plain `print` method displays the requests 
-in console using the default group and sort parameters passed during the initialization. There are also methods that accepts 
-group, sort and search parameters and does the printing after performing the necessary operations.
+## Getting Requests
+
+The library provides a method called `query` that gives you all the captured requests in a custom collection.
 
 ```js
-httpSupervisor.print()
+const requests = http.query();
 ```
 
-You can see other print methods in the API section.
+The output of the `query` method is a custom collection extended from array that helps you to search, group and sort requests.
+
+You can get a single request by passing the `id` to the `get` method.
+
+```js
+const request = http.get(1);
+```
+
+The output request is of type `HttpRequestInfo`.
+
 
 ## Sorting Requests
 
 You can multi-sort the requests.
 
 ```js
-httpSupervisor.sortAndPrintRequests({ field: 'method', dir: 'asc' }, { field: 'responseSize', dir: 'desc' });
+const requests = http.sort({ field: 'method', dir: 'asc' }, { field: 'responseSize', dir: 'desc' });
 ```
+
 
 ## Grouping Requests
 
 You can group and sub-group requests.
 
 ```js
-httpSupervisor.groupAndPrintRequests('path', 'method');
+const requests = http.group('path', 'method');
 ```
 
 There are also methods available that helps to group and sort in the same call.
+
 
 ## Searching Requests
 
 You can also search requests on different fields passing different operators.
 
 ```js
-httpSupervisor.searchAndPrintRequests({ field: 'responseSize', operator: '>', value: '1 kb' });
+const requests = http.query('/token');
+const requests = http.query('GET');
+const requests = http.query('responseSize', '>', '1 kb');
+const requests = http.query({ field: 'responseSize', operator: '>', value: '1 kb' });
 ```
+
+
+## Printing Requests
+
+Calling the `print` method displays the requests in console using the default group and sort parameters.
+
+```js
+http.print()
+```
+
+The method accepts different kind of parameters to search, group and sort the requests before printing. You can also 
+pass a request or collection to this method and that'll be printed.
+
+### Printing a request passing id
+
+Each http request is associated with a unique id. You can print the details of a single request by just passing the id.
+
+```js
+http.print(id);
+```
+
+### Printing requests of a particular http method
+
+You can print requests belongs to a particular http method (GET, POST etc.) by passing the http method name.
+
+```js
+http.print('GET');
+```
+
+### Printing requests matches an url
+
+By passing an url (relative/absolute) the methods prints all the requests belongs to it.
+
+```js
+http.print('/api/v3');
+```
+
+You can also pass glob patterns.
+
+```js
+http.print('https://api.domain.com/v3/*');
+```
+
+### Search, group, sort and then print requests
+
+The method also accepts search, group and sort parameters that'll be applied over the requests before printing them.
+
+```js
+http.print(
+  [{field: 'method', operator: '=', value: 'GET'}], // search
+  ['url', 'method'], // group
+  [{ field: 'responseSize', dir: 'desc' }] //sort
+);
+```
+
+If you want to only sort you can pass `null` to search and group parameters.
+
+### Printing any request or collection
+
+You can pass any request or collection to the print method and it'll print it.
+
+```
+http.print(request);
+http.print(collection);
+```
+
 
 ## Exporting Requests
 
-You can export requests as a CSV file by calling the `export` method.
+You can export requests as CSV/JSON by calling the `export` method.
 
 ```js
-httpSupervisor.export();
+http.export(); // export as CSV
+http.export('json') // export as JSON
 ```
+
+
+## Exporting / Importing Configuration
+
+You can export the configuration of supervisor by passing `true` as the last argument.
+
+```js
+http.export('json', true);
+```
+
+You can import a saved configuration by calling the `import` method.
+
+```js
+http.import();
+```
+
 
 ## Visualizing Requests
 
-The library provides methods to visualize data through charts.
+The library provides methods to visualize data through charts. The `timeChart` method prints the time taken by each request through a bar chart. 
+There are other methods to visualize different information please check the API section.
 
 ```
-httpSupervisor.displayResponseTimeChart()
+http.timeChart()
 ```
+
 
 ## API
 
