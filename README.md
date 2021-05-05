@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/VJAI/http-supervisor/blob/main/assets/http.png" />
+  <img src="https://github.com/VJAI/http-supervisor/blob/main/assets/http.png" width="200" />
 </p>
 
 # http-supervisor
