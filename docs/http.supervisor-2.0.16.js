@@ -2983,6 +2983,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       clearStore && this.clearStore();
       window.removeEventListener('init-supervisor', this.init);
       window.removeEventListener('retire-supervisor', this.retire);
+      window.http = null;
       this._status = SupervisorStatus.Retired;
     }
     /**
@@ -3987,6 +3988,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         })["catch"](function (error) {
           reject(error);
         })["finally"](function () {
+          if (_this4.status === SupervisorStatus.Retired) {
+            return;
+          }
+
           requestInfo.responseStatus = response ? response.status : 500;
           requestInfo.responseHeaders = new Map(Object.entries(response.headers.entries()));
 
@@ -4068,6 +4073,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
 
       xhr.addEventListener('readystatechange', function () {
+        if (_this5.status === SupervisorStatus.Retired) {
+          return;
+        }
+
         if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
           var headers = xhr.getAllResponseHeaders(),
               arr = headers.trim().split(/[\r\n]+/),

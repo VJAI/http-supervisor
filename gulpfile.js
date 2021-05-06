@@ -15,21 +15,20 @@ function updateVersion() {
   return run(`npm version ${args.type || 'patch'} --no-git-tag-version`)();
 }
 
-function updateIndex() {
-  return src('./index.js')
-    .pipe(replace(/http.supervisor-(?:\d[.]?)+js/g, `http.supervisor-${getVersion()}.js`))
-    .pipe(dest(root));
+function createIndex(cb) {
+  fs.writeFileSync(`${dist}/index.js`, `module.exports = require('./http.supervisor-${getVersion()}');`);
+  cb();
 }
 
 function cleanDist() {
   return del(dist);
 }
 
-function buildLib(mode) {
+function buildLib() {
   return run('webpack')();
 }
 
-function buildLibMin(mode) {
+function buildLibMin() {
   return run(`webpack -p`)();
 }
 
@@ -37,9 +36,12 @@ function copyFilesToDist() {
   return src([
     './package.json',
     'LICENSE',
-    'README.md',
-    'index.js'
+    'README.md'
   ], { base: root }).pipe(dest(dist));
+}
+
+function deleteOldFiles() {
+  return del(`${docs}/http.supervisor*.js`);
 }
 
 function copyFilesToDocs() {
@@ -52,12 +54,16 @@ function updateDocFile() {
     .pipe(dest(docs));
 }
 
-function updateAddonFile() {
-  throw new Error('Not Implemented');
+function createAddonFile(cb) {
+  const contentString = fs.readFileSync(`${addon}/template.js`, 'utf8');
+  let supervisorFileString = fs.readFileSync(`${dist}/http.supervisor-${getVersion()}.min.js`);
+  supervisorFileString += `http.init();`;
+  fs.writeFileSync(`${addon}/http.supervisor.js`, contentString.replace('<!--CONTENT-->', supervisorFileString).replace(`//# sourceMappingURL=http.supervisor-${getVersion()}.min.js.map`, ''));
+  cb();
 }
 
 function publish() {
-  throw new Error('Not Implemented');
+  return series(run('cd dist')(), run('npm publish')());
 }
 
 function publishAddon() {
@@ -69,20 +75,17 @@ function getVersion() {
   return pkg.version;
 }
 
-function readBuildFile() {
-  return fs.readFileSync(`${dist}/http.supervisor-${getVersion()}.min.js`, 'utf8');
-}
-
 exports.build = series(
   updateVersion,
-  updateIndex,
   cleanDist,
   buildLib,
   buildLibMin,
   copyFilesToDist,
+  createIndex,
+  deleteOldFiles,
   copyFilesToDocs,
   updateDocFile
 );
-exports.build_addon = updateAddonFile;
+exports.build_addon = createAddonFile;
 exports.publish = publish;
-exports.cleanDist = publishAddon;
+exports.publish_addon = publishAddon;

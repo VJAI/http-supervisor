@@ -754,6 +754,7 @@ export default class HttpSupervisor {
     clearStore && this.clearStore();
     window.removeEventListener('init-supervisor', this.init);
     window.removeEventListener('retire-supervisor', this.retire);
+    window.http = null;
     this._status = SupervisorStatus.Retired;
   }
 
@@ -1508,6 +1509,10 @@ export default class HttpSupervisor {
           reject(error);
         })
         .finally(() => {
+          if (this.status === SupervisorStatus.Retired) {
+            return;
+          }
+
           requestInfo.responseStatus = response ? response.status : 500;
           requestInfo.responseHeaders = new Map(Object.entries(response.headers.entries()));
           this._fillParametersAndFireEvents(requestInfo, response);
@@ -1574,6 +1579,10 @@ export default class HttpSupervisor {
 
     // Listen to `onreadystatechange` event to capture the response info.
     xhr.addEventListener('readystatechange', () => {
+      if (this.status === SupervisorStatus.Retired) {
+        return;
+      }
+
       if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
         const headers = xhr.getAllResponseHeaders(),
           arr = headers.trim().split(/[\r\n]+/),
