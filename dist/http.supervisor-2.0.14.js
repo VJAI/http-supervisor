@@ -1132,12 +1132,22 @@ function isAbsolute(url) {
  * @param onload
  */
 
-function loadScript(src, onload, onerror) {
+function loadScript(src, onload, onerror, id) {
   var script = document.createElement('script');
   script.src = src;
+  id && script.setAttribute('id', id);
   onload && script.addEventListener('load', onload);
   onerror && script.addEventListener('error', onerror);
   (document.head || document.documentElement).appendChild(script);
+}
+/**
+ * Removes the script.
+ * @param id
+ */
+
+function unloadScript(id) {
+  var script = document.getElementById('http-sup-chartjs');
+  script && script.remove();
 }
 /**
  * Returns random color.
@@ -2000,7 +2010,7 @@ var event_emitter_EventEmitter = /*#__PURE__*/function () {
 
       var handlers = this._eventsHandlersMap.get(eventName);
 
-      handlers && handlers.remove(handler);
+      handlers && handlers["delete"](handler);
     }
     /**
      * Invokes the handlers registered for the event.
@@ -2203,6 +2213,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     this._widget = widget || FAKE;
     this._reporter = reporter || FAKE;
     this._eventEmitter = new event_emitter_EventEmitter();
+    this.init = this.init.bind(this);
+    this.retire = this.retire.bind(this);
   }
   /**
    * Initialize the supervisor.
@@ -2864,19 +2876,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._reporter.init(this);
 
       this.start();
+      window.addEventListener('init-supervisor', this.init, false);
+      window.addEventListener('retire-supervisor', this.retire, false);
 
-      var initChart = function initChart() {
-        _this._reporter.initChart();
-
-        _this._triggerEvent(SupervisorEvents.READY);
-      };
-
-      if (this._loadChart) {
-        loadScript(CHARTJS_LIB_PATH, initChart, initChart);
-        return;
-      }
-
-      initChart();
+      this._triggerEvent(SupervisorEvents.READY);
     }
     /**
      * Starts network monitoring.
@@ -2978,6 +2981,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._watches = null;
       this._sessions = null;
       clearStore && this.clearStore();
+      window.removeEventListener('init-supervisor', this.init);
+      window.removeEventListener('retire-supervisor', this.retire);
       this._status = SupervisorStatus.Retired;
     }
     /**
@@ -4379,7 +4384,7 @@ function http_supervisor_widget_isNativeReflectConstruct() { if (typeof Reflect 
  */
 
 var template = document.createElement('template');
-template.innerHTML = "\n<style>\n  :host {\n    --color: #eee;\n    --bg-color: #333;\n    --hover-color: #5ab7fa;\n    --disabled-color: #ccc;\n    --border-color: #666;\n    --font-size: 12px;\n    --index: 20000;\n    --popover-width: 350px;\n    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);\n    color: var(--color);\n    font-family: Arial, \"Helvetica Neue\", Helvetica, sans-serif;\n  }\n\n  .http-supervisor-container {\n    position: fixed;\n    top: 0;\n    right: calc(50% - 91px);\n    z-index: var(--index);\n    display: flex;\n    justify-content: center;\n    align-items:center;\n    background-color: var(--bg-color);\n    border: solid 1px var(--border-color);\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n    font-size: var(--font-size);\n    box-sizing: border-box;\n    color: var(--font-color);\n    box-shadow: var(--box-shadow);\n  }\n\n   button, button:active, button:focus, button:hover, span {\n    width: 30px;\n    height: 26px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    box-sizing: border-box;\n    background: none;\n    box-shadow: none;\n    outline: none;\n  }\n\n  button:not(:disabled) {\n    cursor:pointer;\n  }\n\n  button svg {\n    color: var(--color);\n  }\n\n  button:disabled svg {\n    color: var(--disabled-color);\n  }\n\n  button:not(:disabled):hover svg {\n    color: var(--hover-color);\n  }\n\n  button, span, button:hover {\n    border-right: solid 1px var(--border-color);\n  }\n\n  .counts-label {\n    width: auto;\n    padding: 0 8px;\n  }\n\n  .popover-overlay {\n    position: fixed;\n    top: 0;\n    left: 0;\n    bottom: 0;\n    right: 0;\n    content: ' ';\n    display: none;\n  }\n\n  .popover-content {\n    position: fixed;\n    top: 38px;\n    width: var(--popover-width);\n    background-color: var(--bg-color);\n    right: calc(50% - 216px);\n    border-radius: 6px;\n    padding: 20px;\n    font-size: var(--font-size);\n    box-shadow: var(--box-shadow);\n    z-index: var(--index);\n    display: none;\n  }\n\n  .popover-content .popover-close {\n    position: absolute;\n    right: 8px;\n    top: 8px;\n  }\n\n  .active {\n    display: block;\n  }\n\n  .popover-content:before {\n    position: absolute;\n    z-index: -1;\n    content: \"\";\n    right: calc(50% - 65px);\n    top: -10px;\n    border-style: solid;\n    border-width: 0 10px 10px 10px;\n    border-color: transparent transparent var(--bg-color) transparent;\n  }\n\n  .popover-content input[type=\"number\"], .popover-content input[type=\"text\"] {\n    background-color: transparent;\n    color: var(--color);\n    outline: none;\n    border: none;\n    border-bottom: solid 1px var(--border-color);\n    font-size: var(--font-size);\n    width: 60px;\n  }\n\n  .popover-content form {\n    margin-bottom: 0;\n  }\n\n  .popover-content form div {\n    display: flex;\n    align-items: center;\n  }\n\n  .popover-content h4 {\n    margin: 0;\n    margin-bottom: 8px;\n    color: var(--disabled-color);\n    text-transform: uppercase;\n    font-size: 8px;\n    letter-spacing: 1px;\n  }\n\n  .popover-content fieldset {\n    display: grid;\n    grid-template-columns: 50% 50%;\n    grid-column-gap: 5px;\n    grid-row-gap: 4px;\n    border: dashed 1px var(--border-color);\n    margin-bottom: 15px;\n    padding: 6px 12px;\n  }\n\n  .popover-content .first div label {\n    width: 140px;\n  }\n\n  .popover-content .second div label {\n    width: 80px;\n  }\n\n  .popover-content .third {\n    display: flex;\n    border: none;\n    padding: 0;\n  }\n\n  .popover-content .third button {\n    border: solid 1px var(--border-color);\n  }\n\n  .popover-content .fourth {\n    margin-bottom: 0;\n  }\n\n  .popover-content .fourth.active {\n    display: grid;\n  }\n  \n  .fourth .span2 {\n    grid-column: 1 / span 2;\n  }\n\n  .advanced-container {\n    display: flex;\n    align-items: center;\n  }\n\n  .advanced-container svg {\n    width: 10px;\n    height: 10px;\n    position: relative;\n    top: -5px;\n    margin-left: 5px;\n  }\n</style>\n<div class=\"http-supervisor-container\">\n   <button>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"currentColor\" class=\"bi bi-play\" viewBox=\"0 0 16 16\">\n       <path d=\"M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z\"/>\n    </svg>\n   </button>\n   <button style=\"display: none;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stop-circle\" viewBox=\"0 0 16 16\">\n        <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"/>\n        <path d=\"M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z\"/>\n      </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">\n        <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>\n        <path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>\n      </svg>\n   </button>\n   <button disabled>\n    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-eye\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z\"/>\n      <path d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>\n    </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n        <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n        <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n      </svg>\n  </button>\n   <span class=\"counts-label\">\n     0 / 0\n   </span>\n   <button style=\"border:none;\">\n     <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-three-dots-vertical\" viewBox=\"0 0 16 16\">\n     <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n   </svg>\n   </button>\n</div>\n<div class=\"popover\">\n  <div class=\"popover-overlay\"></div>\n  <div class=\"popover-content\">\n    <a href=\"#\" class=\"popover-close\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"#ccc\" class=\"bi bi-x-circle-fill\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z\"/>\n    </svg>\n    </a>\n    <form>\n      <h4>Options</h4>\n      <fieldset class=\"first\">\n        <div>\n          <label>Trace Request:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Error:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Quota Exceed:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Use Performance:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n\n      <h4>Quota</h4>\n      <fieldset class=\"second\">\n        <div>\n          <label>Payload:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Response:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Duration:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n      </fieldset>\n\n      <h4>Visualization</h4>\n      <fieldset class=\"third\">\n        <button title=\"Response Size Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size And Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size Distribution\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pie-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z\"/>\n            </svg>\n        </button>\n      </fieldset>\n\n      <div class=\"advanced-container\">\n        <h4>Advanced</h4>\n        <svg style=\"cursor:pointer\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-down expand\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n          <path fill-rule=\"evenodd\" d=\"M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n        </svg>\n        <svg style=\"cursor:pointer; display: none\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-up collapse\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z\"/>\n          <path fill-rule=\"evenodd\" d=\"M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z\"/>\n        </svg>\n      </div>\n\n      <fieldset class=\"fourth\">\n        <div class=\"span2\">\n          <label>Include:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div class=\"span2\">\n          <label>Exclude:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div>\n          <label>Keyboard Events:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Persist Config:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n    </form>\n  </div>\n</div>\n";
+template.innerHTML = "\n<style>\n  :host {\n    --color: #eee;\n    --bg-color: #333;\n    --hover-color: #5ab7fa;\n    --disabled-color: #ccc;\n    --border-color: #666;\n    --font-size: 12px;\n    --index: 20000;\n    --popover-width: 350px;\n    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);\n    color: var(--color);\n    font-family: Arial, \"Helvetica Neue\", Helvetica, sans-serif;\n  }\n\n  .http-supervisor-container {\n    position: fixed;\n    top: 0;\n    right: calc(50% - 91px);\n    z-index: var(--index);\n    display: flex;\n    justify-content: center;\n    align-items:center;\n    background-color: var(--bg-color);\n    border: solid 1px var(--border-color);\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n    font-size: var(--font-size);\n    box-sizing: border-box;\n    color: var(--font-color);\n    box-shadow: var(--box-shadow);\n  }\n\n   button, button:active, button:focus, button:hover, span {\n    width: 30px;\n    height: 26px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    box-sizing: border-box;\n    background: none;\n    box-shadow: none;\n    outline: none;\n  }\n\n  button:not(:disabled) {\n    cursor:pointer;\n  }\n\n  button svg {\n    color: var(--color);\n  }\n\n  button:disabled svg {\n    color: var(--disabled-color);\n  }\n\n  button:not(:disabled):hover svg {\n    color: var(--hover-color);\n  }\n\n  button, span, button:hover {\n    border-right: solid 1px var(--border-color);\n  }\n\n  .counts-label {\n    width: auto;\n    padding: 0 8px;\n  }\n\n  .popover-overlay {\n    position: fixed;\n    top: 0;\n    left: 0;\n    bottom: 0;\n    right: 0;\n    content: ' ';\n    display: none;\n  }\n\n  .popover-content {\n    position: fixed;\n    top: 38px;\n    width: var(--popover-width);\n    background-color: var(--bg-color);\n    right: calc(50% - 216px);\n    border-radius: 6px;\n    padding: 20px;\n    font-size: var(--font-size);\n    box-shadow: var(--box-shadow);\n    z-index: var(--index);\n    display: none;\n  }\n\n  .popover-content .popover-close {\n    position: absolute;\n    right: 8px;\n    top: 8px;\n  }\n\n  .active {\n    display: block;\n  }\n\n  .popover-content:before {\n    position: absolute;\n    z-index: -1;\n    content: \"\";\n    right: calc(50% - 65px);\n    top: -10px;\n    border-style: solid;\n    border-width: 0 10px 10px 10px;\n    border-color: transparent transparent var(--bg-color) transparent;\n  }\n\n  .popover-content input[type=\"number\"], .popover-content input[type=\"text\"] {\n    background-color: transparent;\n    color: var(--color);\n    outline: none;\n    border: none;\n    border-bottom: solid 1px var(--border-color);\n    font-size: var(--font-size);\n    width: 60px;\n  }\n\n  .popover-content form {\n    margin-bottom: 0;\n  }\n\n  .popover-content form div {\n    display: flex;\n    align-items: center;\n  }\n\n  .popover-content h4 {\n    margin: 0;\n    margin-bottom: 8px;\n    color: var(--disabled-color);\n    text-transform: uppercase;\n    font-size: 8px;\n    letter-spacing: 1px;\n  }\n\n  .popover-content fieldset {\n    display: grid;\n    grid-template-columns: 50% 50%;\n    grid-column-gap: 5px;\n    grid-row-gap: 4px;\n    border: dashed 1px var(--border-color);\n    margin-bottom: 15px;\n    padding: 6px 12px;\n  }\n\n  .popover-content .first div label {\n    width: 140px;\n  }\n\n  .popover-content .second div label {\n    width: 80px;\n  }\n\n  .popover-content .third {\n    display: flex;\n    border: none;\n    padding: 0;\n  }\n\n  .popover-content .third button {\n    border: solid 1px var(--border-color);\n  }\n\n  .popover-content .fourth {\n    margin-bottom: 0;\n    display: none;\n  }\n\n  .popover-content .fourth.active {\n    display: grid;\n  }\n  \n  .fourth .span2 {\n    grid-column: 1 / span 2;\n  }\n\n  .advanced-container {\n    display: flex;\n    align-items: center;\n  }\n\n  .advanced-container svg {\n    width: 10px;\n    height: 10px;\n    position: relative;\n    top: -5px;\n    margin-left: 5px;\n  }\n</style>\n<div class=\"http-supervisor-container\">\n   <button>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"currentColor\" class=\"bi bi-play\" viewBox=\"0 0 16 16\">\n       <path d=\"M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z\"/>\n    </svg>\n   </button>\n   <button style=\"display: none;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stop-circle\" viewBox=\"0 0 16 16\">\n        <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"/>\n        <path d=\"M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z\"/>\n      </svg>\n   </button>\n   <button disabled>\n    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-eye\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z\"/>\n      <path d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>\n    </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">\n        <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>\n        <path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>\n      </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n        <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n        <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n      </svg>\n  </button>\n   <span class=\"counts-label\">\n     0 / 0\n   </span>\n   <button style=\"border:none;\">\n     <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-three-dots-vertical\" viewBox=\"0 0 16 16\">\n     <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n   </svg>\n   </button>\n</div>\n<div class=\"popover\">\n  <div class=\"popover-overlay\"></div>\n  <div class=\"popover-content\">\n    <a href=\"#\" class=\"popover-close\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"#ccc\" class=\"bi bi-x-circle-fill\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z\"/>\n    </svg>\n    </a>\n    <form>\n      <h4>Options</h4>\n      <fieldset class=\"first\">\n        <div>\n          <label>Silent:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Trace Request:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Error:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Quota Exceed:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Request Start:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Lock Console:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n\n      <h4>Quota</h4>\n      <fieldset class=\"second\">\n        <div>\n          <label>Payload:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Response:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Duration:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n      </fieldset>\n\n      <h4>Visualization</h4>\n      <fieldset class=\"third\">\n        <button title=\"Response Size Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size And Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size Distribution\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pie-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z\"/>\n            </svg>\n        </button>\n      </fieldset>\n\n      <div class=\"advanced-container\">\n        <h4>Advanced</h4>\n        <svg style=\"cursor:pointer\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-down expand\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n          <path fill-rule=\"evenodd\" d=\"M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n        </svg>\n        <svg style=\"cursor:pointer; display: none\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-up collapse\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z\"/>\n          <path fill-rule=\"evenodd\" d=\"M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z\"/>\n        </svg>\n      </div>\n\n      <fieldset class=\"fourth\">\n        <div class=\"span2\">\n          <label>Include:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div class=\"span2\">\n          <label>Exclude:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div>\n          <label>Keyboard Events:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Persist Config:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Use Performance:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n    </form>\n  </div>\n</div>\n";
 /**
  * The wrapper class that controls the supervisor web component.
  */
@@ -4615,6 +4620,18 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
         return _this._httpSupervisor.persistConfig = ctrl.checked;
       });
 
+      this._el.subscribe('lockConsoleChange', function (ctrl) {
+        return _this._httpSupervisor.lockConsole = ctrl.checked;
+      });
+
+      this._el.subscribe('silentChange', function (ctrl) {
+        return _this._httpSupervisor.silent = ctrl.checked;
+      });
+
+      this._el.subscribe('alertRequestStartChange', function (ctrl) {
+        _this._httpSupervisor.alertOnRequestStart = ctrl.checked;
+      });
+
       if (status === SupervisorStatus.Busy) {
         this._onStart();
       } else {
@@ -4638,6 +4655,9 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
           usePerformance = _this$_httpSupervisor.usePerformance,
           keyboardEvents = _this$_httpSupervisor.keyboardEvents,
           persistConfig = _this$_httpSupervisor.persistConfig,
+          lockConsole = _this$_httpSupervisor.lockConsole,
+          silent = _this$_httpSupervisor.silent,
+          alertOnRequestStart = _this$_httpSupervisor.alertOnRequestStart,
           onGoingCallsCount = _this$_httpSupervisor.onGoingCallsCount,
           status = _this$_httpSupervisor.status;
 
@@ -4650,7 +4670,10 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
         quota: quota,
         usePerformance: usePerformance,
         keyboardEvents: keyboardEvents,
-        persistConfig: persistConfig
+        persistConfig: persistConfig,
+        lockConsole: lockConsole,
+        silent: silent,
+        alertOnRequestStart: alertOnRequestStart
       });
     }
     /**
@@ -4772,9 +4795,15 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_persistConfigCheckbox", null);
 
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_lockConsoleCheckbox", null);
+
     defineProperty_default()(assertThisInitialized_default()(_this2), "_expandButton", null);
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_collapisbleFieldSet", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_silentCheckbox", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_alertRequestStartCheckbox", null);
 
     _this2._handleKeyPress = _this2._handleKeyPress.bind(assertThisInitialized_default()(_this2));
 
@@ -4789,26 +4818,29 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
     _this2._startButton = _ref[0];
     _this2._stopButton = _ref[1];
-    _this2._clearButton = _ref[2];
-    _this2._printButton = _ref[3];
+    _this2._printButton = _ref[2];
+    _this2._clearButton = _ref[3];
     _this2._exportButton = _ref[4];
     _this2._callsCountLabel = _ref[5];
     _this2._moreButton = _ref[6];
-    _this2._traceEachRequestCheckbox = _ref[7];
-    _this2._alertOnErrorCheckbox = _ref[8];
-    _this2._alertOnQuotaExceedCheckbox = _ref[9];
-    _this2._usePerformanceAPICheckbox = _ref[10];
-    _this2._maxPayloadSizeTextbox = _ref[11];
-    _this2._maxResponseSizeTextbox = _ref[12];
-    _this2._maxDurationTextbox = _ref[13];
-    _this2._responseSizeChartButton = _ref[14];
-    _this2._responseTimeChartButton = _ref[15];
-    _this2._responseSizeTimeChartButton = _ref[16];
-    _this2._responseSizeDistributionChartButton = _ref[17];
-    _this2._includeTextbox = _ref[18];
-    _this2._excludeTextbox = _ref[19];
-    _this2._keyboardEventsCheckbox = _ref[20];
-    _this2._persistConfigCheckbox = _ref[21];
+    _this2._silentCheckbox = _ref[7];
+    _this2._traceEachRequestCheckbox = _ref[8];
+    _this2._alertOnErrorCheckbox = _ref[9];
+    _this2._alertOnQuotaExceedCheckbox = _ref[10];
+    _this2._alertRequestStartCheckbox = _ref[11];
+    _this2._lockConsoleCheckbox = _ref[12];
+    _this2._maxPayloadSizeTextbox = _ref[13];
+    _this2._maxResponseSizeTextbox = _ref[14];
+    _this2._maxDurationTextbox = _ref[15];
+    _this2._responseSizeChartButton = _ref[16];
+    _this2._responseTimeChartButton = _ref[17];
+    _this2._responseSizeTimeChartButton = _ref[18];
+    _this2._responseSizeDistributionChartButton = _ref[19];
+    _this2._includeTextbox = _ref[20];
+    _this2._excludeTextbox = _ref[21];
+    _this2._keyboardEventsCheckbox = _ref[22];
+    _this2._persistConfigCheckbox = _ref[23];
+    _this2._usePerformanceAPICheckbox = _ref[24];
     _this2._eventsAndControls = {
       start: _this2._startButton,
       stop: _this2._stopButton,
@@ -4829,13 +4861,23 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       includeChange: _this2._includeTextbox,
       excludeChange: _this2._excludeTextbox,
       keyboardEventsChange: _this2._keyboardEventsCheckbox,
-      persistConfigChange: _this2._persistConfigCheckbox
+      persistConfigChange: _this2._persistConfigCheckbox,
+      lockConsoleChange: _this2._lockConsoleCheckbox,
+      silentChange: _this2._silentCheckbox,
+      alertRequestStartChange: _this2._alertRequestStartCheckbox
     };
     _this2._expandButton = shadowRoot.querySelector('.expand');
     _this2._collapseButton = shadowRoot.querySelector('.collapse');
     _this2._collapisbleFieldSet = shadowRoot.querySelector('.fourth');
     _this2._popoverClose = shadowRoot.querySelector('.popover-close');
     _this2._overlay = shadowRoot.querySelector('.popover-overlay');
+
+    _this2._silentCheckbox.addEventListener('change', function () {
+      var checked = _this2._silentCheckbox.checked;
+      [_this2._traceEachRequestCheckbox, _this2._alertOnErrorCheckbox, _this2._alertOnQuotaExceedCheckbox, _this2._alertRequestStartCheckbox].forEach(function (c) {
+        return c.disabled = checked;
+      });
+    });
 
     _this2._moreButton.addEventListener('click', function () {
       return _this2._isPopoverActive() ? _this2._hidePopover() : _this2._showPopover();
@@ -4888,7 +4930,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
           quota = _ref2.quota,
           usePerformance = _ref2.usePerformance,
           keyboardEvents = _ref2.keyboardEvents,
-          persistConfig = _ref2.persistConfig;
+          persistConfig = _ref2.persistConfig,
+          lockConsole = _ref2.lockConsole,
+          silent = _ref2.silent,
+          alertOnRequestStart = _ref2.alertOnRequestStart;
       Array.isArray(include) && (this._includeTextbox.value = include.join(','));
       Array.isArray(exclude) && (this._excludeTextbox.value = exclude.join(','));
       this._traceEachRequestCheckbox.checked = traceEachRequest;
@@ -4900,7 +4945,13 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       this._usePerformanceAPICheckbox.checked = usePerformance;
       this._keyboardEventsCheckbox.checked = keyboardEvents;
       this._persistConfigCheckbox.checked = persistConfig;
+      this._lockConsoleCheckbox.checked = lockConsole;
+      this._silentCheckbox.checked = silent;
+      this._alertRequestStartCheckbox.checked = alertOnRequestStart;
       keyboardEvents && this._listenToKeyPressEvent();
+      [this._traceEachRequestCheckbox, this._alertOnErrorCheckbox, this._alertOnQuotaExceedCheckbox, this._alertRequestStartCheckbox].forEach(function (c) {
+        return c.disabled = silent;
+      });
     }
   }, {
     key: "subscribe",
@@ -5102,6 +5153,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     defineProperty_default()(this, "_originalConsole", window.console);
 
     fieldsToDisplay && (this._fieldsToDisplay = new Set(fieldsToDisplay));
+    this._initChart = this._initChart.bind(this);
   }
   /**
    * Does initialization stuff.
@@ -5112,19 +5164,11 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   createClass_default()(ConsoleReporter, [{
     key: "init",
     value: function init(httpSupervisor) {
-      var lockConsole = httpSupervisor.lockConsole;
+      var lockConsole = httpSupervisor.lockConsole,
+          loadChart = httpSupervisor.loadChart;
       this._lockConsole = lockConsole;
       this._lockConsole && this.acquireLock();
-    }
-  }, {
-    key: "initChart",
-    value: function initChart() {
-      window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
-      this._canvasEl = document.createElement('canvas');
-      this._canvasEl.style.width = "".concat(this._chartWidth, "px");
-      this._canvasEl.style.height = "".concat(this._chartHeight, "px");
-      this._canvasEl.style.display = 'none';
-      document.body.appendChild(this._canvasEl);
+      loadChart && loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs');
     }
   }, {
     key: "printStatusMessage",
@@ -5551,6 +5595,17 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       this._canvasEl.remove();
 
       this._canvasEl = null;
+      unloadScript('http-sup-chartjs');
+    }
+  }, {
+    key: "_initChart",
+    value: function _initChart() {
+      window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
+      this._canvasEl = document.createElement('canvas');
+      this._canvasEl.style.width = "".concat(this._chartWidth, "px");
+      this._canvasEl.style.height = "".concat(this._chartHeight, "px");
+      this._canvasEl.style.display = 'none';
+      document.body.appendChild(this._canvasEl);
     }
   }, {
     key: "_getTitleWithSpaces",

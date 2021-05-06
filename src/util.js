@@ -93,12 +93,22 @@ export function isAbsolute(url) {
  * @param src
  * @param onload
  */
-export function loadScript(src, onload, onerror) {
+export function loadScript(src, onload, onerror, id) {
   const script = document.createElement('script');
   script.src = src;
+  id && script.setAttribute('id', id);
   onload && script.addEventListener('load', onload);
   onerror && script.addEventListener('error', onerror);
   (document.head || document.documentElement).appendChild(script);
+}
+
+/**
+ * Removes the script.
+ * @param id
+ */
+export function unloadScript(id) {
+  const script = document.getElementById('http-sup-chartjs');
+  script && script.remove();
 }
 
 /**

@@ -1,9 +1,8 @@
-import HttpRequestInfo                                       from './http-request-info';
-import Collection                                            from './collection';
-import { formatBytes, formatTime, poolColors }               from './util';
-import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES } from './constants';
+import HttpRequestInfo                                                         from './http-request-info';
+import Collection                                                              from './collection';
+import { formatBytes, formatTime, loadScript, poolColors, unloadScript }       from './util';
+import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES, CHARTJS_LIB_PATH } from './constants';
 import './console-snapshot';
-import './console-image';
 
 /**
  * Class that is responsible for displaying the requests info to console.
@@ -74,6 +73,7 @@ export default class ConsoleReporter {
    */
   constructor(fieldsToDisplay) {
     fieldsToDisplay && (this._fieldsToDisplay = new Set(fieldsToDisplay));
+    this._initChart = this._initChart.bind(this);
   }
 
   /**
@@ -81,20 +81,10 @@ export default class ConsoleReporter {
    * @param {HttpSupervisor} httpSupervisor
    */
   init(httpSupervisor) {
-    const { lockConsole } = httpSupervisor;
+    const { lockConsole, loadChart } = httpSupervisor;
     this._lockConsole = lockConsole;
     this._lockConsole && this.acquireLock();
-  }
-
-  initChart() {
-    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
-
-    this._canvasEl = document.createElement('canvas');
-    this._canvasEl.style.width = `${this._chartWidth}px`;
-    this._canvasEl.style.height = `${this._chartHeight}px`;
-    this._canvasEl.style.display = 'none';
-
-    document.body.appendChild(this._canvasEl);
+    loadChart && loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs');
   }
 
   printStatusMessage(message) {
@@ -191,8 +181,8 @@ export default class ConsoleReporter {
             y: {
               beginAtZero: true,
               ticks: {
-                callback: function(value) {
-                  return format ? format(value): value;
+                callback: function (value) {
+                  return format ? format(value) : value;
                 }
               }
             }
@@ -219,10 +209,10 @@ export default class ConsoleReporter {
             point: {
               backgroundColor: this._colorize.bind(this, false),
               borderColor: this._colorize.bind(this, true),
-              borderWidth: function(context) {
+              borderWidth: function (context) {
                 return Math.min(Math.max(1, context.datasetIndex + 1), 8);
               },
-              radius: function(context) {
+              radius: function (context) {
                 const size = context.chart.width;
                 const base = Math.abs(context.raw.v) / 1000;
                 return (size / 24) * base;
@@ -233,8 +223,8 @@ export default class ConsoleReporter {
             y: {
               beginAtZero: true,
               ticks: {
-                callback: function(value) {
-                  return format ? format(value): value;
+                callback: function (value) {
+                  return format ? format(value) : value;
                 }
               }
             }
@@ -448,6 +438,18 @@ export default class ConsoleReporter {
   destroy() {
     this._canvasEl.remove();
     this._canvasEl = null;
+    unloadScript('http-sup-chartjs');
+  }
+
+  _initChart() {
+    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
+
+    this._canvasEl = document.createElement('canvas');
+    this._canvasEl.style.width = `${this._chartWidth}px`;
+    this._canvasEl.style.height = `${this._chartHeight}px`;
+    this._canvasEl.style.display = 'none';
+
+    document.body.appendChild(this._canvasEl);
   }
 
   _getTitleWithSpaces(title) {

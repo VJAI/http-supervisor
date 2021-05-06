@@ -34,7 +34,7 @@ export default class EventEmitter {
     }
 
     const handlers = this._eventsHandlersMap.get(eventName);
-    handlers && handlers.remove(handler);
+    handlers && handlers.delete(handler);
   }
 
   /**

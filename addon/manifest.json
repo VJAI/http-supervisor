@@ -12,7 +12,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://eng-ecom.apttuscloud.io/*"],
+      "matches": ["*://*/*"],
       "js": ["http.supervisor.js"],
       "run_at": "document_start"
     }
@@ -23,7 +23,8 @@
     "128": "128.png"
   },
   "browser_action": {
-    "default_title": "Http Supervisor"
+    "default_title": "Http Supervisor",
+    "default_popup": "popup.html"
   },
   "permissions": [
     "activeTab", "declarativeContent", "storage"

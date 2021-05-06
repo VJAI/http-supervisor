@@ -603,6 +603,9 @@ export default class HttpSupervisor {
     this._widget = widget || FAKE;
     this._reporter = reporter || FAKE;
     this._eventEmitter = new EventEmitter();
+
+    this.init = this.init.bind(this);
+    this.retire = this.retire.bind(this);
   }
 
   /**
@@ -670,18 +673,9 @@ export default class HttpSupervisor {
     this._status = SupervisorStatus.Idle;
     this._reporter.init(this);
     this.start();
-
-    const initChart = () => {
-      this._reporter.initChart();
-      this._triggerEvent(SupervisorEvents.READY);
-    };
-
-    if (this._loadChart) {
-      loadScript(CHARTJS_LIB_PATH, initChart, initChart);
-      return;
-    }
-
-    initChart();
+    window.addEventListener('init-supervisor', this.init, false);
+    window.addEventListener('retire-supervisor', this.retire, false);
+    this._triggerEvent(SupervisorEvents.READY);
   }
 
   /**
@@ -758,6 +752,8 @@ export default class HttpSupervisor {
     this._watches = null;
     this._sessions = null;
     clearStore && this.clearStore();
+    window.removeEventListener('init-supervisor', this.init);
+    window.removeEventListener('retire-supervisor', this.retire);
     this._status = SupervisorStatus.Retired;
   }
 

@@ -87,9 +87,7 @@ function sendCall8() {
 
 window.http = http;
 http.init({
-  include: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
-  traceEachRequest: true,
-  alertOnRequestStart: false
+  include: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io']
 });
 makeAjaxCalls();
 setTimeout(makeAjaxCalls, 100);

@@ -493,6 +493,9 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('persistConfigChange', ctrl => this._httpSupervisor.persistConfig = ctrl.checked);
     this._el.subscribe('lockConsoleChange', ctrl => this._httpSupervisor.lockConsole = ctrl.checked);
     this._el.subscribe('silentChange', ctrl => this._httpSupervisor.silent = ctrl.checked);
+    this._el.subscribe('alertRequestStartChange', ctrl => {
+      this._httpSupervisor.alertOnRequestStart = ctrl.checked;
+    });
 
     if (status === SupervisorStatus.Busy) {
       this._onStart();
