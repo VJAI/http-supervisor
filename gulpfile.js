@@ -1,4 +1,5 @@
 const { src, dest, series } = require('gulp');
+const del = require('del');
 
 const args   = require('yargs').argv,
   replace = require('gulp-replace'),
@@ -7,7 +8,8 @@ const args   = require('yargs').argv,
 
 const root = './',
   dist = './dist',
-  docs = './docs';
+  docs = './docs',
+  addon = './addon';
 
 function updateVersion() {
   return run(`npm version ${args.type || 'patch'} --no-git-tag-version`)();
@@ -19,8 +21,16 @@ function updateIndex() {
     .pipe(dest(root));
 }
 
-function buildLib() {
-  return run(`webpack && webpack -p`)();
+function cleanDist() {
+  return del(dist);
+}
+
+function buildLib(mode) {
+  return run('webpack')();
+}
+
+function buildLibMin(mode) {
+  return run(`webpack -p`)();
 }
 
 function copyFilesToDist() {
@@ -43,15 +53,15 @@ function updateDocFile() {
 }
 
 function updateAddonFile() {
-
+  throw new Error('Not Implemented');
 }
 
 function publish() {
-  return run(`cd dist && npm publish`)();
+  throw new Error('Not Implemented');
 }
 
 function publishAddon() {
-  // TODO: Need to figure out!
+  throw new Error('Not Implemented');
 }
 
 function getVersion() {
@@ -59,18 +69,20 @@ function getVersion() {
   return pkg.version;
 }
 
+function readBuildFile() {
+  return fs.readFileSync(`${dist}/http.supervisor-${getVersion()}.min.js`, 'utf8');
+}
+
 exports.build = series(
   updateVersion,
   updateIndex,
+  cleanDist,
   buildLib,
+  buildLibMin,
   copyFilesToDist,
   copyFilesToDocs,
   updateDocFile
 );
 exports.build_addon = updateAddonFile;
 exports.publish = publish;
-exports.publish_addon = publishAddon;
-
-// Testing
-exports.updateDocFile = updateDocFile;
-exports.updateIndex = updateIndex;
+exports.cleanDist = publishAddon;

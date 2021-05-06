@@ -180,6 +180,7 @@ template.innerHTML = `
 
   .popover-content .fourth {
     margin-bottom: 0;
+    display: none;
   }
 
   .popover-content .fourth.active {
@@ -216,16 +217,16 @@ template.innerHTML = `
       </svg>
    </button>
    <button disabled>
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-      </svg>
-   </button>
-   <button disabled>
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
       <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
       <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
     </svg>
+   </button>
+   <button disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+      </svg>
    </button>
    <button disabled>
       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up" viewBox="0 0 16 16">
@@ -254,6 +255,10 @@ template.innerHTML = `
       <h4>Options</h4>
       <fieldset class="first">
         <div>
+          <label>Silent:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
           <label>Trace Request:</label>
           <input type="checkbox" />
         </div>
@@ -266,7 +271,11 @@ template.innerHTML = `
           <input type="checkbox" />
         </div>
         <div>
-          <label>Use Performance:</label>
+          <label>Alert Request Start:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
+          <label>Lock Console:</label>
           <input type="checkbox" />
         </div>
       </fieldset>
@@ -338,6 +347,10 @@ template.innerHTML = `
         </div>
         <div>
           <label>Persist Config:</label>
+          <input type="checkbox" />
+        </div>
+        <div>
+          <label>Use Performance:</label>
           <input type="checkbox" />
         </div>
       </fieldset>
@@ -478,6 +491,8 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('excludeChange', (ctrl) => this._httpSupervisor.exclude = ctrl.value.split(',').map(x => x.trim()));
     this._el.subscribe('keyboardEventsChange', ctrl => this._httpSupervisor.keyboardEvents = ctrl.checked);
     this._el.subscribe('persistConfigChange', ctrl => this._httpSupervisor.persistConfig = ctrl.checked);
+    this._el.subscribe('lockConsoleChange', ctrl => this._httpSupervisor.lockConsole = ctrl.checked);
+    this._el.subscribe('silentChange', ctrl => this._httpSupervisor.silent = ctrl.checked);
 
     if (status === SupervisorStatus.Busy) {
       this._onStart();
@@ -500,6 +515,9 @@ export default class HttpSupervisorWidget {
       usePerformance,
       keyboardEvents,
       persistConfig,
+      lockConsole,
+      silent,
+      alertOnRequestStart,
       onGoingCallsCount,
       status
     } = this._httpSupervisor;
@@ -513,7 +531,10 @@ export default class HttpSupervisorWidget {
       quota,
       usePerformance,
       keyboardEvents,
-      persistConfig
+      persistConfig,
+      lockConsole,
+      silent,
+      alertOnRequestStart
     });
   }
 
@@ -587,8 +608,11 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _excludeTextbox = null;
   _keyboardEventsCheckbox = null;
   _persistConfigCheckbox = null;
+  _lockConsoleCheckbox = null;
   _expandButton = null;
   _collapisbleFieldSet = null;
+  _silentCheckbox = null;
+  _alertRequestStartCheckbox = null;
 
   constructor() {
     super();
@@ -602,15 +626,17 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     [
       this._startButton,
       this._stopButton,
-      this._clearButton,
       this._printButton,
+      this._clearButton,
       this._exportButton,
       this._callsCountLabel,
       this._moreButton,
+      this._silentCheckbox,
       this._traceEachRequestCheckbox,
       this._alertOnErrorCheckbox,
       this._alertOnQuotaExceedCheckbox,
-      this._usePerformanceAPICheckbox,
+      this._alertRequestStartCheckbox,
+      this._lockConsoleCheckbox,
       this._maxPayloadSizeTextbox,
       this._maxResponseSizeTextbox,
       this._maxDurationTextbox,
@@ -621,7 +647,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._includeTextbox,
       this._excludeTextbox,
       this._keyboardEventsCheckbox,
-      this._persistConfigCheckbox
+      this._persistConfigCheckbox,
+      this._usePerformanceAPICheckbox
     ] = [
       ...Array.from(shadowRoot.querySelector('.http-supervisor-container').children),
       ...Array.from(this._popover.querySelectorAll('input,button'))
@@ -647,7 +674,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       includeChange: this._includeTextbox,
       excludeChange: this._excludeTextbox,
       keyboardEventsChange: this._keyboardEventsCheckbox,
-      persistConfigChange: this._persistConfigCheckbox
+      persistConfigChange: this._persistConfigCheckbox,
+      lockConsoleChange: this._lockConsoleCheckbox,
+      silentChange: this._silentCheckbox,
+      alertRequestStartChange: this._alertRequestStartCheckbox
     };
 
     this._expandButton = shadowRoot.querySelector('.expand');
@@ -655,6 +685,16 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     this._collapisbleFieldSet = shadowRoot.querySelector('.fourth');
     this._popoverClose = shadowRoot.querySelector('.popover-close');
     this._overlay = shadowRoot.querySelector('.popover-overlay');
+
+    this._silentCheckbox.addEventListener('change', () => {
+      const checked = this._silentCheckbox.checked;
+      [
+        this._traceEachRequestCheckbox,
+        this._alertOnErrorCheckbox,
+        this._alertOnQuotaExceedCheckbox,
+        this._alertRequestStartCheckbox
+      ].forEach(c => c.disabled = checked);
+    });
 
     this._moreButton.addEventListener('click', () => this._isPopoverActive() ? this._hidePopover() : this._showPopover());
 
@@ -695,7 +735,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     quota,
     usePerformance,
     keyboardEvents,
-    persistConfig
+    persistConfig,
+    lockConsole,
+    silent,
+    alertOnRequestStart
   }) {
     Array.isArray(include) && (this._includeTextbox.value = include.join(','));
     Array.isArray(exclude) && (this._excludeTextbox.value = exclude.join(','));
@@ -708,7 +751,16 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     this._usePerformanceAPICheckbox.checked = usePerformance;
     this._keyboardEventsCheckbox.checked = keyboardEvents;
     this._persistConfigCheckbox.checked = persistConfig;
+    this._lockConsoleCheckbox.checked = lockConsole;
+    this._silentCheckbox.checked = silent;
+    this._alertRequestStartCheckbox.checked = alertOnRequestStart;
     keyboardEvents && this._listenToKeyPressEvent();
+    [
+      this._traceEachRequestCheckbox,
+      this._alertOnErrorCheckbox,
+      this._alertOnQuotaExceedCheckbox,
+      this._alertRequestStartCheckbox
+    ].forEach(c => c.disabled = silent);
   }
 
   subscribe(evt, handler) {

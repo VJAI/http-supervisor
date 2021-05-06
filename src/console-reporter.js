@@ -3,6 +3,7 @@ import Collection                                            from './collection'
 import { formatBytes, formatTime, poolColors }               from './util';
 import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES } from './constants';
 import './console-snapshot';
+import './console-image';
 
 /**
  * Class that is responsible for displaying the requests info to console.
@@ -83,6 +84,10 @@ export default class ConsoleReporter {
     const { lockConsole } = httpSupervisor;
     this._lockConsole = lockConsole;
     this._lockConsole && this.acquireLock();
+  }
+
+  initChart() {
+    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
 
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;
@@ -90,10 +95,6 @@ export default class ConsoleReporter {
     this._canvasEl.style.display = 'none';
 
     document.body.appendChild(this._canvasEl);
-  }
-
-  initChart() {
-    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
   }
 
   printStatusMessage(message) {

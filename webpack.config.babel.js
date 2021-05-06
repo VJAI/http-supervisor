@@ -10,7 +10,7 @@ export default {
   output: {
     path: __dirname + '/dist',
     filename: optimizeMinimize ? `http.supervisor-${version}.min.js` : `http.supervisor-${version}.js`,
-    library: 'httpSupervisor',
+    library: 'http',
     libraryExport: 'default',
     libraryTarget: 'umd'
   },
