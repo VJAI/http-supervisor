@@ -62,14 +62,6 @@ function createAddonFile(cb) {
   cb();
 }
 
-function publish() {
-  return series(run('cd dist')(), run('npm publish')());
-}
-
-function publishAddon() {
-  throw new Error('Not Implemented');
-}
-
 function getVersion() {
   const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   return pkg.version;
@@ -87,5 +79,3 @@ exports.build = series(
   updateDocFile
 );
 exports.build_addon = createAddonFile;
-exports.publish = publish;
-exports.publish_addon = publishAddon;

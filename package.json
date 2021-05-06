@@ -5,9 +5,7 @@
   "scripts": {
     "start": "opener http://localhost:8080/index.html && webpack-dev-server --config webpack.dev.config.babel.js",
     "build": "gulp build",
-    "build_addon": "gulp build_addon",
-    "publish": "gulp publish",
-    "publish_addon": "gulp publish_addon"
+    "build_addon": "gulp build_addon"
   },
   "repository": {
     "type": "git",
