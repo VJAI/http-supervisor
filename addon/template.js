@@ -32,7 +32,9 @@
   );
 
   chrome.storage.local.get(['supervisor_domain_status'], function(result) {
-    if (result['supervisor_domain_status']) {
+    const domainStatus = result['supervisor_domain_status'] || {};
+
+    if (domainStatus[document.domain] === true) {
       install();
     } else {
       uninstall();
