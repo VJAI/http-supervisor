@@ -860,4 +860,6 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   }
 }
 
-window.customElements.define('http-supervisor-widget', HtmlSupervisorWidgetElement);
+if (!window.customElements.get('http-supervisor-widget')) {
+  window.customElements.define('http-supervisor-widget', HtmlSupervisorWidgetElement);
+}

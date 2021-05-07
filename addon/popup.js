@@ -1,18 +1,19 @@
+const background = chrome.extension.getBackgroundPage();
+
 function updateLabel() {
-  const enabled = chrome.extension.getBackgroundPage().enabled;
-  document.getElementById('toggle_button').value = enabled ? 'Disable' : 'Enable';
+  background.isSupervisorEnabled(function (result) {
+    document.getElementById('toggle_button').value = result ? 'Disable' : 'Enable';
+  });
 }
 
 function onToggle() {
-  const background = chrome.extension.getBackgroundPage();
-
-  if (background.enabled) {
-    background.disable();
-  } else {
-    background.enable();
-  }
-
-  updateLabel();
+  background.isSupervisorEnabled(function (result) {
+    if (result) {
+      background.disable(updateLabel);
+    } else {
+      background.enable(updateLabel);
+    }
+  });
 }
 
 window.addEventListener('load', function () {

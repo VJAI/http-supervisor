@@ -5083,7 +5083,9 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
   return HtmlSupervisorWidgetElement;
 }( /*#__PURE__*/wrapNativeSuper_default()(HTMLElement));
 
-window.customElements.define('http-supervisor-widget', http_supervisor_widget_HtmlSupervisorWidgetElement);
+if (!window.customElements.get('http-supervisor-widget')) {
+  window.customElements.define('http-supervisor-widget', http_supervisor_widget_HtmlSupervisorWidgetElement);
+}
 // EXTERNAL MODULE: ./src/console-snapshot.js
 var console_snapshot = __webpack_require__(23);
 

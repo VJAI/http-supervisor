@@ -31,8 +31,8 @@
     }
   );
 
-  chrome.storage.local.get(['supervisor_enabled'], function(result) {
-    if (result['supervisor_enabled']) {
+  chrome.storage.local.get(['supervisor_domain_status'], function(result) {
+    if (result['supervisor_domain_status']) {
       install();
     } else {
       uninstall();
