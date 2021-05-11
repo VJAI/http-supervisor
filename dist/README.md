@@ -21,6 +21,10 @@ Last but not least it also provides visualization support using the chart.js lib
 
 ## Screenshots
 
+### Enable / Disable In Any Page Using Addon
+
+![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/addon.png)
+
 ### UI with controls
 
 ![Screen Shot](https://github.com/VJAI/http-supervisor/blob/main/assets/ui.png)
@@ -50,12 +54,14 @@ Last but not least it also provides visualization support using the chart.js lib
 
 ## Install
 
-Currently it's available in `npm`. I've also created a chrome addon and it's currently in pending review state meanwhile you can locally 
-install the "addon" folder in the repo to chrome extensions [which is quite easy](https://superuser.com/questions/247651/how-does-one-install-an-extension-for-chrome-browser-from-the-local-file-system) :)
+Currently it's available in `npm`.
 
 ```shell
 npm i http-supervisor --save-dev
 ``` 
+
+I've also created a chrome addon and it's currently in pending review state meanwhile you can locally 
+install the "addon" folder in the repo to chrome extensions [which is quite easy](https://superuser.com/questions/247651/how-does-one-install-an-extension-for-chrome-browser-from-the-local-file-system) :)
 
 The library exports a single object called `http` through which you can control the audit and manage the requests.
 
