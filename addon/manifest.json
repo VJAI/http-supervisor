@@ -2,7 +2,7 @@
   "name": "Http Supervisor",
   "version": "1.0.0",
   "manifest_version": 2,
-  "description": "An addon that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort and query requests based upon a variety of parameters.",
+  "description": "An addon that helps to audit HTTP requests and identify the requests that exceeds the set quota and more.",
   "homepage_url": "https://github.com/vjai/http-supervisor",
   "background": {
     "scripts": [
@@ -27,6 +27,7 @@
     "default_popup": "popup.html"
   },
   "permissions": [
-    "tabs", "activeTab", "declarativeContent", "storage"
+    "activeTab",
+    "storage"
   ]
 }

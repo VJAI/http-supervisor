@@ -6,7 +6,7 @@
 
 ## Intro
 
-A simple tool that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort, search and export requests.
+A simple library (also available as chrome addon) that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort, search and export requests.
 
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to work with requests from developer console.
@@ -50,7 +50,8 @@ Last but not least it also provides visualization support using the chart.js lib
 
 ## Install
 
-Currently it's available in `npm`. There are plans to make it available as a browser addon.
+Currently it's available in `npm`. I've also created a chrome addon and it's currently in pending review state meanwhile you can locally 
+install the "addon" folder in the repo to chrome extensions [which is quite easy](https://superuser.com/questions/247651/how-does-one-install-an-extension-for-chrome-browser-from-the-local-file-system) :)
 
 ```shell
 npm i http-supervisor --save-dev
