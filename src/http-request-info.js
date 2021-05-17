@@ -81,10 +81,7 @@ export default class HttpRequestInfo {
       return null;
     }
 
-    const pathParts = this.path.split('/'),
-      lastPart = `/${pathParts[pathParts.length - 1]}` || '/';
-
-    return this.query ? `${lastPart}${this.query}` : lastPart;
+    return this.query ? `${this.path}${this.query}` : this.path;
   }
 
   /**

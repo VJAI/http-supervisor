@@ -876,7 +876,7 @@ export default class HttpSupervisor {
         } else if (arg.indexOf('*') > -1) {
           query = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: arg };
         } else {
-          query = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.EQUALS, value: arg };
+          query = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: arg };
         }
       } else {
         query = { field: 'responseStatus', operator: SEARCH_OPERATOR.EQUALS, value: arg }
@@ -887,7 +887,7 @@ export default class HttpSupervisor {
 
     if (Array.isArray(args[0] || args[1] || args[2])) {
       const [query, groupArgs, sortArgs] = args;
-      return this.query(...(query || [])).groupBy(...(groupArgs || [])).sortBy(...(sortArgs || []));
+      return this.query().search(...(query || [])).groupBy(...(groupArgs || [])).sortBy(...(sortArgs || []));
     }
 
     if (typeof args[0] === 'object') {
@@ -911,7 +911,7 @@ export default class HttpSupervisor {
         q.push({ field, value, operator });
       });
 
-      return this.query().search(...q);
+      return this.query(q);
     }
 
     const [field, operator, value] = args;
@@ -962,7 +962,7 @@ export default class HttpSupervisor {
    * Prints the requests based on the passed arguments.
    */
   print(...args) {
-    const [firstArg, secondArg, thirdArg, fourthArg] = args;
+    const [firstArg, secondArg, thirdArg] = args;
 
     if (typeof firstArg === 'number') {
       args.forEach(arg => this._reporter.report(this.get(arg)));
@@ -970,7 +970,6 @@ export default class HttpSupervisor {
     }
 
     if (typeof firstArg === 'string') {
-      const [, displayFields] = args;
       let query;
 
       if (REQUEST_TYPE.hasOwnProperty(firstArg)) {
@@ -978,10 +977,10 @@ export default class HttpSupervisor {
       } else if (firstArg.indexOf('*') > -1) {
         query = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: firstArg };
       } else {
-        query = { field: isAbsolute(firstArg) ? 'url' : 'path', operator: SEARCH_OPERATOR.EQUALS, value: firstArg };
+        query = { field: isAbsolute(firstArg) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: firstArg };
       }
 
-      this._reporter.report(this.query(query), displayFields);
+      this._reporter.report(this.query(query));
       return;
     }
 
@@ -995,22 +994,9 @@ export default class HttpSupervisor {
       return;
     }
 
-    if (firstArg && firstArg.displayFields) {
-      this._reporter.report(this.query(), firstArg.displayFields);
-      return;
-    }
-
     if (Array.isArray(firstArg || secondArg || thirdArg)) {
-      const lastArg = args[args.length - 1];
-
-      let displayFields;
-      if (!Array.isArray(lastArg) && typeof lastArg === 'object') {
-        args.pop();
-        displayFields = lastArg.displayFields;
-      }
-
       const [query, groupArgs, sortArgs] = args;
-      this._reporter.report(this.query(query, groupArgs, sortArgs), displayFields);
+      this._reporter.report(this.query(query, groupArgs, sortArgs));
       return;
     }
 
@@ -1032,18 +1018,16 @@ export default class HttpSupervisor {
 
   /**
    * Prints failed requests.
-   * @param {Array<string>} displayFields The fields to display.
    */
-  printFailed(displayFields) {
-    this._reporter.report(this.failed(), displayFields);
+  printFailed() {
+    this._reporter.report(this.failed());
   }
 
   /**
    * Prints requests exceeds quota.
-   * @param {Array<string>} displayFields The fields to display.
    */
-  printExceeded(displayFields) {
-    this._reporter.report(this.exceeded(), displayFields);
+  printExceeded() {
+    this._reporter.report(this.exceeded());
   }
 
   /**
@@ -1274,7 +1258,7 @@ export default class HttpSupervisor {
       } else if (arg.indexOf('*') > -1) {
         watchArgs = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: arg };
       } else {
-        watchArgs = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.EQUALS, value: arg };
+        watchArgs = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: arg };
       }
 
       this._watches.set(watchId, watchArgs);

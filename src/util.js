@@ -166,9 +166,9 @@ export function matchCriteria(criteria, object) {
     } else if (operator === SEARCH_OPERATOR.ENDS_WITH) {
       results.push(typeof object[field] === 'string' && v.endsWith(value));
     } else if (operator === SEARCH_OPERATOR.CONTAINS) {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
+      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.NOT_CONTAINS) {
-      results.push(typeof object[field] === 'string' && !v.toLowerCase().has(value.toLowerCase()));
+      results.push(typeof object[field] === 'string' && !v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.MATCHES) {
       results.push(typeof object[field] === 'string' && matchesGlob(value, v));
     } else if (operator === SEARCH_OPERATOR.NOT_MATCHES) {

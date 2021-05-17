@@ -1207,9 +1207,9 @@ function matchCriteria(criteria, object) {
     } else if (operator === SEARCH_OPERATOR.ENDS_WITH) {
       results.push(typeof object[field] === 'string' && v.endsWith(value));
     } else if (operator === SEARCH_OPERATOR.CONTAINS) {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().has(value.toLowerCase()));
+      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.NOT_CONTAINS) {
-      results.push(typeof object[field] === 'string' && !v.toLowerCase().has(value.toLowerCase()));
+      results.push(typeof object[field] === 'string' && !v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.MATCHES) {
       results.push(typeof object[field] === 'string' && matchesGlob(value, v));
     } else if (operator === SEARCH_OPERATOR.NOT_MATCHES) {
@@ -1435,9 +1435,7 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
         return null;
       }
 
-      var pathParts = this.path.split('/'),
-          lastPart = "/".concat(pathParts[pathParts.length - 1]) || false;
-      return this.query ? "".concat(lastPart).concat(this.query) : lastPart;
+      return this.query ? "".concat(this.path).concat(this.query) : this.path;
     }
     /**
      * The request type (GET, POST etc.)
@@ -3159,7 +3157,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           } else {
             query = {
               field: isAbsolute(arg) ? 'url' : 'path',
-              operator: SEARCH_OPERATOR.EQUALS,
+              operator: SEARCH_OPERATOR.CONTAINS,
               value: arg
             };
           }
@@ -3175,17 +3173,15 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       if (Array.isArray(args[0] || args[1] || args[2])) {
-        var _this$query$groupBy, _this$query;
+        var _this$query$search$gr, _this$query$search, _this$query;
 
         var _query = args[0],
             groupArgs = args[1],
             sortArgs = args[2];
-        return (_this$query$groupBy = (_this$query = this.query.apply(this, toConsumableArray_default()(_query || []))).groupBy.apply(_this$query, toConsumableArray_default()(groupArgs || []))).sortBy.apply(_this$query$groupBy, toConsumableArray_default()(sortArgs || []));
+        return (_this$query$search$gr = (_this$query$search = (_this$query = this.query()).search.apply(_this$query, toConsumableArray_default()(_query || []))).groupBy.apply(_this$query$search, toConsumableArray_default()(groupArgs || []))).sortBy.apply(_this$query$search$gr, toConsumableArray_default()(sortArgs || []));
       }
 
       if (typeof_default()(args[0]) === 'object') {
-        var _this$query2;
-
         var q = [];
         args.forEach(function (x) {
           var field = x.field,
@@ -3211,7 +3207,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
             operator: operator
           });
         });
-        return (_this$query2 = this.query()).search.apply(_this$query2, q);
+        return this.query(q);
       }
 
       var field = args[0],
@@ -3298,8 +3294,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
       var firstArg = args[0],
           secondArg = args[1],
-          thirdArg = args[2],
-          fourthArg = args[3];
+          thirdArg = args[2];
 
       if (typeof firstArg === 'number') {
         args.forEach(function (arg) {
@@ -3309,7 +3304,6 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       if (typeof firstArg === 'string') {
-        var displayFields = args[1];
         var query;
 
         if (REQUEST_TYPE.hasOwnProperty(firstArg)) {
@@ -3327,12 +3321,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         } else {
           query = {
             field: isAbsolute(firstArg) ? 'url' : 'path',
-            operator: SEARCH_OPERATOR.EQUALS,
+            operator: SEARCH_OPERATOR.CONTAINS,
             value: firstArg
           };
         }
 
-        this._reporter.report(this.query(query), displayFields);
+        this._reporter.report(this.query(query));
 
         return;
       }
@@ -3350,27 +3344,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         return;
       }
 
-      if (firstArg && firstArg.displayFields) {
-        this._reporter.report(this.query(), firstArg.displayFields);
-
-        return;
-      }
-
       if (Array.isArray(firstArg || secondArg || thirdArg)) {
-        var lastArg = args[args.length - 1];
-
-        var _displayFields;
-
-        if (!Array.isArray(lastArg) && typeof_default()(lastArg) === 'object') {
-          args.pop();
-          _displayFields = lastArg.displayFields;
-        }
-
         var _query2 = args[0],
             groupArgs = args[1],
             sortArgs = args[2];
 
-        this._reporter.report(this.query(_query2, groupArgs, sortArgs), _displayFields);
+        this._reporter.report(this.query(_query2, groupArgs, sortArgs));
 
         return;
       }
@@ -3392,23 +3371,21 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Prints failed requests.
-     * @param {Array<string>} displayFields The fields to display.
      */
 
   }, {
     key: "printFailed",
-    value: function printFailed(displayFields) {
-      this._reporter.report(this.failed(), displayFields);
+    value: function printFailed() {
+      this._reporter.report(this.failed());
     }
     /**
      * Prints requests exceeds quota.
-     * @param {Array<string>} displayFields The fields to display.
      */
 
   }, {
     key: "printExceeded",
-    value: function printExceeded(displayFields) {
-      this._reporter.report(this.exceeded(), displayFields);
+    value: function printExceeded() {
+      this._reporter.report(this.exceeded());
     }
     /**
      * Prints the last failed request.
@@ -3703,7 +3680,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         } else {
           watchArgs = {
             field: isAbsolute(arg) ? 'url' : 'path',
-            operator: SEARCH_OPERATOR.EQUALS,
+            operator: SEARCH_OPERATOR.CONTAINS,
             value: arg
           };
         }
@@ -5100,18 +5077,11 @@ var console_snapshot = __webpack_require__(23);
 
 
 
-
 /**
  * Class that is responsible for displaying the requests info to console.
  */
 
 var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
-  /**
-   * Fields to display.
-   * @type {Set}
-   * @private
-   */
-
   /**
    * Canvas element used for chart generation.
    * @type {HTMLCanvasElement}
@@ -5144,12 +5114,9 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
   /**
    * Ctor.
-   * @param {Object} fieldsToDisplay
    */
-  function ConsoleReporter(fieldsToDisplay) {
+  function ConsoleReporter() {
     classCallCheck_default()(this, ConsoleReporter);
-
-    defineProperty_default()(this, "_fieldsToDisplay", new Set(['id', 'url', 'part', 'method', 'payload', 'payloadSize', 'duration', 'responseStatus', 'response', 'responseSize', 'error', 'errorDescription', 'exceedsQuota']));
 
     defineProperty_default()(this, "_lockConsole", true);
 
@@ -5163,7 +5130,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_originalConsole", window.console);
 
-    fieldsToDisplay && (this._fieldsToDisplay = new Set(fieldsToDisplay));
     this._initChart = this._initChart.bind(this);
   }
   /**
@@ -5190,12 +5156,11 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
      * Prints the metrics summary and the requests information in console.
      * @param arg1
      * @param arg2
-     * @param arg3
      */
 
   }, {
     key: "report",
-    value: function report(arg1, arg2, arg3) {
+    value: function report(arg1, arg2) {
       if (arguments.length === 1) {
         if (!arg1) {
           this.print(Messages.NO_REQUEST, Colors.INFO, true);
@@ -5205,8 +5170,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             this.print(Messages.NO_REQUESTS, Colors.INFO, true);
             return;
           }
-
-          arg1 instanceof collection_Collection && this.printTitle(Messages.REQUESTS_INFO);
 
           this._reportObject(arg1);
         } else {
@@ -5243,7 +5206,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       this["break"]();
       this.printTitle(Messages.REQUESTS_INFO);
 
-      this._reportObject(arg2, arg3);
+      this._reportObject(arg2);
     }
     /**
      * Create chart in canvans and render in console.
@@ -5466,12 +5429,12 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     key: "printKeyValue",
     value: function printKeyValue(head, value) {
       if (value !== null && typeof_default()(value) === 'object') {
-        this._invokeConsole('log', "%c".concat(this._getTitleWithSpaces(head), ":"), "font-weight: bold; color: ".concat(Colors.INFO), value);
+        this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ":"), "font-weight: bold; color: ".concat(Colors.INFO), value);
 
         return;
       }
 
-      this._invokeConsole('log', "%c".concat(this._getTitleWithSpaces(head), ": %c").concat(value), "font-weight: bold; color: ".concat(Colors.INFO), "color: ".concat(Colors.INFO, ";"));
+      this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ": %c").concat(value), "font-weight: bold; color: ".concat(Colors.INFO), "color: ".concat(Colors.INFO, ";"));
     }
     /**
      * Prints many fields and values in single row.
@@ -5490,7 +5453,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             title = _ref2[0],
             value = _ref2[1];
 
-        msgs.push("%c".concat(index === 0 ? _this2._getTitleWithSpaces(title) : title, ": %c").concat(value));
+        msgs.push("%c".concat(index === 0 ? _this2._appendTextWithSpaces(title, 30) : title, ": %c").concat(value));
         styles.push("font-weight: bold; color: ".concat(Colors.INFO), "color: ".concat(Colors.INFO, ";"));
         index < Object.keys(obj).length - 1 && styles.push("color: ".concat(Colors.MEDIUM_GRAY));
       });
@@ -5619,9 +5582,10 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       document.body.appendChild(this._canvasEl);
     }
   }, {
-    key: "_getTitleWithSpaces",
-    value: function _getTitleWithSpaces(title) {
-      return "".concat(title).concat(Array(30 - title.length).fill(' ').join(''));
+    key: "_appendTextWithSpaces",
+    value: function _appendTextWithSpaces(title, size) {
+      title = title || '-';
+      return "".concat(title).concat(Array(size - title.toString().length).fill(' ').join(''));
     }
   }, {
     key: "_reportStats",
@@ -5651,7 +5615,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     }
   }, {
     key: "_reportObject",
-    value: function _reportObject(requestOrCollection, fieldsToDisplay) {
+    value: function _reportObject(requestOrCollection) {
       var _this3 = this;
 
       if (requestOrCollection === null) {
@@ -5670,7 +5634,10 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           borderColor = Colors.WARN_MEDIUM;
         }
 
-        this._invokeConsole('groupCollapsed', "%c#".concat(requestOrCollection.id, " %c").concat(requestOrCollection.method, "  ").concat(requestOrCollection.part, " | ").concat(requestOrCollection.responseStatus, " | ").concat(formatBytes(requestOrCollection.responseSize), " | ").concat(formatTime(requestOrCollection.duration)), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.INFO));
+        var part = requestOrCollection.part;
+        var displayUrl = part.length <= 75 ? part : '...' + part.substring(part.length - 72);
+
+        this._invokeConsole('groupCollapsed', "%c#".concat(this._appendTextWithSpaces(requestOrCollection.id, 3), " %c").concat(this._appendTextWithSpaces(requestOrCollection.method, 6), "  ").concat(this._appendTextWithSpaces(displayUrl, 80), " ").concat(this._appendTextWithSpaces(requestOrCollection.responseStatus, 5), " ").concat(this._appendTextWithSpaces(formatBytes(requestOrCollection.responseSize), 10), " ").concat(this._appendTextWithSpaces(formatTime(requestOrCollection.duration), 10)), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.INFO));
 
         this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
         this.printKeyValue(Messages.URL, requestOrCollection.url);
@@ -5721,31 +5688,16 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
           }
 
-          _this3._reportObject(group, fieldsToDisplay);
+          _this3._reportObject(group);
 
           _this3.groupEnd();
         });
         return;
       }
 
-      var items = requestOrCollection.items.map(function (item) {
-        var displayObj = {};
-
-        (fieldsToDisplay || toConsumableArray_default()(_this3._fieldsToDisplay)).forEach(function (field) {
-          var v;
-
-          if (typeof item[field] === 'undefined') {
-            v = null;
-          } else {
-            v = item[field];
-          }
-
-          displayObj[HTTP_REQUEST_INFO_DISPLAY_NAMES[field]] = v;
-        });
-
-        return displayObj;
+      requestOrCollection.items.forEach(function (item) {
+        return _this3._reportObject(item);
       });
-      this.table(items);
     }
   }, {
     key: "_colorize",

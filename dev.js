@@ -52,7 +52,7 @@ function sendCall4() {
 }
 
 function sendCall5() {
-  fetch('https://jsonplaceholder.typicode.com/posts', {
+  fetch('https://jsonplaceholder.typicode.com/posts?query=lorem_ipsum_dolor_smir_ameit&arg1=lorem_ipsum_dolor_smir_ameit&atg3=lorem_ipsum_dolor_smir_ameit', {
     method: 'POST',
     body: JSON.stringify({
       "userId": 1,

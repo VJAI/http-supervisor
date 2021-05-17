@@ -9,27 +9,6 @@ import './console-snapshot';
  */
 export default class ConsoleReporter {
 
-  /**
-   * Fields to display.
-   * @type {Set}
-   * @private
-   */
-  _fieldsToDisplay = new Set([
-    'id',
-    'url',
-    'part',
-    'method',
-    'payload',
-    'payloadSize',
-    'duration',
-    'responseStatus',
-    'response',
-    'responseSize',
-    'error',
-    'errorDescription',
-    'exceedsQuota'
-  ]);
-
   _lockConsole = true;
 
   /**
@@ -69,10 +48,8 @@ export default class ConsoleReporter {
 
   /**
    * Ctor.
-   * @param {Object} fieldsToDisplay
    */
-  constructor(fieldsToDisplay) {
-    fieldsToDisplay && (this._fieldsToDisplay = new Set(fieldsToDisplay));
+  constructor() {
     this._initChart = this._initChart.bind(this);
   }
 
@@ -95,9 +72,8 @@ export default class ConsoleReporter {
    * Prints the metrics summary and the requests information in console.
    * @param arg1
    * @param arg2
-   * @param arg3
    */
-  report(arg1, arg2, arg3) {
+  report(arg1, arg2) {
     if (arguments.length === 1) {
       if (!arg1) {
         this.print(Messages.NO_REQUEST, Colors.INFO, true);
@@ -108,7 +84,6 @@ export default class ConsoleReporter {
           return;
         }
 
-        arg1 instanceof Collection && this.printTitle(Messages.REQUESTS_INFO);
         this._reportObject(arg1);
       } else {
         this.printTitle(Messages.METRICS_SUMMARY);
@@ -138,7 +113,7 @@ export default class ConsoleReporter {
     this._reportStats(arg1);
     this.break();
     this.printTitle(Messages.REQUESTS_INFO);
-    this._reportObject(arg2, arg3);
+    this._reportObject(arg2);
   }
 
   /**
@@ -337,11 +312,11 @@ export default class ConsoleReporter {
    */
   printKeyValue(head, value) {
     if (value !== null && typeof value === 'object') {
-      this._invokeConsole('log', `%c${this._getTitleWithSpaces(head)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
+      this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
       return;
     }
 
-    this._invokeConsole('log', `%c${this._getTitleWithSpaces(head)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
+    this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
   }
 
   /**
@@ -352,7 +327,7 @@ export default class ConsoleReporter {
     let msgs = [];
     let styles = [];
     Object.entries(obj).forEach(([title, value], index) => {
-      msgs.push(`%c${index === 0 ? this._getTitleWithSpaces(title) : title}: %c${value}`);
+      msgs.push(`%c${index === 0 ? this._appendTextWithSpaces(title, 30) : title}: %c${value}`);
       styles.push(`font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
       index < Object.keys(obj).length - 1 && styles.push(`color: ${Colors.MEDIUM_GRAY}`);
     });
@@ -452,8 +427,9 @@ export default class ConsoleReporter {
     document.body.appendChild(this._canvasEl);
   }
 
-  _getTitleWithSpaces(title) {
-    return `${title}${Array(30 - title.length).fill(' ').join('')}`;
+  _appendTextWithSpaces(title, size) {
+    title = title || '-';
+    return `${title}${Array(size - title.toString().length).fill(' ').join('')}`;
   }
 
   _reportStats({
@@ -486,7 +462,7 @@ export default class ConsoleReporter {
     this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
   }
 
-  _reportObject(requestOrCollection, fieldsToDisplay) {
+  _reportObject(requestOrCollection) {
     if (requestOrCollection === null) {
       this.print(Messages.NO_REQUEST, Colors.INFO, true);
       return;
@@ -502,7 +478,9 @@ export default class ConsoleReporter {
         borderColor = Colors.WARN_MEDIUM;
       }
 
-      this._invokeConsole('groupCollapsed', `%c#${requestOrCollection.id} %c${requestOrCollection.method}  ${requestOrCollection.part} | ${requestOrCollection.responseStatus} | ${formatBytes(requestOrCollection.responseSize)} | ${formatTime(requestOrCollection.duration)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: ${Colors.INFO}`);
+      const { part } = requestOrCollection;
+      const displayUrl = part.length <= 75 ? part : '...' + part.substring(part.length - 72);
+      this._invokeConsole('groupCollapsed', `%c#${this._appendTextWithSpaces(requestOrCollection.id, 3)} %c${this._appendTextWithSpaces(requestOrCollection.method, 6)}  ${this._appendTextWithSpaces(displayUrl, 80)} ${this._appendTextWithSpaces(requestOrCollection.responseStatus, 5)} ${this._appendTextWithSpaces(formatBytes(requestOrCollection.responseSize), 10)} ${this._appendTextWithSpaces(formatTime(requestOrCollection.duration), 10)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: ${Colors.INFO}`);
       this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
       this.printKeyValue(Messages.PATH, requestOrCollection.part);
@@ -548,28 +526,14 @@ export default class ConsoleReporter {
           this.groupStart(`${groupName} %c- [${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
         }
 
-        this._reportObject(group, fieldsToDisplay);
+        this._reportObject(group);
         this.groupEnd();
       });
 
       return;
     }
 
-    const items = requestOrCollection.items.map(item => {
-      const displayObj = {};
-      (fieldsToDisplay || [...this._fieldsToDisplay]).forEach(field => {
-        let v;
-        if (typeof item[field] === 'undefined') {
-          v = null;
-        } else {
-          v = item[field];
-        }
-        displayObj[HTTP_REQUEST_INFO_DISPLAY_NAMES[field]] = v;
-      });
-      return displayObj;
-    });
-
-    this.table(items);
+    requestOrCollection.items.forEach(item => this._reportObject(item));
   }
 
   _colorize(opaque, context) {
