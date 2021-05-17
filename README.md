@@ -6,12 +6,22 @@
 
 ## Intro
 
-A simple library (also available as chrome addon) that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to group, sort, search and export requests.
+A simple library (also available as chrome addon) that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to find duplicate requests. Not only that you can group, sort, search and export requests.
 
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to work with requests from developer console.
 
 Last but not least it also provides visualization support using the chart.js library.
+
+## Motivation
+
+I was working in improving the performance of a single page e-commerce app. One of the task was to figure out the duplicate AJAX calls made during a particular period by 
+different components. It seemed to be so challenging to do it through Chrome network tab because it lacks abilities to group requests. 
+
+I created a simple script that wrapped the XHR calls and helped to group requests based on url, method and payload and printed them in console. This easily helped us to identify the duplicate calls 
+made by the app and eliminate them easier. I improved the script and made it as a library and addon that can do more extra things other than finding duplicate requests.
+
+Please feel free to use it and share your feedback.
 
 
 ## Demo
@@ -41,6 +51,7 @@ Last but not least it also provides visualization support using the chart.js lib
 ## Features
 
 - Auditing Requests By Setting Quota
+- Finding Duplicate Requests
 - Searching Requests Based On Different Criteria
 - Nested Grouping
 - Multi Sorting
@@ -211,6 +222,14 @@ You can pass any request or collection to the print method and it'll print it.
 ```
 http.print(request);
 http.print(collection);
+```
+
+### Finding Duplicate Requests
+
+You can print duplicate calls made during a particular session by grouping the AJAX calls by url, method and payload as shown below.
+
+```
+http.print(null, ['url', 'method', 'payload']);
 ```
 
 
@@ -598,12 +617,6 @@ Printing all the requests with the default `groupBy` and `sortBy` properties.
 http.print();
 ```
 
-Printing a subset fields of all the requests.
-
-```js
-http.print({ displayFields: ['url', 'method', 'response'] });
-```
-
 Printing requests after searching, grouping and sorting.
 
 ```js
@@ -614,11 +627,11 @@ http.print(
 );
 ```
 
-#### `printFailed(displayFields?)`
+#### `printFailed()`
 
-Prints failed requests. Passing an array of fields as second parameter will only display those fields in the console.
+Prints failed requests.
 
-#### `printExceeded(displayFields)`
+#### `printExceeded()`
 
 Prints requests exceeds quota.
 
