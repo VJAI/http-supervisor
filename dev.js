@@ -43,6 +43,8 @@ function sendCall3() {
 function sendCall4() {
   const xhr = new XMLHttpRequest();
   xhr.open('POST', 'https://jsonplaceholder.typicode.com/posts');
+  xhr.setRequestHeader('Authorization', 'Bearer 00D3I0000008n7g!AQIAQPsMoEEciH88UMtNm2ioL3vo068j5MOJAfYvLZDloIHppIajILl7IPLeVYjvAYkXBbjGhuLLwrfu1l9bLM7tDfbkuLqA');
+  xhr.setRequestHeader('Something', '456');
   xhr.send({
     "userId": 1,
     "id": 1,

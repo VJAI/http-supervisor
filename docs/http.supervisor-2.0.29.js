@@ -124,7 +124,7 @@ var arrayWithoutHoles = __webpack_require__(15);
 
 var iterableToArray = __webpack_require__(16);
 
-var unsupportedIterableToArray = __webpack_require__(14);
+var unsupportedIterableToArray = __webpack_require__(13);
 
 var nonIterableSpread = __webpack_require__(17);
 
@@ -232,7 +232,7 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var setPrototypeOf = __webpack_require__(11);
+var setPrototypeOf = __webpack_require__(10);
 
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
@@ -277,11 +277,11 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 var getPrototypeOf = __webpack_require__(6);
 
-var setPrototypeOf = __webpack_require__(11);
+var setPrototypeOf = __webpack_require__(10);
 
-var isNativeFunction = __webpack_require__(21);
+var isNativeFunction = __webpack_require__(18);
 
-var construct = __webpack_require__(12);
+var construct = __webpack_require__(11);
 
 function _wrapNativeSuper(Class) {
   var _cache = typeof Map === "function" ? new Map() : undefined;
@@ -323,25 +323,6 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(18);
-
-var iterableToArrayLimit = __webpack_require__(19);
-
-var unsupportedIterableToArray = __webpack_require__(14);
-
-var nonIterableRest = __webpack_require__(20);
-
-function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
-}
-
-module.exports = _slicedToArray;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 11 */
 /***/ (function(module, exports) {
 
 function _setPrototypeOf(o, p) {
@@ -358,12 +339,12 @@ module.exports = _setPrototypeOf;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var setPrototypeOf = __webpack_require__(11);
+var setPrototypeOf = __webpack_require__(10);
 
-var isNativeReflectConstruct = __webpack_require__(22);
+var isNativeReflectConstruct = __webpack_require__(19);
 
 function _construct(Parent, args, Class) {
   if (isNativeReflectConstruct()) {
@@ -389,7 +370,7 @@ module.exports = _construct;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports) {
 
 function _arrayLikeToArray(arr, len) {
@@ -406,10 +387,10 @@ module.exports = _arrayLikeToArray;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayLikeToArray = __webpack_require__(13);
+var arrayLikeToArray = __webpack_require__(12);
 
 function _unsupportedIterableToArray(o, minLen) {
   if (!o) return;
@@ -424,10 +405,29 @@ module.exports = _unsupportedIterableToArray;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithHoles = __webpack_require__(20);
+
+var iterableToArrayLimit = __webpack_require__(21);
+
+var unsupportedIterableToArray = __webpack_require__(13);
+
+var nonIterableRest = __webpack_require__(22);
+
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
+}
+
+module.exports = _slicedToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
 /* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayLikeToArray = __webpack_require__(13);
+var arrayLikeToArray = __webpack_require__(12);
 
 function _arrayWithoutHoles(arr) {
   if (Array.isArray(arr)) return arrayLikeToArray(arr);
@@ -462,6 +462,37 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 /* 18 */
 /***/ (function(module, exports) {
 
+function _isNativeFunction(fn) {
+  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+}
+
+module.exports = _isNativeFunction;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+function _isNativeReflectConstruct() {
+  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+  if (Reflect.construct.sham) return false;
+  if (typeof Proxy === "function") return true;
+
+  try {
+    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+module.exports = _isNativeReflectConstruct;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
 function _arrayWithHoles(arr) {
   if (Array.isArray(arr)) return arr;
 }
@@ -470,7 +501,7 @@ module.exports = _arrayWithHoles;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, exports) {
 
 function _iterableToArrayLimit(arr, i) {
@@ -504,7 +535,7 @@ module.exports = _iterableToArrayLimit;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, exports) {
 
 function _nonIterableRest() {
@@ -512,37 +543,6 @@ function _nonIterableRest() {
 }
 
 module.exports = _nonIterableRest;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 21 */
-/***/ (function(module, exports) {
-
-function _isNativeFunction(fn) {
-  return Function.toString.call(fn).indexOf("[native code]") !== -1;
-}
-
-module.exports = _isNativeFunction;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 22 */
-/***/ (function(module, exports) {
-
-function _isNativeReflectConstruct() {
-  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-  if (Reflect.construct.sham) return false;
-  if (typeof Proxy === "function") return true;
-
-  try {
-    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-module.exports = _isNativeReflectConstruct;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
@@ -836,10 +836,6 @@ var createClass_default = /*#__PURE__*/__webpack_require__.n(createClass);
 var defineProperty = __webpack_require__(0);
 var defineProperty_default = /*#__PURE__*/__webpack_require__.n(defineProperty);
 
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
-var slicedToArray = __webpack_require__(10);
-var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
-
 // CONCATENATED MODULE: ./src/constants.js
 var HTTP_SUPERVISOR_EMOJI = '👮';
 /**
@@ -890,7 +886,8 @@ var Messages = {
   TIME_START: 'Time Start',
   TIME_END: 'Time End',
   IMPORTED_SUCCESS: 'Configuration Imported Successsfully!',
-  IMPORTED_FAILURE: 'Failed to import configuration!'
+  IMPORTED_FAILURE: 'Failed to import configuration!',
+  NO_DUPLICATE_REQUESTS: 'No duplicate requests found'
 };
 /**
  * The different color codes by supervisor.
@@ -1291,7 +1288,6 @@ function copyText(content) {
 
 
 
-
 /**
  * Holds the http request information.
  */
@@ -1478,12 +1474,8 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
         var xhr = new XMLHttpRequest();
         onReadyStateChange && xhr.addEventListener('readystatechange', onReadyStateChange);
         xhr.open(this.method, this.url);
-        Object.entries(this.requestHeaders).forEach(function (_ref) {
-          var _ref2 = slicedToArray_default()(_ref, 2),
-              header = _ref2[0],
-              value = _ref2[1];
-
-          return xhr.setRequestHeader(header, value);
+        this.requestHeaders.forEach(function (value, header) {
+          xhr.setRequestHeader(header, value);
         });
         this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
         return xhr;
@@ -1495,6 +1487,16 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
       };
       this.method !== REQUEST_TYPE.GET && this.payload && (requestOptions.body = JSON.stringify(this.payload));
       return window.fetch(this.url, requestOptions);
+    }
+    /**
+     * Returns a cloned copy.
+     * @return {HttpRequestInfo}
+     */
+
+  }, {
+    key: "clone",
+    value: function clone() {
+      return Object.assign(HttpRequestInfo.prototype, this);
     }
   }]);
 
@@ -2044,7 +2046,7 @@ var event_emitter_EventEmitter = /*#__PURE__*/function () {
 
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/construct.js
-var construct = __webpack_require__(12);
+var construct = __webpack_require__(11);
 var construct_default = /*#__PURE__*/__webpack_require__.n(construct);
 
 // CONCATENATED MODULE: ./src/session.js
@@ -3462,6 +3464,44 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._reporter.report(this.maxDurationRequest());
     }
     /**
+     * Prints duplicate requests.
+     */
+
+  }, {
+    key: "printDuplicateRequests",
+    value: function printDuplicateRequests() {
+      this._reporter.table(this.duplicateRequests());
+    }
+    /**
+     * Compares two requests and print the differences.
+     * @param id1
+     * @param id2
+     */
+
+  }, {
+    key: "compareRequests",
+    value: function compareRequests(id1, id2) {
+      var request1 = this.get(id1),
+          request2 = this.get(id2);
+
+      if (!request1 || !request2) {
+        return;
+      }
+
+      var array = [];
+      var propsToCompare = ['url', 'method', 'payload', 'response', 'responseStatus'];
+      propsToCompare.forEach(function (prop) {
+        array.push({
+          field: prop,
+          request1: request1[prop],
+          request2: request2[prop],
+          same: JSON.stringify(request1[prop]) === JSON.stringify(request2[prop])
+        });
+      });
+
+      this._reporter.table(array);
+    }
+    /**
      * Displays the bar chart of responsive size.
      */
 
@@ -4041,7 +4081,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       var httpRequestInfo = xhr[XHR_METADATA_KEY] || new http_request_info_HttpRequestInfo(id);
-      httpRequestInfo.url = url.toLowerCase();
+      httpRequestInfo.url = url;
       httpRequestInfo.method = method.toUpperCase();
       xhr[XHR_METADATA_KEY] = httpRequestInfo;
 
@@ -4143,8 +4183,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           value = parameters[2];
       parameters.shift();
       var httpRequestInfo = xhr[XHR_METADATA_KEY] || new http_request_info_HttpRequestInfo(this._id());
-      var _httpRequestInfo$reqH = httpRequestInfo.reqHeaders,
-          reqHeaders = _httpRequestInfo$reqH === void 0 ? new Map() : _httpRequestInfo$reqH;
+      var reqHeaders = httpRequestInfo.requestHeaders || new Map();
       reqHeaders.set(header, value);
       httpRequestInfo.requestHeaders = reqHeaders;
       xhr[XHR_METADATA_KEY] = httpRequestInfo;
@@ -5101,6 +5140,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 if (!window.customElements.get('http-supervisor-widget')) {
   window.customElements.define('http-supervisor-widget', http_supervisor_widget_HtmlSupervisorWidgetElement);
 }
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
+var slicedToArray = __webpack_require__(14);
+var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
+
 // EXTERNAL MODULE: ./src/console-snapshot.js
 var console_snapshot = __webpack_require__(23);
 

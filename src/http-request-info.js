@@ -214,7 +214,9 @@ export default class HttpRequestInfo {
       const xhr = new XMLHttpRequest();
       onReadyStateChange && xhr.addEventListener('readystatechange', onReadyStateChange);
       xhr.open(this.method, this.url);
-      Object.entries(this.requestHeaders).forEach(([header, value]) => xhr.setRequestHeader(header, value));
+      this.requestHeaders.forEach((value, header) => {
+        xhr.setRequestHeader(header, value);
+      });
       this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
       return xhr;
     }
@@ -227,5 +229,13 @@ export default class HttpRequestInfo {
     this.method !== REQUEST_TYPE.GET && this.payload && (requestOptions.body = JSON.stringify(this.payload));
 
     return window.fetch(this.url, requestOptions);
+  }
+
+  /**
+   * Returns a cloned copy.
+   * @return {HttpRequestInfo}
+   */
+  clone() {
+    return Object.assign(HttpRequestInfo.prototype, this);
   }
 }

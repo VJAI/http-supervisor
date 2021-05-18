@@ -475,6 +475,7 @@ Below are the constructor and methods of this class.
 
 - `constructor(id, url, method, payload)`
 - `fire(type = 'xhr', reqOptions = {})` - Issues AJAX request using the property values.
+- `clone()` - Returns a cloned copy.
 
 #### `first()`
 
@@ -658,6 +659,14 @@ Prints the request that has maximum size.
 #### `printMaxDurationRequest()`
 
 Prints the request that took maximum time.
+
+#### `printDuplicateRequests()`
+
+Prints duplicate requests.
+
+#### `compareRequests(id1, id2)`
+
+Compares two requests and print the differences.
 
 #### `sizeChart()`
 

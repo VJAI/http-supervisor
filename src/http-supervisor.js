@@ -1088,6 +1088,36 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Prints duplicate requests.
+   */
+  printDuplicateRequests() {
+    this._reporter.table(this.duplicateRequests());
+  }
+
+  /**
+   * Compares two requests and print the differences.
+   * @param id1
+   * @param id2
+   */
+  compareRequests(id1, id2) {
+    const request1 = this.get(id1),
+      request2 = this.get(id2);
+
+    if (!request1 || !request2) {
+      return;
+    }
+
+    const array = [];
+    const propsToCompare = ['url', 'method', 'payload', 'response', 'responseStatus'];
+
+    propsToCompare.forEach(prop => {
+      array.push({ field: prop, request1: request1[prop], request2: request2[prop], same: JSON.stringify(request1[prop]) === JSON.stringify(request2[prop]) });
+    });
+
+    this._reporter.table(array);
+  }
+
+  /**
    * Displays the bar chart of responsive size.
    */
   sizeChart() {
@@ -1554,7 +1584,7 @@ export default class HttpSupervisor {
     }
 
     const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo(id);
-    httpRequestInfo.url = url.toLowerCase();
+    httpRequestInfo.url = url;
     httpRequestInfo.method = method.toUpperCase();
     xhr[XHR_METADATA_KEY] = httpRequestInfo;
 
@@ -1644,7 +1674,7 @@ export default class HttpSupervisor {
     parameters.shift();
 
     const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo(this._id());
-    const { reqHeaders = new Map() } = httpRequestInfo;
+    const reqHeaders = httpRequestInfo.requestHeaders || new Map();
     reqHeaders.set(header, value);
     httpRequestInfo.requestHeaders = reqHeaders;
     xhr[XHR_METADATA_KEY] = httpRequestInfo;

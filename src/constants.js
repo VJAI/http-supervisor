@@ -47,7 +47,8 @@ export const Messages = {
   TIME_START: 'Time Start',
   TIME_END: 'Time End',
   IMPORTED_SUCCESS: 'Configuration Imported Successsfully!',
-  IMPORTED_FAILURE: 'Failed to import configuration!'
+  IMPORTED_FAILURE: 'Failed to import configuration!',
+  NO_DUPLICATE_REQUESTS: 'No duplicate requests found'
 };
 
 /**
