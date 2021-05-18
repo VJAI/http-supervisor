@@ -73,10 +73,10 @@ export default class HttpRequestInfo {
   }
 
   /**
-   * The path in the url excluding domain.
+   * The path with query.
    * @type {string}
    */
-  get part() {
+  get pathQuery() {
     if (!this._urlObj) {
       return null;
     }

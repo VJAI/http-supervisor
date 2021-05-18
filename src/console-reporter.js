@@ -478,12 +478,12 @@ export default class ConsoleReporter {
         borderColor = Colors.WARN_MEDIUM;
       }
 
-      const { part } = requestOrCollection;
-      const displayUrl = part.length <= 75 ? part : '...' + part.substring(part.length - 72);
+      const { pathQuery } = requestOrCollection;
+      const displayUrl = pathQuery.length <= 75 ? pathQuery : '...' + pathQuery.substring(pathQuery.length - 72);
       this._invokeConsole('groupCollapsed', `%c#${this._appendTextWithSpaces(requestOrCollection.id, 3)} %c${this._appendTextWithSpaces(requestOrCollection.method, 6)}  ${this._appendTextWithSpaces(displayUrl, 80)} ${this._appendTextWithSpaces(requestOrCollection.responseStatus, 5)} ${this._appendTextWithSpaces(formatBytes(requestOrCollection.responseSize), 10)} ${this._appendTextWithSpaces(formatTime(requestOrCollection.duration), 10)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: ${Colors.INFO}`);
       this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
       this.printKeyValue(Messages.URL, requestOrCollection.url);
-      this.printKeyValue(Messages.PATH, requestOrCollection.part);
+      this.printKeyValue(Messages.PATH, requestOrCollection.pathQuery);
       this.printKeyValue(Messages.METHOD, requestOrCollection.method);
       this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
       this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));

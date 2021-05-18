@@ -1424,12 +1424,12 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
       return this._urlObj ? this._urlObj.search : null;
     }
     /**
-     * The path in the url excluding domain.
+     * The path with query.
      * @type {string}
      */
 
   }, {
-    key: "part",
+    key: "pathQuery",
     get: function get() {
       if (!this._urlObj) {
         return null;
@@ -2163,7 +2163,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_alertOnRequestStart", false);
 
-    defineProperty_default()(this, "_groupBy", ['part', 'method']);
+    defineProperty_default()(this, "_groupBy", ['pathQuery', 'method']);
 
     defineProperty_default()(this, "_sortBy", [{
       field: 'id',
@@ -2213,6 +2213,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     this._eventEmitter = new event_emitter_EventEmitter();
     this.init = this.init.bind(this);
     this.retire = this.retire.bind(this);
+    window.addEventListener('init-supervisor', this.init, false);
+    window.addEventListener('retire-supervisor', this.retire, false);
   }
   /**
    * Initialize the supervisor.
@@ -2874,8 +2876,6 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._reporter.init(this);
 
       this.start();
-      window.addEventListener('init-supervisor', this.init, false);
-      window.addEventListener('retire-supervisor', this.retire, false);
 
       this._triggerEvent(SupervisorEvents.READY);
     }
@@ -3278,6 +3278,44 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(this._requests).map(function (r) {
         return r.duration;
       })));
+    }
+    /**
+     * Returns duplicate requests.
+     * @return {Array}
+     */
+
+  }, {
+    key: "duplicateRequests",
+    value: function duplicateRequests() {
+      var duplicateRequests = [];
+      var requests = this.group('url', 'method', 'payload');
+      requests.groups.forEach(function (a) {
+        a.groups.forEach(function (b) {
+          if (b.items.length > 1) {
+            var _b$items$ = b.items[0],
+                url = _b$items$.url,
+                method = _b$items$.method,
+                payload = _b$items$.payload;
+            duplicateRequests.push({
+              url: url,
+              method: method,
+              payload: payload,
+              count: b.items.length
+            });
+          }
+        });
+      });
+      return duplicateRequests;
+    }
+    /**
+     * Returns true if there are duplicate requests.
+     * @return {boolean}
+     */
+
+  }, {
+    key: "hasDuplicates",
+    value: function hasDuplicates() {
+      return this.duplicateRequests().length > 0;
     }
     /**
      * Prints the requests based on the passed arguments.
@@ -5634,14 +5672,14 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           borderColor = Colors.WARN_MEDIUM;
         }
 
-        var part = requestOrCollection.part;
-        var displayUrl = part.length <= 75 ? part : '...' + part.substring(part.length - 72);
+        var pathQuery = requestOrCollection.pathQuery;
+        var displayUrl = pathQuery.length <= 75 ? pathQuery : '...' + pathQuery.substring(pathQuery.length - 72);
 
         this._invokeConsole('groupCollapsed', "%c#".concat(this._appendTextWithSpaces(requestOrCollection.id, 3), " %c").concat(this._appendTextWithSpaces(requestOrCollection.method, 6), "  ").concat(this._appendTextWithSpaces(displayUrl, 80), " ").concat(this._appendTextWithSpaces(requestOrCollection.responseStatus, 5), " ").concat(this._appendTextWithSpaces(formatBytes(requestOrCollection.responseSize), 10), " ").concat(this._appendTextWithSpaces(formatTime(requestOrCollection.duration), 10)), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.INFO));
 
         this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
         this.printKeyValue(Messages.URL, requestOrCollection.url);
-        this.printKeyValue(Messages.PATH, requestOrCollection.part);
+        this.printKeyValue(Messages.PATH, requestOrCollection.pathQuery);
         this.printKeyValue(Messages.METHOD, requestOrCollection.method);
         this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
         this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));

@@ -226,10 +226,10 @@ http.print(collection);
 
 ### Finding Duplicate Requests
 
-You can print duplicate calls made during a particular session by grouping the AJAX calls by url, method and payload as shown below.
+You can find duplicate calls made during a particular session by calling `duplicateRequests` method.
 
 ```
-http.print(null, ['url', 'method', 'payload']);
+const duplicateRequests = http.duplicateRequests();
 ```
 
 
@@ -588,6 +588,14 @@ Returns the max response size of the requests.
 #### `maxDuration()`
 
 Returns the max duration.
+
+#### `duplicateRequests()`
+
+Returns the duplicate requests made during the session.
+
+#### `hasDuplicates`
+
+Returns true if there are duplicate requests.
 
 #### `print(...args)`
 

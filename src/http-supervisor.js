@@ -130,7 +130,7 @@ export default class HttpSupervisor {
    * @type {string[]}
    * @private
    */
-  _groupBy = ['part', 'method'];
+  _groupBy = ['pathQuery', 'method'];
 
   /**
    * Sorting parameters used in displaying requests.
@@ -606,6 +606,9 @@ export default class HttpSupervisor {
 
     this.init = this.init.bind(this);
     this.retire = this.retire.bind(this);
+
+    window.addEventListener('init-supervisor', this.init, false);
+    window.addEventListener('retire-supervisor', this.retire, false);
   }
 
   /**
@@ -673,8 +676,6 @@ export default class HttpSupervisor {
     this._status = SupervisorStatus.Idle;
     this._reporter.init(this);
     this.start();
-    window.addEventListener('init-supervisor', this.init, false);
-    window.addEventListener('retire-supervisor', this.retire, false);
     this._triggerEvent(SupervisorEvents.READY);
   }
 
@@ -956,6 +957,34 @@ export default class HttpSupervisor {
    */
   maxDuration() {
     return Math.max(...[...this._requests].map(r => r.duration));
+  }
+
+  /**
+   * Returns duplicate requests.
+   * @return {Array}
+   */
+  duplicateRequests() {
+    const duplicateRequests = [];
+    const requests = this.group('url', 'method', 'payload');
+
+    requests.groups.forEach(a => {
+      a.groups.forEach(b => {
+        if (b.items.length > 1) {
+          const { url, method, payload } = b.items[0];
+          duplicateRequests.push({ url, method, payload, count: b.items.length });
+        }
+      });
+    });
+
+    return duplicateRequests;
+  }
+
+  /**
+   * Returns true if there are duplicate requests.
+   * @return {boolean}
+   */
+  hasDuplicates() {
+    return this.duplicateRequests().length > 0;
   }
 
   /**
