@@ -6,7 +6,7 @@
 
 ## Intro
 
-A simple library (also available as chrome addon) that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to find duplicate requests. Not only that you can group, sort, search and export requests.
+A simple library (also available as [https://chrome.google.com/webstore/detail/http-supervisor/ilfhanegmhjioandehhnopokeoeefonj](chrome addon)) that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to find duplicate requests. Not only that you can group, sort, search and export requests.
 
 The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
 to work with requests from developer console.
@@ -65,16 +65,19 @@ Please feel free to use it and share your feedback.
 
 ## Install
 
-Currently it's available in `npm`.
+You can install the library from npm as shown below.
 
 ```shell
 npm i http-supervisor --save-dev
 ``` 
 
-I've also created a chrome addon and it's currently in pending review state meanwhile you can locally 
-install the "addon" folder in the repo to chrome extensions [which is quite easy](https://superuser.com/questions/247651/how-does-one-install-an-extension-for-chrome-browser-from-the-local-file-system) :)
-
 The library exports a single object called `http` through which you can control the audit and manage the requests.
+
+
+## Chrome Addon
+
+It's also available as chrome addon. By installing the addon you can enable it for any site for monitoring HTTP requests. 
+You can install the addon from [https://chrome.google.com/webstore/detail/http-supervisor/ilfhanegmhjioandehhnopokeoeefonj](here).
 
 
 ## Initializing Supervisor
