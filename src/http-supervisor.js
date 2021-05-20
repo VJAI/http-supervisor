@@ -963,7 +963,7 @@ export default class HttpSupervisor {
    * Returns duplicate requests.
    * @return {Array}
    */
-  duplicateRequests() {
+  duplicates() {
     const duplicateRequests = [];
     const requests = this.group('url', 'method', 'payload');
 
@@ -1090,8 +1090,8 @@ export default class HttpSupervisor {
   /**
    * Prints duplicate requests.
    */
-  printDuplicateRequests() {
-    this._reporter.table(this.duplicateRequests());
+  printDuplicates() {
+    this._reporter.table(this.duplicates());
   }
 
   /**
@@ -1099,7 +1099,7 @@ export default class HttpSupervisor {
    * @param id1
    * @param id2
    */
-  compareRequests(id1, id2) {
+  compare(id1, id2) {
     const request1 = this.get(id1),
       request2 = this.get(id2);
 
@@ -1527,6 +1527,7 @@ export default class HttpSupervisor {
 
     const payload = safeParse(body);
     const requestInfo = new HttpRequestInfo(id, url, method, payload);
+    requestInfo.payloadSize = byteSize(payload ? JSON.stringify(payload) : '');
     requestInfo.initiatorType = InitiatorType.FETCH;
     headers && (requestInfo.requestHeaders = new Map(Object.entries(headers)));
     this._addRequest(requestInfo);

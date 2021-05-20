@@ -229,10 +229,10 @@ http.print(collection);
 
 ### Finding Duplicate Requests
 
-You can find duplicate calls made during a particular session by calling `duplicateRequests` method.
+You can find duplicate calls made during a particular session by calling `duplicates` method.
 
 ```
-const duplicateRequests = http.duplicateRequests();
+const duplicateRequests = http.duplicates();
 ```
 
 
@@ -663,11 +663,11 @@ Prints the request that has maximum size.
 
 Prints the request that took maximum time.
 
-#### `printDuplicateRequests()`
+#### `printDuplicates()`
 
 Prints duplicate requests.
 
-#### `compareRequests(id1, id2)`
+#### `compare(id1, id2)`
 
 Compares two requests and print the differences.
 

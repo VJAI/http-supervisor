@@ -76,11 +76,11 @@ export default class ConsoleReporter {
   report(arg1, arg2) {
     if (arguments.length === 1) {
       if (!arg1) {
-        this.print(Messages.NO_REQUEST, Colors.INFO, true);
+        this.print(Messages.NO_REQUEST, 'inherit', true);
         return;
       } else if (arg1 instanceof HttpRequestInfo || arg1 instanceof Collection) {
         if (arg1 instanceof Collection && !arg1.hasGroups && !arg1.hasItems) {
-          this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+          this.print(Messages.NO_REQUESTS, 'inherit', true);
           return;
         }
 
@@ -95,7 +95,7 @@ export default class ConsoleReporter {
 
     if (arguments.length === 2 && arg1 instanceof Collection) {
       if (!arg1.hasGroups && !arg1.hasItems) {
-        this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+        this.print(Messages.NO_REQUESTS, 'inherit', true);
         return;
       }
 
@@ -105,7 +105,7 @@ export default class ConsoleReporter {
     }
 
     if (!arg2.hasGroups && !arg2.hasItems) {
-      this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+      this.print(Messages.NO_REQUESTS, 'inherit', true);
       return;
     }
 
@@ -264,7 +264,7 @@ export default class ConsoleReporter {
    * @param message
    */
   info(message) {
-    this.print(message, Colors.INFO);
+    this.print(message, 'inherit');
   }
 
   /**
@@ -282,7 +282,7 @@ export default class ConsoleReporter {
    * @param bold
    * @param otherStyles
    */
-  print(message, color, bold = false, otherStyles) {
+  print(message, color = 'inherit', bold = false, otherStyles = null) {
     const styles = [`color: ${color}`];
     bold && styles.push(`font-weight: bold`);
     otherStyles && styles.push(otherStyles);
@@ -292,9 +292,10 @@ export default class ConsoleReporter {
   /**
    * Prints section title.
    * @param message
+   * @param bgColor
    */
   printTitle(message, bgColor = Colors.GRAY) {
-    this.print(message, Colors.INFO, true, `padding: 5px 250px; background-color: ${bgColor}; color: ${Colors.WHITE};margin-bottom: 10px;`);
+    this.print(message, 'inherit', true, `padding: 5px 250px; background-color: ${bgColor}; color: ${Colors.WHITE};margin-bottom: 10px;`);
   }
 
   /**
@@ -302,7 +303,7 @@ export default class ConsoleReporter {
    * @param message
    */
   printRow(message) {
-    this.print(message, Colors.INFO);
+    this.print(message, 'inherit');
   }
 
   /**
@@ -312,11 +313,11 @@ export default class ConsoleReporter {
    */
   printKeyValue(head, value) {
     if (value !== null && typeof value === 'object') {
-      this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}:`, `font-weight: bold; color: ${Colors.INFO}`, value);
+      this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}:`, `font-weight: bold; color: inherit;`, value);
       return;
     }
 
-    this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}: %c${value}`, `font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
+    this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}: %c${value}`, `font-weight: bold; color: inherit;`, `color: inherit;`);
   }
 
   /**
@@ -328,7 +329,7 @@ export default class ConsoleReporter {
     let styles = [];
     Object.entries(obj).forEach(([title, value], index) => {
       msgs.push(`%c${index === 0 ? this._appendTextWithSpaces(title, 30) : title}: %c${value}`);
-      styles.push(`font-weight: bold; color: ${Colors.INFO}`, `color: ${Colors.INFO};`);
+      styles.push(`font-weight: bold; color: inherit`, `color: inherit;`);
       index < Object.keys(obj).length - 1 && styles.push(`color: ${Colors.MEDIUM_GRAY}`);
     });
 
@@ -464,38 +465,62 @@ export default class ConsoleReporter {
 
   _reportObject(requestOrCollection) {
     if (requestOrCollection === null) {
-      this.print(Messages.NO_REQUEST, Colors.INFO, true);
+      this.print(Messages.NO_REQUEST, 'inherit', true);
       return;
     }
 
     if (requestOrCollection instanceof HttpRequestInfo) {
+      const {
+        id,
+        pending,
+        error,
+        url,
+        pathQuery,
+        method,
+        payload,
+        payloadSize,
+        duration,
+        response,
+        responseSize,
+        responseStatus,
+        errorDescription,
+        initiatorType,
+        payloadByPerformance,
+        exceedsQuota
+      } = requestOrCollection;
+
       let borderColor = Colors.GRAY;
-      if (requestOrCollection.pending) {
+      if (pending) {
         borderColor = Colors.LIGHT_GRAY;
-      } else if (requestOrCollection.error) {
+      } else if (error) {
         borderColor = Colors.ERROR_MEDIUM;
-      } else if (requestOrCollection.exceedsQuota) {
+      } else if (exceedsQuota) {
         borderColor = Colors.WARN_MEDIUM;
       }
 
-      const { pathQuery } = requestOrCollection;
-      const displayUrl = pathQuery.length <= 75 ? pathQuery : '...' + pathQuery.substring(pathQuery.length - 72);
-      this._invokeConsole('groupCollapsed', `%c#${this._appendTextWithSpaces(requestOrCollection.id, 3)} %c${this._appendTextWithSpaces(requestOrCollection.method, 6)}  ${this._appendTextWithSpaces(displayUrl, 80)} ${this._appendTextWithSpaces(requestOrCollection.responseStatus, 5)} ${this._appendTextWithSpaces(formatBytes(requestOrCollection.responseSize), 10)} ${this._appendTextWithSpaces(formatTime(requestOrCollection.duration), 10)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: ${Colors.INFO}`);
-      this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
-      this.printKeyValue(Messages.URL, requestOrCollection.url);
-      this.printKeyValue(Messages.PATH, requestOrCollection.pathQuery);
-      this.printKeyValue(Messages.METHOD, requestOrCollection.method);
-      this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
-      this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));
-      this.printKeyValue(Messages.DURATION, formatTime(requestOrCollection.duration));
-      this.printKeyValue(Messages.RESPONSE, requestOrCollection.response || '-');
-      this.printKeyValue(Messages.RESPONSE_SIZE, formatBytes(requestOrCollection.responseSize));
-      this.printKeyValue(Messages.RESPONSE_STATUS, requestOrCollection.responseStatus);
-      this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
-      this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription || '-');
-      this.printKeyValue(Messages.EXCEEDS_QUOTA, requestOrCollection.exceedsQuota ? 'Yes' : 'No');
-      this.printKeyValue(Messages.INITIATOR_TYPE, requestOrCollection.initiatorType);
-      this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, requestOrCollection.payloadByPerformance ? 'Yes' : 'No');
+      let displayUrl;
+      if (pathQuery.length <= 75) {
+        displayUrl = pathQuery;
+      } else {
+        displayUrl = pathQuery.substring(0, 10) + '...' + pathQuery.substring(pathQuery.length - 62);
+      }
+
+      this._invokeConsole('groupCollapsed', `%c#${this._appendTextWithSpaces(requestOrCollection.id, 3)} %c${this._appendTextWithSpaces(requestOrCollection.method, 6)}  ${this._appendTextWithSpaces(displayUrl, 80)} ${this._appendTextWithSpaces(pending ? '-' : requestOrCollection.responseStatus, 5)} ${this._appendTextWithSpaces(pending ? '-' : formatBytes(requestOrCollection.responseSize), 10)} ${this._appendTextWithSpaces(pending ? '-' : formatTime(requestOrCollection.duration), 10)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: inherit;`);
+      this.printKeyValue(Messages.REQUEST_NO, id);
+      this.printKeyValue(Messages.URL, url);
+      this.printKeyValue(Messages.PATH, pathQuery);
+      this.printKeyValue(Messages.METHOD, method);
+      this.printKeyValue(Messages.PAYLOAD, payload || '-');
+      this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize));
+      this.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration));
+      this.printKeyValue(Messages.RESPONSE, response || '-');
+      this.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize));
+      this.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus);
+      this.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
+      this.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
+      this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
+      this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
+      this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
       this._invokeConsole('groupEnd');
       return;
     }

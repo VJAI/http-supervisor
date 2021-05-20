@@ -3287,8 +3287,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "duplicateRequests",
-    value: function duplicateRequests() {
+    key: "duplicates",
+    value: function duplicates() {
       var duplicateRequests = [];
       var requests = this.group('url', 'method', 'payload');
       requests.groups.forEach(function (a) {
@@ -3468,9 +3468,9 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "printDuplicateRequests",
-    value: function printDuplicateRequests() {
-      this._reporter.table(this.duplicateRequests());
+    key: "printDuplicates",
+    value: function printDuplicates() {
+      this._reporter.table(this.duplicates());
     }
     /**
      * Compares two requests and print the differences.
@@ -3479,8 +3479,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "compareRequests",
-    value: function compareRequests(id1, id2) {
+    key: "compare",
+    value: function compare(id1, id2) {
       var request1 = this.get(id1),
           request2 = this.get(id2);
 
@@ -4023,6 +4023,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
       var payload = safeParse(body);
       var requestInfo = new http_request_info_HttpRequestInfo(id, url, method, payload);
+      requestInfo.payloadSize = byteSize(payload ? JSON.stringify(payload) : '');
       requestInfo.initiatorType = InitiatorType.FETCH;
       headers && (requestInfo.requestHeaders = new Map(Object.entries(headers)));
 
@@ -5244,11 +5245,11 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     value: function report(arg1, arg2) {
       if (arguments.length === 1) {
         if (!arg1) {
-          this.print(Messages.NO_REQUEST, Colors.INFO, true);
+          this.print(Messages.NO_REQUEST, 'inherit', true);
           return;
         } else if (arg1 instanceof http_request_info_HttpRequestInfo || arg1 instanceof collection_Collection) {
           if (arg1 instanceof collection_Collection && !arg1.hasGroups && !arg1.hasItems) {
-            this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+            this.print(Messages.NO_REQUESTS, 'inherit', true);
             return;
           }
 
@@ -5264,7 +5265,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
       if (arguments.length === 2 && arg1 instanceof collection_Collection) {
         if (!arg1.hasGroups && !arg1.hasItems) {
-          this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+          this.print(Messages.NO_REQUESTS, 'inherit', true);
           return;
         }
 
@@ -5276,7 +5277,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       }
 
       if (!arg2.hasGroups && !arg2.hasItems) {
-        this.print(Messages.NO_REQUESTS, Colors.INFO, true);
+        this.print(Messages.NO_REQUESTS, 'inherit', true);
         return;
       }
 
@@ -5448,7 +5449,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "info",
     value: function info(message) {
-      this.print(message, Colors.INFO);
+      this.print(message, 'inherit');
     }
     /**
      * Prints warning message.
@@ -5470,9 +5471,10 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
   }, {
     key: "print",
-    value: function print(message, color) {
+    value: function print(message) {
+      var color = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'inherit';
       var bold = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-      var otherStyles = arguments.length > 3 ? arguments[3] : undefined;
+      var otherStyles = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
       var styles = ["color: ".concat(color)];
       bold && styles.push("font-weight: bold");
       otherStyles && styles.push(otherStyles);
@@ -5482,13 +5484,14 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     /**
      * Prints section title.
      * @param message
+     * @param bgColor
      */
 
   }, {
     key: "printTitle",
     value: function printTitle(message) {
       var bgColor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Colors.GRAY;
-      this.print(message, Colors.INFO, true, "padding: 5px 250px; background-color: ".concat(bgColor, "; color: ").concat(Colors.WHITE, ";margin-bottom: 10px;"));
+      this.print(message, 'inherit', true, "padding: 5px 250px; background-color: ".concat(bgColor, "; color: ").concat(Colors.WHITE, ";margin-bottom: 10px;"));
     }
     /**
      * Prints row.
@@ -5498,7 +5501,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "printRow",
     value: function printRow(message) {
-      this.print(message, Colors.INFO);
+      this.print(message, 'inherit');
     }
     /**
      * Prints field name and value.
@@ -5510,12 +5513,12 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     key: "printKeyValue",
     value: function printKeyValue(head, value) {
       if (value !== null && typeof_default()(value) === 'object') {
-        this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ":"), "font-weight: bold; color: ".concat(Colors.INFO), value);
+        this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ":"), "font-weight: bold; color: inherit;", value);
 
         return;
       }
 
-      this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ": %c").concat(value), "font-weight: bold; color: ".concat(Colors.INFO), "color: ".concat(Colors.INFO, ";"));
+      this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ": %c").concat(value), "font-weight: bold; color: inherit;", "color: inherit;");
     }
     /**
      * Prints many fields and values in single row.
@@ -5535,7 +5538,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             value = _ref2[1];
 
         msgs.push("%c".concat(index === 0 ? _this2._appendTextWithSpaces(title, 30) : title, ": %c").concat(value));
-        styles.push("font-weight: bold; color: ".concat(Colors.INFO), "color: ".concat(Colors.INFO, ";"));
+        styles.push("font-weight: bold; color: inherit", "color: inherit;");
         index < Object.keys(obj).length - 1 && styles.push("color: ".concat(Colors.MEDIUM_GRAY));
       });
 
@@ -5700,41 +5703,62 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       var _this3 = this;
 
       if (requestOrCollection === null) {
-        this.print(Messages.NO_REQUEST, Colors.INFO, true);
+        this.print(Messages.NO_REQUEST, 'inherit', true);
         return;
       }
 
       if (requestOrCollection instanceof http_request_info_HttpRequestInfo) {
+        var id = requestOrCollection.id,
+            pending = requestOrCollection.pending,
+            error = requestOrCollection.error,
+            url = requestOrCollection.url,
+            pathQuery = requestOrCollection.pathQuery,
+            method = requestOrCollection.method,
+            payload = requestOrCollection.payload,
+            payloadSize = requestOrCollection.payloadSize,
+            duration = requestOrCollection.duration,
+            response = requestOrCollection.response,
+            responseSize = requestOrCollection.responseSize,
+            responseStatus = requestOrCollection.responseStatus,
+            errorDescription = requestOrCollection.errorDescription,
+            initiatorType = requestOrCollection.initiatorType,
+            payloadByPerformance = requestOrCollection.payloadByPerformance,
+            exceedsQuota = requestOrCollection.exceedsQuota;
         var borderColor = Colors.GRAY;
 
-        if (requestOrCollection.pending) {
+        if (pending) {
           borderColor = Colors.LIGHT_GRAY;
-        } else if (requestOrCollection.error) {
+        } else if (error) {
           borderColor = Colors.ERROR_MEDIUM;
-        } else if (requestOrCollection.exceedsQuota) {
+        } else if (exceedsQuota) {
           borderColor = Colors.WARN_MEDIUM;
         }
 
-        var pathQuery = requestOrCollection.pathQuery;
-        var displayUrl = pathQuery.length <= 75 ? pathQuery : '...' + pathQuery.substring(pathQuery.length - 72);
+        var displayUrl;
 
-        this._invokeConsole('groupCollapsed', "%c#".concat(this._appendTextWithSpaces(requestOrCollection.id, 3), " %c").concat(this._appendTextWithSpaces(requestOrCollection.method, 6), "  ").concat(this._appendTextWithSpaces(displayUrl, 80), " ").concat(this._appendTextWithSpaces(requestOrCollection.responseStatus, 5), " ").concat(this._appendTextWithSpaces(formatBytes(requestOrCollection.responseSize), 10), " ").concat(this._appendTextWithSpaces(formatTime(requestOrCollection.duration), 10)), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.INFO));
+        if (pathQuery.length <= 75) {
+          displayUrl = pathQuery;
+        } else {
+          displayUrl = pathQuery.substring(0, 10) + '...' + pathQuery.substring(pathQuery.length - 62);
+        }
 
-        this.printKeyValue(Messages.REQUEST_NO, requestOrCollection.id);
-        this.printKeyValue(Messages.URL, requestOrCollection.url);
-        this.printKeyValue(Messages.PATH, requestOrCollection.pathQuery);
-        this.printKeyValue(Messages.METHOD, requestOrCollection.method);
-        this.printKeyValue(Messages.PAYLOAD, requestOrCollection.payload || '-');
-        this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(requestOrCollection.payloadSize));
-        this.printKeyValue(Messages.DURATION, formatTime(requestOrCollection.duration));
-        this.printKeyValue(Messages.RESPONSE, requestOrCollection.response || '-');
-        this.printKeyValue(Messages.RESPONSE_SIZE, formatBytes(requestOrCollection.responseSize));
-        this.printKeyValue(Messages.RESPONSE_STATUS, requestOrCollection.responseStatus);
-        this.printKeyValue(Messages.IS_ERROR, requestOrCollection.error ? 'Yes' : 'No');
-        this.printKeyValue(Messages.ERROR_DESC, requestOrCollection.errorDescription || '-');
-        this.printKeyValue(Messages.EXCEEDS_QUOTA, requestOrCollection.exceedsQuota ? 'Yes' : 'No');
-        this.printKeyValue(Messages.INITIATOR_TYPE, requestOrCollection.initiatorType);
-        this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, requestOrCollection.payloadByPerformance ? 'Yes' : 'No');
+        this._invokeConsole('groupCollapsed', "%c#".concat(this._appendTextWithSpaces(requestOrCollection.id, 3), " %c").concat(this._appendTextWithSpaces(requestOrCollection.method, 6), "  ").concat(this._appendTextWithSpaces(displayUrl, 80), " ").concat(this._appendTextWithSpaces(pending ? '-' : requestOrCollection.responseStatus, 5), " ").concat(this._appendTextWithSpaces(pending ? '-' : formatBytes(requestOrCollection.responseSize), 10), " ").concat(this._appendTextWithSpaces(pending ? '-' : formatTime(requestOrCollection.duration), 10)), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: inherit;");
+
+        this.printKeyValue(Messages.REQUEST_NO, id);
+        this.printKeyValue(Messages.URL, url);
+        this.printKeyValue(Messages.PATH, pathQuery);
+        this.printKeyValue(Messages.METHOD, method);
+        this.printKeyValue(Messages.PAYLOAD, payload || '-');
+        this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize));
+        this.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration));
+        this.printKeyValue(Messages.RESPONSE, response || '-');
+        this.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize));
+        this.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus);
+        this.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
+        this.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
+        this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
+        this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
+        this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
 
         this._invokeConsole('groupEnd');
 
