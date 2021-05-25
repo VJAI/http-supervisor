@@ -28,12 +28,14 @@ import {
   isJsonResponse,
   safeParse,
   matchesGlob,
-  copyText
+  copyText,
+  mapToJson, readValue
 } from './util';
 import { Session }     from './session';
 
 /**
- * Supervises HTTP Network Traffic. Helps to identify query, group, sort, export, visualize requests and much more.
+ * Supervises HTTP Network Traffic. Helps to identify duplicate requests. Also helps to query, group,
+ * sort, export, visualize requests and much more.
  */
 export default class HttpSupervisor {
 
@@ -182,6 +184,13 @@ export default class HttpSupervisor {
   _lockConsole = false;
 
   /**
+   * The display labels for urls and other configuration for respective urls.
+   * @type {object}
+   * @private
+   */
+  _urlConfig = {};
+
+  /**
    * Collection of captured requests.
    * @type {Set}
    * @private
@@ -271,6 +280,13 @@ export default class HttpSupervisor {
    * @private
    */
   _nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+
+  /**
+   * Helps to find duplicates.
+   * @type {Array}
+   * @private
+   */
+  _callsSummary = [];
 
   /**
    * Returns `true` if busy.
@@ -629,8 +645,9 @@ export default class HttpSupervisor {
    * @param {boolean} [config.loadChart] True to use chart.js library for data visualization.
    * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
    * @param {boolean} [config.persistConfig] True to persist config in local storage.
-   * @param {Array} [config.watches] Collection of watches.
    * @param {boolean} [config.lockConsole] True to lock console.
+   * @param {object} [config.watches] Collection of watches.
+   * @param {object} [config.urlConfig] User friendly labels with dynamic values for urls.
    * @param {boolean} [loadConfigFromStore = true] True to load the config from local storage.
    */
   init(config = {}, loadConfigFromStore = true) {
@@ -639,7 +656,7 @@ export default class HttpSupervisor {
     }
 
     const storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
-    this._setConfig({ ...storedConfig, ...config });
+    this.setConfig({ ...storedConfig, ...config });
 
     // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
@@ -666,9 +683,6 @@ export default class HttpSupervisor {
         this._reporter.report(request);
       }
     });
-
-    // Update the configuration to the storage.
-    this._updateStorage();
 
     // Render the widget, initialize the reporter and start monitoring.
     this._render();
@@ -716,6 +730,7 @@ export default class HttpSupervisor {
   clear() {
     this._reporter.clear();
     this._requests.clear();
+    this._callsSummary = [];
     this._triggerEvent(SupervisorEvents.CLEAR);
   }
 
@@ -868,21 +883,8 @@ export default class HttpSupervisor {
     }
 
     if (args.length === 1 && ['number', 'string'].has(typeof args[0])) {
-      const [arg] = args;
-      let query;
-
-      if (typeof arg === 'string') {
-        if (REQUEST_TYPE.hasOwnProperty(arg)) {
-          query = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: arg };
-        } else if (arg.indexOf('*') > -1) {
-          query = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: arg };
-        } else {
-          query = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: arg };
-        }
-      } else {
-        query = { field: 'responseStatus', operator: SEARCH_OPERATOR.EQUALS, value: arg }
-      }
-
+      const [arg] = args,
+        query = typeof arg === 'string' ? this._prepareQuery(arg) : { field: 'responseStatus', operator: SEARCH_OPERATOR.EQUALS, value: arg };
       return this.query(query);
     }
 
@@ -963,20 +965,23 @@ export default class HttpSupervisor {
    * Returns duplicate requests.
    * @return {Array}
    */
-  duplicates() {
-    const duplicateRequests = [];
-    const requests = this.group('url', 'method', 'payload');
+  duplicates(id) {
+    if (!id) {
+      const duplicateRequestIds = this._callsSummary.filter(r => r.count > 1)
+        .reduce((a, c) => [...a, ...c.requests], [])
+        .map(r => r.id);
 
-    requests.groups.forEach(a => {
-      a.groups.forEach(b => {
-        if (b.items.length > 1) {
-          const { url, method, payload } = b.items[0];
-          duplicateRequests.push({ url, method, payload, count: b.items.length });
-        }
-      });
-    });
+      return this.query([{ field: 'id', operator: SEARCH_OPERATOR.IN, value: duplicateRequestIds }], ['pathQuery', 'method', 'payload']);
+    }
 
-    return duplicateRequests;
+    const request = this.get(id),
+      { url, method, payload } = request;
+
+    const reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && r.payload === payload),
+      requestIds = [...reqSummary.requests];
+    requestIds.splice(requestIds.indexOf(request), 1);
+
+    return this.query([{ field: 'id', operator: SEARCH_OPERATOR.IN, value: requestIds.map(r => r.id) }]);
   }
 
   /**
@@ -984,7 +989,61 @@ export default class HttpSupervisor {
    * @return {boolean}
    */
   hasDuplicates() {
-    return this.duplicateRequests().length > 0;
+    return this.duplicates().length > 0;
+  }
+
+  /**
+   * Returns the related requests.
+   * @param id
+   * @return {Collection}
+   */
+  related(id) {
+    const request = this.get(id);
+
+    if (!request) {
+      return null;
+    }
+
+    return this.query([
+      { field: 'url', operator: SEARCH_OPERATOR.EQUALS, value: request.url }
+    ], ['url', 'method', 'payload']);
+  }
+
+  /**
+   * Returns the parameters that exceeded quota.
+   * @param request
+   * @return {object}
+   */
+  exceededParameters(request) {
+    return {
+      payload: request.payloadSize > this._quota.maxPayloadSize,
+      response: request.responseSize > this._quota.maxResponseSize,
+      duration: request.duration > this._quota.maxDuration
+    };
+  }
+
+  /**
+   * Sorts the requests based on the passed arguments and print them.
+   * @param {...*} sortArgs The sort parameters.
+   */
+  sortPrint(...sortArgs) {
+    this.print(this.sort(...sortArgs));
+  }
+
+  /**
+   * Groups the requests based on the passed fields and print them.
+   * @param {...string} groupArgs The group fields.
+   */
+  groupPrint(...groupArgs) {
+    this.print(this.group(...groupArgs));
+  }
+
+  /**
+   * Search requests based on the passed arguments. Also, sorts and groups.
+   * @param {...*} searchArgs The search arguments.
+   */
+  queryPrint(...searchArgs) {
+    this.print(this.query(...searchArgs));
   }
 
   /**
@@ -999,17 +1058,7 @@ export default class HttpSupervisor {
     }
 
     if (typeof firstArg === 'string') {
-      let query;
-
-      if (REQUEST_TYPE.hasOwnProperty(firstArg)) {
-        query = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: firstArg };
-      } else if (firstArg.indexOf('*') > -1) {
-        query = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: firstArg };
-      } else {
-        query = { field: isAbsolute(firstArg) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: firstArg };
-      }
-
-      this._reporter.report(this.query(query));
+      this._reporter.report(this.query(this._prepareQuery(firstArg)));
       return;
     }
 
@@ -1089,9 +1138,10 @@ export default class HttpSupervisor {
 
   /**
    * Prints duplicate requests.
+   * @param {number} [id] Request id.
    */
-  printDuplicates() {
-    this._reporter.table(this.duplicates());
+  printDuplicates(id) {
+    this._reporter.report(this.duplicates(id));
   }
 
   /**
@@ -1107,14 +1157,15 @@ export default class HttpSupervisor {
       return;
     }
 
-    const array = [];
-    const propsToCompare = ['url', 'method', 'payload', 'response', 'responseStatus'];
+    this._reporter.printComparison(request1, request2);
+  }
 
-    propsToCompare.forEach(prop => {
-      array.push({ field: prop, request1: request1[prop], request2: request2[prop], same: JSON.stringify(request1[prop]) === JSON.stringify(request2[prop]) });
-    });
-
-    this._reporter.table(array);
+  /**
+   * Print related requests.
+   * @param id
+   */
+  printRelated(id) {
+    this._reporter.report(this.related(id));
   }
 
   /**
@@ -1199,10 +1250,9 @@ export default class HttpSupervisor {
           window.alert(Messages.IMPORTED_FAILURE);
           return;
         }
-        this._setConfig(content.config);
+        this.setConfig(content.config);
         this._updateStorage();
         window.alert(Messages.IMPORTED_SUCCESS);
-        this._triggerEvent(SupervisorEvents.CONFIG_CHANGE, content.config);
       };
       reader.readAsText(fileInput.files[0]);
       fileInput.remove();
@@ -1269,7 +1319,7 @@ export default class HttpSupervisor {
       let content;
       if (exportConfig) {
         content = {
-          config: this._getConfig()
+          config: this.getConfig()
         };
         fileName = `HttpSupervisorConfiguration.json`;
       } else {
@@ -1309,18 +1359,7 @@ export default class HttpSupervisor {
     const watchId = this._watchId();
 
     if (args.length === 1 && typeof args[0] === 'string') {
-      const [arg] = args;
-      let watchArgs;
-
-      if (REQUEST_TYPE.hasOwnProperty(arg)) {
-        watchArgs = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: arg };
-      } else if (arg.indexOf('*') > -1) {
-        watchArgs = { field: 'method', operator: SEARCH_OPERATOR.MATCHES, value: arg };
-      } else {
-        watchArgs = { field: isAbsolute(arg) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: arg };
-      }
-
-      this._watches.set(watchId, watchArgs);
+      this._watches.set(watchId, this._prepareQuery(args[0]));
     } else {
       this._watches.set(watchId, args);
     }
@@ -1455,11 +1494,87 @@ export default class HttpSupervisor {
       return false;
     }
 
-    if (this._exclude !== null && [...this._exclude].filter(pattern => matchesGlob(pattern, xhr[XHR_METADATA_KEY].url)).length === 0) {
+    if (this._include !== null && [...this._include].filter(pattern => matchesGlob(pattern, url)).length === 0) {
       return false;
     }
 
     return true;
+  }
+
+
+
+  /**
+   * Returns the configuration of supervisor.
+   * @returns {object}
+   */
+  getConfig() {
+    return {
+      include: this._include !== null ? [...this._include] : null,
+      exclude: this._exclude !== null ? [...this._exclude] : null,
+      silent: this._silent,
+      traceEachRequest: this._traceEachRequest,
+      alertOnError: this._alertOnError,
+      alertOnExceedQuota: this._alertOnExceedQuota,
+      alertOnRequestStart: this._alertOnRequestStart,
+      renderUI: this._renderUI,
+      groupBy: this._groupBy,
+      sortBy: this._sortBy,
+      keyboardEvents: this._keyboardEvents,
+      lockConsole: this._lockConsole,
+      usePerformance: this._usePerformance,
+      quota: this._quota,
+      watches: mapToJson(this._watches),
+      urlConfig: this._urlConfig
+    };
+  }
+
+  /**
+   * Sets the configuration of supervisor.
+   * @param config
+   */
+  setConfig(config) {
+    const {
+      include,
+      exclude,
+      renderUI,
+      traceEachRequest,
+      alertOnError,
+      alertOnExceedQuota,
+      alertOnRequestStart,
+      silent,
+      quota,
+      groupBy,
+      sortBy,
+      usePerformance,
+      monkeyPatchFetch,
+      loadChart,
+      keyboardEvents,
+      watches,
+      persistConfig,
+      lockConsole,
+      urlConfig
+    } = config;
+
+    Array.isArray(include) && (this._include = new Set(include));
+    Array.isArray(exclude) && (this._exclude = new Set(exclude));
+    typeof renderUI === 'boolean' && (this._renderUI = renderUI);
+    typeof silent === 'boolean' && (this._silent = silent);
+    typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
+    typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
+    typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
+    typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
+    typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
+    Array.isArray(groupBy) && (this._groupBy = groupBy);
+    Array.isArray(sortBy) && (this._sortBy = sortBy);
+    typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
+    typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
+    typeof loadChart === 'boolean' && (this._loadChart = loadChart);
+    typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
+    typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
+    typeof watches === 'object' && watches !== null  && (this._watches = new Map(Object.entries(this._watches)));
+    typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
+    typeof urlConfig === 'object' && urlConfig !== null && (this._urlConfig = urlConfig);
+    this._updateStorage();
   }
 
   /**
@@ -1715,7 +1830,117 @@ export default class HttpSupervisor {
 
     httpRequestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, httpRequestInfo, xhrOrResponse);
     httpRequestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, httpRequestInfo, xhrOrResponse);
+
+    this._setUrlMeta(httpRequestInfo);
     this._triggerEvent(SupervisorEvents.REQUEST_END, httpRequestInfo, xhrOrResponse);
+  }
+
+  /**
+   * Sets url metadata info to request object.
+   * @param request
+   * @private
+   */
+  _setUrlMeta(request) {
+    let { pathDomain, method } = request;
+    const regex1 = new RegExp(/{([a-zA-Z0-9_$.]+)}/g),
+      regex2 = new RegExp(/[^{}]*(?=})/g);
+
+    const urlConfigUpdated = {};
+    Object.entries(this._urlConfig).forEach(([k, v]) => Object.keys(v).forEach(u => urlConfigUpdated[`${k}${u}`] = v[u]));
+
+    const urlParts = pathDomain.toLowerCase().split('/');
+
+    const matchedEntry = Object.keys(urlConfigUpdated).find(u => {
+      u = u.replace(regex1, '*').toLowerCase();
+      const uParts = u.split('/');
+      let isMatch = true;
+
+      for (let i = 0; i < urlParts.length; i++) {
+        if (uParts[i] !== '*' && uParts[i] !== urlParts[i]) {
+          isMatch = false;
+          break;
+        }
+      }
+
+      return isMatch;
+    });
+
+    if (!matchedEntry) {
+      return {};
+    }
+
+    const matchedValue = urlConfigUpdated[matchedEntry];
+
+    if (typeof matchedValue === 'string') {
+      request.label = matchedValue;
+    } else if (typeof matchedValue === 'object' && matchedEntry !== null) {
+      request.category = matchedValue.category;
+      matchedValue.tags && (request.tags = new Set(matchedValue.tags));
+      if (matchedValue.hasOwnProperty(method)) {
+        const t = matchedValue[method];
+        if (typeof t === 'string') {
+          request.label = t;
+        } else {
+          request.label = t.label;
+          request.labelPending = t.labelPending;
+          request.errorLabel = t.error;
+        }
+      } else {
+        request.label = matchedValue.label;
+        request.labelPending = matchedValue.labelPending;
+        request.errorLabel = matchedValue.error;
+      }
+    }
+
+    const matchedEntryParts = matchedEntry.split('/'),
+      tokensObj = {};
+
+    matchedEntryParts.forEach((part, i) => {
+      if (!regex1.test(part)) {
+        return;
+      }
+
+      const [token] = part.match(regex2);
+      tokensObj[token] = urlParts[i];
+    });
+
+    const replaceTokens = (str) => {
+      [...str.matchAll(regex1)].forEach(([part1, part2]) => {
+        if (part2.startsWith('$response') && request.response) {
+          const val = readValue(request.response, part2.replace(/\$response./, ''));
+          (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
+        } else if (part2.startsWith('$payload') && request.payload) {
+          const val = readValue(request.response, part2.replace(/\$payload./, ''));
+          (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
+        } else if (part2.startsWith('$query')) {
+          const queryParams = new Map(new URLSearchParams(request.query));
+          const val = queryParams.get(part2.replace(/\$query./, ''));
+          (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
+        } else {
+          tokensObj.hasOwnProperty(part2) && (request.label = request.label.replaceAll(part1, tokensObj[part2]));
+        }
+      });
+    };
+
+    request.label && replaceTokens(request.label);
+    request.labelPending && replaceTokens(request.labelPending);
+  }
+
+  /**
+   * Add the request to the summary request which helps to find duplicates.
+   * @param request
+   * @private
+   */
+  _addToCallsSummary(request) {
+    const { url, method, payload } = request,
+      reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && r.payload === payload);
+
+    if (reqSummary) {
+      reqSummary.count += 1;
+      reqSummary.requests.push(request);
+    } else {
+      this._callsSummary.push({ url, method, payload, count: 1, requests: [request] });
+    }
   }
 
   /**
@@ -1746,6 +1971,8 @@ export default class HttpSupervisor {
   _addRequest(request) {
     this._requests.add(request);
     this._activeSessionId && this._sessions.get(this._activeSessionId).add(request);
+    this._setUrlMeta(request);
+    this._addToCallsSummary(request);
   }
 
   /**
@@ -1798,79 +2025,8 @@ export default class HttpSupervisor {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this._getConfig()));
-  }
-
-  /**
-   * Returns the configuration of supervisor.
-   * @private
-   */
-  _getConfig() {
-    return {
-      include: this._include !== null ? [...this._include] : null,
-      exclude: this._exclude !== null ? [...this._exclude] : null,
-      silent: this._silent,
-      traceEachRequest: this._traceEachRequest,
-      alertOnError: this._alertOnError,
-      alertOnExceedQuota: this._alertOnExceedQuota,
-      alertOnRequestStart: this._alertOnRequestStart,
-      renderUI: this._renderUI,
-      groupBy: this._groupBy,
-      sortBy: this._sortBy,
-      keyboardEvents: this._keyboardEvents,
-      lockConsole: this._lockConsole,
-      usePerformance: this._usePerformance,
-      quota: this._quota,
-      watches: JSON.stringify([...this._watches.entries()]),
-      sessions: JSON.stringify([...this._sessions.entries()])
-    };
-  }
-
-  /**
-   * Sets the configuration of supervisor.
-   * @param config
-   * @private
-   */
-  _setConfig(config) {
-    const {
-      include,
-      exclude,
-      renderUI,
-      traceEachRequest,
-      alertOnError,
-      alertOnExceedQuota,
-      alertOnRequestStart,
-      silent,
-      quota,
-      groupBy,
-      sortBy,
-      usePerformance,
-      monkeyPatchFetch,
-      loadChart,
-      keyboardEvents,
-      watches,
-      persistConfig,
-      lockConsole
-    } = config;
-
-    Array.isArray(include) && (this._include = new Set(include));
-    Array.isArray(exclude) && (this._exclude = new Set(exclude));
-    typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-    typeof silent === 'boolean' && (this._silent = silent);
-    typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
-    typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
-    typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
-    typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
-    typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
-    Array.isArray(groupBy) && (this._groupBy = groupBy);
-    Array.isArray(sortBy) && (this._sortBy = sortBy);
-    typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
-    typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-    typeof loadChart === 'boolean' && (this._loadChart = loadChart);
-    typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
-    typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
-    Array.isArray(watches) && (this._watches = new Map(this._watches));
-    typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.getConfig()));
+    [SupervisorStatus.Idle, SupervisorStatus.Busy].has(this._status) && this._triggerEvent(SupervisorEvents.CONFIG_CHANGE, this.getConfig());
   }
 
   /**
@@ -1878,5 +2034,27 @@ export default class HttpSupervisor {
    */
   _matchWatch(argsArray, request) {
     return matchCriteria(argsArray, request);
+  }
+
+  /**
+   * Prepares query if input is string.
+   * @param str
+   */
+  _prepareQuery(str) {
+    let query;
+
+    if (REQUEST_TYPE.hasOwnProperty(str)) {
+      query = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: str };
+    } else if (str.toLowerCase().startsWith('label:')) {
+      query = { field: 'label', operator: SEARCH_OPERATOR.CONTAINS, value: str.replace(/label:/, '') };
+    } else if (str.startsWith('category:')) {
+      query = { field: 'category', operator: SEARCH_OPERATOR.CONTAINS, value: str.replace(/category:/, '') };
+    } else if (str.indexOf('*') > -1) {
+      query = { field: 'url', operator: SEARCH_OPERATOR.MATCHES, value: str };
+    } else {
+      query = { field: isAbsolute(str) ? 'url' : 'path', operator: SEARCH_OPERATOR.CONTAINS, value: str };
+    }
+
+    return query;
   }
 }

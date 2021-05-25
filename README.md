@@ -204,6 +204,15 @@ You can also pass glob patterns.
 http.print('https://api.domain.com/v3/*');
 ```
 
+### Printing requests matching a label or category
+
+You can print all the requests matching label as below,
+
+```js
+http.print('label:Add to cart');
+http.print('category:Carts');
+```
+
 ### Search, group, sort and then print requests
 
 The method also accepts search, group and sort parameters that'll be applied over the requests before printing them.
@@ -388,6 +397,7 @@ Configures the supervisor. You can pass the following parameters to the `config`
 - `persistConfig` (boolean) - True to persist config in local storage.
 - `watches` (Array<{field: string, operator: string, value: any}>) - Collection of watches.
 - `lockConsole` (boolean) - True to lock developer console so except supervisor other scripts can't print messages in console.
+- `urlConfig` (object) - Configuration object that helps to add meta info like user-friendly label, category, tags and more to an URL.
 
 Passing `true` for `loadConfigFromStore` loads the config from local storage.
 
@@ -593,13 +603,17 @@ Returns the max response size of the requests.
 
 Returns the max duration.
 
-#### `duplicateRequests()`
+#### `duplicates()`
 
 Returns the duplicate requests made during the session.
 
 #### `hasDuplicates`
 
 Returns true if there are duplicate requests.
+
+#### `related(id)`
+
+Returns the related requests for the passed request.
 
 #### `print(...args)`
 
@@ -670,6 +684,14 @@ Prints duplicate requests.
 #### `compare(id1, id2)`
 
 Compares two requests and print the differences.
+
+#### `sortPrint(...sortArgs)`
+
+Sorts the requests based on the passed arguments and print them
+
+#### `groupPrint(...groupArgs)`
+
+Groups the requests based on the passed fields and print them.
 
 #### `sizeChart()`
 

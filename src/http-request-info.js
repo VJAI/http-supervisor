@@ -20,13 +20,6 @@ export default class HttpRequestInfo {
   id = -1;
 
   /**
-   * The url.
-   * @type {string}
-   * @private
-   */
-  _url = null;
-
-  /**
    * Returns the url.
    * @return {string}
    */
@@ -39,8 +32,6 @@ export default class HttpRequestInfo {
    * @param value
    */
   set url(value) {
-    this._url = value;
-
     if (value) {
       this._urlObj = isAbsolute(value) ? new URL(value) : new URL(value, document.location.origin);
     } else {
@@ -73,6 +64,14 @@ export default class HttpRequestInfo {
   }
 
   /**
+   * Returns path with domain.
+   * @return {string}
+   */
+  get pathDomain() {
+    return this._urlObj ? `${this.domain}${this.path}` : null;
+  }
+
+  /**
    * The path with query.
    * @type {string}
    */
@@ -82,6 +81,14 @@ export default class HttpRequestInfo {
     }
 
     return this.query ? `${this.path}${this.query}` : this.path;
+  }
+
+  /**
+   * Returns url object.
+   * @return {URL}
+   */
+  get urlObj() {
+    return this._urlObj;
   }
 
   /**
@@ -191,6 +198,36 @@ export default class HttpRequestInfo {
   pending = true;
 
   /**
+   * Request category.
+   * @type {string}
+   */
+  category = null;
+
+  /**
+   * The display label for url.
+   * @type {string}
+   */
+  label = null;
+
+  /**
+   * The display label for url when request is pending.
+   * @type {string}
+   */
+  labelPending = null;
+
+  /**
+   * Error label.
+   * @type {string}
+   */
+  errorLabel = null;
+
+  /**
+   * Collection of tags.
+   * @type {Set<any>}
+   */
+  tags = new Set();
+
+  /**
    * Constructor.
    */
   constructor(id, url, method, payload) {
@@ -236,6 +273,6 @@ export default class HttpRequestInfo {
    * @return {HttpRequestInfo}
    */
   clone() {
-    return Object.assign(HttpRequestInfo.prototype, this);
+    return Object.assign(new HttpRequestInfo(), this);
   }
 }

@@ -15,8 +15,8 @@ function makeAjaxCalls() {
   setTimeout(() => {
     sendCall4();
     sendCall5();
-    sendCall6();
-    sendCall7();
+    //sendCall6();
+    //sendCall7();
     sendCall8();
   }, 600);
 }
@@ -83,13 +83,43 @@ function sendCall7() {
 
 function sendCall8() {
   const xhr = new XMLHttpRequest();
-  xhr.open('GET', 'https://eng-ecom.apttuscloud.io/ui/ecom/patch/assets/i18n/en_US.json');
+  xhr.open('GET', 'https://jsonplaceholder.typicode.com/posts/1');
   xhr.send();
 }
 
 window.http = http;
 http.init({
-  include: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io']
+  include: ['https://jsonplaceholder.typicode.com', 'https://eng-ecom.apttuscloud.io'],
+  urlConfig: {
+    'https://jsonplaceholder.typicode.com': {
+      '/posts': {
+        GET: 'Fetching Posts',
+        POST: { labelPending: 'Creating Post', label: 'Post Created, Id: {$response.id}' },
+        DELETE: 'Deleting Post',
+        PUT: 'Updating Post',
+        category: 'POSTS',
+        tags: ['post', 'posts']
+      },
+      '/posts/{id}': {
+        GET: 'Getting Post Of #{id}',
+        category: 'POSTS',
+        tags: ['post', 'posts']
+      },
+      '/comments': {
+        GET: 'Fetching Comments',
+        POST: 'Creating Comment',
+        DELETE: 'Deleting Comment',
+        PUT: 'Updating Comment',
+        category: 'COMMENTS',
+        tags: ['comment', 'comments']
+      },
+      '/users': {
+        GET: {
+          label: 'Fetching Users {$query.fake}'
+        }
+      }
+    }
+  }
 });
 makeAjaxCalls();
 setTimeout(makeAjaxCalls, 100);

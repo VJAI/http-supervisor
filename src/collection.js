@@ -42,7 +42,7 @@ export default class Collection extends Array {
 
   /**
    * The field by which the collection's groups are grouped by.
-   * @type {null}
+   * @type {string}
    * @private
    */
   _childrenGroupedBy = null;
@@ -59,7 +59,7 @@ export default class Collection extends Array {
    * @type {*}
    * @private
    */
-  _query = null;
+  _query = [];
 
   /**
    * Returns the name of the collection.
@@ -174,7 +174,7 @@ export default class Collection extends Array {
       return this;
     }
 
-    this._groupArgs = args;
+    this._groupArgs = [...args];
     this._groups = [];
     this._childrenGroupedBy = args.shift();
     const obj = this._customGroupBy(this._childrenGroupedBy);
@@ -212,6 +212,8 @@ export default class Collection extends Array {
     if (!args.length) {
       return this;
     }
+
+    this._sortArgs = args;
 
     if (this.hasGroups) {
       this._groups.forEach(group => group.sortBy(...args));
@@ -309,5 +311,10 @@ export default class Collection extends Array {
       rv.set(groupKey, newValue);
       return rv;
     }, new Map());
+  }
+
+  clone() {
+    const collection = new Collection(this._originalItems.map(item => item.clone()));
+    return collection.search(...this._query).groupBy(...this._groupArgs).sortBy(...this._sortArgs);
   }
 }

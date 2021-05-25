@@ -28,6 +28,7 @@ export const Messages = {
   REQUEST_NO: 'Request No',
   URL: 'Url',
   PATH: 'Path',
+  QUERY: 'Query',
   METHOD: 'Type',
   PAYLOAD: 'Payload',
   PAYLOAD_SIZE: 'Payload Size',
@@ -48,7 +49,11 @@ export const Messages = {
   TIME_END: 'Time End',
   IMPORTED_SUCCESS: 'Configuration Imported Successsfully!',
   IMPORTED_FAILURE: 'Failed to import configuration!',
-  NO_DUPLICATE_REQUESTS: 'No duplicate requests found'
+  NO_DUPLICATE_REQUESTS: 'No duplicate requests found',
+  HAS_DUPLICATES: 'Has Duplicates?',
+  DUPLICATE_REQUESTS: 'Duplicate Requests',
+  CATEGORY: 'Category',
+  TAGS: 'Tags'
 };
 
 /**
@@ -66,7 +71,11 @@ export const Colors = {
   MEDIUM_GRAY: '#ccc',
   LIGHT_GRAY: '#eee',
   ERROR_MEDIUM: '#ff6e92',
-  WARN_MEDIUM: '#e3b842'
+  WARN_MEDIUM: '#e3b842',
+  WARN_DARK: '#bd8f15',
+  YELLOW: '#f5e340',
+  LIGHT_BLUE: '#b3d0f2',
+  DARK_BLUE: '#082f5e'
 };
 
 /**
@@ -180,7 +189,9 @@ export const SEARCH_OPERATOR = {
   CONTAINS: 'contains',
   NOT_CONTAINS: '!contains',
   MATCHES: 'matches',
-  NOT_MATCHES: '!matches'
+  NOT_MATCHES: '!matches',
+  IN: 'in',
+  NOT_IN: '!in'
 };
 
 /**

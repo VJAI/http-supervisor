@@ -162,17 +162,21 @@ export function matchCriteria(criteria, object) {
     } else if (operator === SEARCH_OPERATOR.GREATER_EQUAL) {
       results.push(v >= value);
     } else if (operator === SEARCH_OPERATOR.STARTS_WITH) {
-      results.push(typeof object[field] === 'string' && v.startsWith(value));
+      results.push(typeof v === 'string' && v.startsWith(value));
     } else if (operator === SEARCH_OPERATOR.ENDS_WITH) {
-      results.push(typeof object[field] === 'string' && v.endsWith(value));
+      results.push(typeof v === 'string' && v.endsWith(value));
     } else if (operator === SEARCH_OPERATOR.CONTAINS) {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+      results.push(typeof v === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.NOT_CONTAINS) {
-      results.push(typeof object[field] === 'string' && !v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+      results.push(typeof v === 'string' && !v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.MATCHES) {
-      results.push(typeof object[field] === 'string' && matchesGlob(value, v));
+      results.push(typeof v === 'string' && matchesGlob(value, v));
     } else if (operator === SEARCH_OPERATOR.NOT_MATCHES) {
-      results.push(typeof object[field] === 'string' && !matchesGlob(value, v));
+      results.push(typeof v === 'string' && !matchesGlob(value, v));
+    } else if (operator === SEARCH_OPERATOR.IN) {
+      results.push(Array.isArray(value) && value.indexOf(v) > -1);
+    } else if (operator === SEARCH_OPERATOR.NOT_IN) {
+      results.push(Array.isArray(value) && value.indexOf(v) === -1);
     }
   });
 
@@ -240,4 +244,20 @@ export function copyText(content) {
   input.setSelectionRange(0, 99999);
   document.execCommand('copy');
   input.remove();
+}
+
+// https://stackoverflow.com/questions/6491463/accessing-nested-javascript-objects-and-arrays-by-string-path
+export function readValue(o, s) {
+  s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+  s = s.replace(/^\./, '');           // strip a leading dot
+  var a = s.split('.');
+  for (var i = 0, n = a.length; i < n; ++i) {
+    var k = a[i];
+    if (k in o) {
+      o = o[k];
+    } else {
+      return;
+    }
+  }
+  return o;
 }

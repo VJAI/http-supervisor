@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 24);
+/******/ 	return __webpack_require__(__webpack_require__.s = 27);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -120,13 +120,13 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayWithoutHoles = __webpack_require__(15);
+var arrayWithoutHoles = __webpack_require__(20);
 
-var iterableToArray = __webpack_require__(16);
+var iterableToArray = __webpack_require__(21);
 
-var unsupportedIterableToArray = __webpack_require__(13);
+var unsupportedIterableToArray = __webpack_require__(15);
 
-var nonIterableSpread = __webpack_require__(17);
+var nonIterableSpread = __webpack_require__(22);
 
 function _toConsumableArray(arr) {
   return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
@@ -232,7 +232,14 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var setPrototypeOf = __webpack_require__(10);
+module.exports = __webpack_require__(25);
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(13);
 
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
@@ -253,7 +260,7 @@ module.exports = _inherits;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _typeof = __webpack_require__(5)["default"];
@@ -272,16 +279,16 @@ module.exports = _possibleConstructorReturn;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var getPrototypeOf = __webpack_require__(6);
 
-var setPrototypeOf = __webpack_require__(10);
+var setPrototypeOf = __webpack_require__(13);
 
-var isNativeFunction = __webpack_require__(18);
+var isNativeFunction = __webpack_require__(23);
 
-var construct = __webpack_require__(11);
+var construct = __webpack_require__(14);
 
 function _wrapNativeSuper(Class) {
   var _cache = typeof Map === "function" ? new Map() : undefined;
@@ -322,7 +329,69 @@ module.exports = _wrapNativeSuper;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 10 */
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithHoles = __webpack_require__(17);
+
+var iterableToArrayLimit = __webpack_require__(18);
+
+var unsupportedIterableToArray = __webpack_require__(15);
+
+var nonIterableRest = __webpack_require__(19);
+
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
+}
+
+module.exports = _slicedToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
+function _asyncToGenerator(fn) {
+  return function () {
+    var self = this,
+        args = arguments;
+    return new Promise(function (resolve, reject) {
+      var gen = fn.apply(self, args);
+
+      function _next(value) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+      }
+
+      function _throw(err) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+
+      _next(undefined);
+    });
+  };
+}
+
+module.exports = _asyncToGenerator;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 13 */
 /***/ (function(module, exports) {
 
 function _setPrototypeOf(o, p) {
@@ -339,12 +408,12 @@ module.exports = _setPrototypeOf;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 11 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var setPrototypeOf = __webpack_require__(10);
+var setPrototypeOf = __webpack_require__(13);
 
-var isNativeReflectConstruct = __webpack_require__(19);
+var isNativeReflectConstruct = __webpack_require__(24);
 
 function _construct(Parent, args, Class) {
   if (isNativeReflectConstruct()) {
@@ -370,7 +439,25 @@ module.exports = _construct;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 12 */
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(16);
+
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
+}
+
+module.exports = _unsupportedIterableToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 16 */
 /***/ (function(module, exports) {
 
 function _arrayLikeToArray(arr, len) {
@@ -387,110 +474,7 @@ module.exports = _arrayLikeToArray;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(12);
-
-function _unsupportedIterableToArray(o, minLen) {
-  if (!o) return;
-  if (typeof o === "string") return arrayLikeToArray(o, minLen);
-  var n = Object.prototype.toString.call(o).slice(8, -1);
-  if (n === "Object" && o.constructor) n = o.constructor.name;
-  if (n === "Map" || n === "Set") return Array.from(o);
-  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
-}
-
-module.exports = _unsupportedIterableToArray;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(20);
-
-var iterableToArrayLimit = __webpack_require__(21);
-
-var unsupportedIterableToArray = __webpack_require__(13);
-
-var nonIterableRest = __webpack_require__(22);
-
-function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
-}
-
-module.exports = _slicedToArray;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(12);
-
-function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) return arrayLikeToArray(arr);
-}
-
-module.exports = _arrayWithoutHoles;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 16 */
-/***/ (function(module, exports) {
-
-function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
-}
-
-module.exports = _iterableToArray;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
 /* 17 */
-/***/ (function(module, exports) {
-
-function _nonIterableSpread() {
-  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-
-module.exports = _nonIterableSpread;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 18 */
-/***/ (function(module, exports) {
-
-function _isNativeFunction(fn) {
-  return Function.toString.call(fn).indexOf("[native code]") !== -1;
-}
-
-module.exports = _isNativeFunction;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 19 */
-/***/ (function(module, exports) {
-
-function _isNativeReflectConstruct() {
-  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-  if (Reflect.construct.sham) return false;
-  if (typeof Proxy === "function") return true;
-
-  try {
-    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-module.exports = _isNativeReflectConstruct;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 20 */
 /***/ (function(module, exports) {
 
 function _arrayWithHoles(arr) {
@@ -501,7 +485,7 @@ module.exports = _arrayWithHoles;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 21 */
+/* 18 */
 /***/ (function(module, exports) {
 
 function _iterableToArrayLimit(arr, i) {
@@ -535,7 +519,7 @@ module.exports = _iterableToArrayLimit;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 22 */
+/* 19 */
 /***/ (function(module, exports) {
 
 function _nonIterableRest() {
@@ -546,7 +530,827 @@ module.exports = _nonIterableRest;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(16);
+
+function _arrayWithoutHoles(arr) {
+  if (Array.isArray(arr)) return arrayLikeToArray(arr);
+}
+
+module.exports = _arrayWithoutHoles;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports) {
+
+function _iterableToArray(iter) {
+  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+}
+
+module.exports = _iterableToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+function _nonIterableSpread() {
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+}
+
+module.exports = _nonIterableSpread;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
 /* 23 */
+/***/ (function(module, exports) {
+
+function _isNativeFunction(fn) {
+  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+}
+
+module.exports = _isNativeFunction;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports) {
+
+function _isNativeReflectConstruct() {
+  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+  if (Reflect.construct.sham) return false;
+  if (typeof Proxy === "function") return true;
+
+  try {
+    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+module.exports = _isNativeReflectConstruct;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+var runtime = (function (exports) {
+  "use strict";
+
+  var Op = Object.prototype;
+  var hasOwn = Op.hasOwnProperty;
+  var undefined; // More compressible than void 0.
+  var $Symbol = typeof Symbol === "function" ? Symbol : {};
+  var iteratorSymbol = $Symbol.iterator || "@@iterator";
+  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+
+  function define(obj, key, value) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+    return obj[key];
+  }
+  try {
+    // IE 8 has a broken Object.defineProperty that only works on DOM objects.
+    define({}, "");
+  } catch (err) {
+    define = function(obj, key, value) {
+      return obj[key] = value;
+    };
+  }
+
+  function wrap(innerFn, outerFn, self, tryLocsList) {
+    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+    var generator = Object.create(protoGenerator.prototype);
+    var context = new Context(tryLocsList || []);
+
+    // The ._invoke method unifies the implementations of the .next,
+    // .throw, and .return methods.
+    generator._invoke = makeInvokeMethod(innerFn, self, context);
+
+    return generator;
+  }
+  exports.wrap = wrap;
+
+  // Try/catch helper to minimize deoptimizations. Returns a completion
+  // record like context.tryEntries[i].completion. This interface could
+  // have been (and was previously) designed to take a closure to be
+  // invoked without arguments, but in all the cases we care about we
+  // already have an existing method we want to call, so there's no need
+  // to create a new function object. We can even get away with assuming
+  // the method takes exactly one argument, since that happens to be true
+  // in every case, so we don't have to touch the arguments object. The
+  // only additional allocation required is the completion record, which
+  // has a stable shape and so hopefully should be cheap to allocate.
+  function tryCatch(fn, obj, arg) {
+    try {
+      return { type: "normal", arg: fn.call(obj, arg) };
+    } catch (err) {
+      return { type: "throw", arg: err };
+    }
+  }
+
+  var GenStateSuspendedStart = "suspendedStart";
+  var GenStateSuspendedYield = "suspendedYield";
+  var GenStateExecuting = "executing";
+  var GenStateCompleted = "completed";
+
+  // Returning this object from the innerFn has the same effect as
+  // breaking out of the dispatch switch statement.
+  var ContinueSentinel = {};
+
+  // Dummy constructor functions that we use as the .constructor and
+  // .constructor.prototype properties for functions that return Generator
+  // objects. For full spec compliance, you may wish to configure your
+  // minifier not to mangle the names of these two functions.
+  function Generator() {}
+  function GeneratorFunction() {}
+  function GeneratorFunctionPrototype() {}
+
+  // This is a polyfill for %IteratorPrototype% for environments that
+  // don't natively support it.
+  var IteratorPrototype = {};
+  IteratorPrototype[iteratorSymbol] = function () {
+    return this;
+  };
+
+  var getProto = Object.getPrototypeOf;
+  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
+  if (NativeIteratorPrototype &&
+      NativeIteratorPrototype !== Op &&
+      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
+    // This environment has a native %IteratorPrototype%; use it instead
+    // of the polyfill.
+    IteratorPrototype = NativeIteratorPrototype;
+  }
+
+  var Gp = GeneratorFunctionPrototype.prototype =
+    Generator.prototype = Object.create(IteratorPrototype);
+  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
+  GeneratorFunctionPrototype.constructor = GeneratorFunction;
+  GeneratorFunction.displayName = define(
+    GeneratorFunctionPrototype,
+    toStringTagSymbol,
+    "GeneratorFunction"
+  );
+
+  // Helper for defining the .next, .throw, and .return methods of the
+  // Iterator interface in terms of a single ._invoke method.
+  function defineIteratorMethods(prototype) {
+    ["next", "throw", "return"].forEach(function(method) {
+      define(prototype, method, function(arg) {
+        return this._invoke(method, arg);
+      });
+    });
+  }
+
+  exports.isGeneratorFunction = function(genFun) {
+    var ctor = typeof genFun === "function" && genFun.constructor;
+    return ctor
+      ? ctor === GeneratorFunction ||
+        // For the native GeneratorFunction constructor, the best we can
+        // do is to check its .name property.
+        (ctor.displayName || ctor.name) === "GeneratorFunction"
+      : false;
+  };
+
+  exports.mark = function(genFun) {
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
+    } else {
+      genFun.__proto__ = GeneratorFunctionPrototype;
+      define(genFun, toStringTagSymbol, "GeneratorFunction");
+    }
+    genFun.prototype = Object.create(Gp);
+    return genFun;
+  };
+
+  // Within the body of any async function, `await x` is transformed to
+  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
+  // `hasOwn.call(value, "__await")` to determine if the yielded value is
+  // meant to be awaited.
+  exports.awrap = function(arg) {
+    return { __await: arg };
+  };
+
+  function AsyncIterator(generator, PromiseImpl) {
+    function invoke(method, arg, resolve, reject) {
+      var record = tryCatch(generator[method], generator, arg);
+      if (record.type === "throw") {
+        reject(record.arg);
+      } else {
+        var result = record.arg;
+        var value = result.value;
+        if (value &&
+            typeof value === "object" &&
+            hasOwn.call(value, "__await")) {
+          return PromiseImpl.resolve(value.__await).then(function(value) {
+            invoke("next", value, resolve, reject);
+          }, function(err) {
+            invoke("throw", err, resolve, reject);
+          });
+        }
+
+        return PromiseImpl.resolve(value).then(function(unwrapped) {
+          // When a yielded Promise is resolved, its final value becomes
+          // the .value of the Promise<{value,done}> result for the
+          // current iteration.
+          result.value = unwrapped;
+          resolve(result);
+        }, function(error) {
+          // If a rejected Promise was yielded, throw the rejection back
+          // into the async generator function so it can be handled there.
+          return invoke("throw", error, resolve, reject);
+        });
+      }
+    }
+
+    var previousPromise;
+
+    function enqueue(method, arg) {
+      function callInvokeWithMethodAndArg() {
+        return new PromiseImpl(function(resolve, reject) {
+          invoke(method, arg, resolve, reject);
+        });
+      }
+
+      return previousPromise =
+        // If enqueue has been called before, then we want to wait until
+        // all previous Promises have been resolved before calling invoke,
+        // so that results are always delivered in the correct order. If
+        // enqueue has not been called before, then it is important to
+        // call invoke immediately, without waiting on a callback to fire,
+        // so that the async generator function has the opportunity to do
+        // any necessary setup in a predictable way. This predictability
+        // is why the Promise constructor synchronously invokes its
+        // executor callback, and why async functions synchronously
+        // execute code before the first await. Since we implement simple
+        // async functions in terms of async generators, it is especially
+        // important to get this right, even though it requires care.
+        previousPromise ? previousPromise.then(
+          callInvokeWithMethodAndArg,
+          // Avoid propagating failures to Promises returned by later
+          // invocations of the iterator.
+          callInvokeWithMethodAndArg
+        ) : callInvokeWithMethodAndArg();
+    }
+
+    // Define the unified helper method that is used to implement .next,
+    // .throw, and .return (see defineIteratorMethods).
+    this._invoke = enqueue;
+  }
+
+  defineIteratorMethods(AsyncIterator.prototype);
+  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+    return this;
+  };
+  exports.AsyncIterator = AsyncIterator;
+
+  // Note that simple async functions are implemented on top of
+  // AsyncIterator objects; they just return a Promise for the value of
+  // the final result produced by the iterator.
+  exports.async = function(innerFn, outerFn, self, tryLocsList, PromiseImpl) {
+    if (PromiseImpl === void 0) PromiseImpl = Promise;
+
+    var iter = new AsyncIterator(
+      wrap(innerFn, outerFn, self, tryLocsList),
+      PromiseImpl
+    );
+
+    return exports.isGeneratorFunction(outerFn)
+      ? iter // If outerFn is a generator, return the full iterator.
+      : iter.next().then(function(result) {
+          return result.done ? result.value : iter.next();
+        });
+  };
+
+  function makeInvokeMethod(innerFn, self, context) {
+    var state = GenStateSuspendedStart;
+
+    return function invoke(method, arg) {
+      if (state === GenStateExecuting) {
+        throw new Error("Generator is already running");
+      }
+
+      if (state === GenStateCompleted) {
+        if (method === "throw") {
+          throw arg;
+        }
+
+        // Be forgiving, per 25.3.3.3.3 of the spec:
+        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
+        return doneResult();
+      }
+
+      context.method = method;
+      context.arg = arg;
+
+      while (true) {
+        var delegate = context.delegate;
+        if (delegate) {
+          var delegateResult = maybeInvokeDelegate(delegate, context);
+          if (delegateResult) {
+            if (delegateResult === ContinueSentinel) continue;
+            return delegateResult;
+          }
+        }
+
+        if (context.method === "next") {
+          // Setting context._sent for legacy support of Babel's
+          // function.sent implementation.
+          context.sent = context._sent = context.arg;
+
+        } else if (context.method === "throw") {
+          if (state === GenStateSuspendedStart) {
+            state = GenStateCompleted;
+            throw context.arg;
+          }
+
+          context.dispatchException(context.arg);
+
+        } else if (context.method === "return") {
+          context.abrupt("return", context.arg);
+        }
+
+        state = GenStateExecuting;
+
+        var record = tryCatch(innerFn, self, context);
+        if (record.type === "normal") {
+          // If an exception is thrown from innerFn, we leave state ===
+          // GenStateExecuting and loop back for another invocation.
+          state = context.done
+            ? GenStateCompleted
+            : GenStateSuspendedYield;
+
+          if (record.arg === ContinueSentinel) {
+            continue;
+          }
+
+          return {
+            value: record.arg,
+            done: context.done
+          };
+
+        } else if (record.type === "throw") {
+          state = GenStateCompleted;
+          // Dispatch the exception by looping back around to the
+          // context.dispatchException(context.arg) call above.
+          context.method = "throw";
+          context.arg = record.arg;
+        }
+      }
+    };
+  }
+
+  // Call delegate.iterator[context.method](context.arg) and handle the
+  // result, either by returning a { value, done } result from the
+  // delegate iterator, or by modifying context.method and context.arg,
+  // setting context.delegate to null, and returning the ContinueSentinel.
+  function maybeInvokeDelegate(delegate, context) {
+    var method = delegate.iterator[context.method];
+    if (method === undefined) {
+      // A .throw or .return when the delegate iterator has no .throw
+      // method always terminates the yield* loop.
+      context.delegate = null;
+
+      if (context.method === "throw") {
+        // Note: ["return"] must be used for ES3 parsing compatibility.
+        if (delegate.iterator["return"]) {
+          // If the delegate iterator has a return method, give it a
+          // chance to clean up.
+          context.method = "return";
+          context.arg = undefined;
+          maybeInvokeDelegate(delegate, context);
+
+          if (context.method === "throw") {
+            // If maybeInvokeDelegate(context) changed context.method from
+            // "return" to "throw", let that override the TypeError below.
+            return ContinueSentinel;
+          }
+        }
+
+        context.method = "throw";
+        context.arg = new TypeError(
+          "The iterator does not provide a 'throw' method");
+      }
+
+      return ContinueSentinel;
+    }
+
+    var record = tryCatch(method, delegate.iterator, context.arg);
+
+    if (record.type === "throw") {
+      context.method = "throw";
+      context.arg = record.arg;
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    var info = record.arg;
+
+    if (! info) {
+      context.method = "throw";
+      context.arg = new TypeError("iterator result is not an object");
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    if (info.done) {
+      // Assign the result of the finished delegate to the temporary
+      // variable specified by delegate.resultName (see delegateYield).
+      context[delegate.resultName] = info.value;
+
+      // Resume execution at the desired location (see delegateYield).
+      context.next = delegate.nextLoc;
+
+      // If context.method was "throw" but the delegate handled the
+      // exception, let the outer generator proceed normally. If
+      // context.method was "next", forget context.arg since it has been
+      // "consumed" by the delegate iterator. If context.method was
+      // "return", allow the original .return call to continue in the
+      // outer generator.
+      if (context.method !== "return") {
+        context.method = "next";
+        context.arg = undefined;
+      }
+
+    } else {
+      // Re-yield the result returned by the delegate method.
+      return info;
+    }
+
+    // The delegate iterator is finished, so forget it and continue with
+    // the outer generator.
+    context.delegate = null;
+    return ContinueSentinel;
+  }
+
+  // Define Generator.prototype.{next,throw,return} in terms of the
+  // unified ._invoke helper method.
+  defineIteratorMethods(Gp);
+
+  define(Gp, toStringTagSymbol, "Generator");
+
+  // A Generator should always return itself as the iterator object when the
+  // @@iterator function is called on it. Some browsers' implementations of the
+  // iterator prototype chain incorrectly implement this, causing the Generator
+  // object to not be returned from this call. This ensures that doesn't happen.
+  // See https://github.com/facebook/regenerator/issues/274 for more details.
+  Gp[iteratorSymbol] = function() {
+    return this;
+  };
+
+  Gp.toString = function() {
+    return "[object Generator]";
+  };
+
+  function pushTryEntry(locs) {
+    var entry = { tryLoc: locs[0] };
+
+    if (1 in locs) {
+      entry.catchLoc = locs[1];
+    }
+
+    if (2 in locs) {
+      entry.finallyLoc = locs[2];
+      entry.afterLoc = locs[3];
+    }
+
+    this.tryEntries.push(entry);
+  }
+
+  function resetTryEntry(entry) {
+    var record = entry.completion || {};
+    record.type = "normal";
+    delete record.arg;
+    entry.completion = record;
+  }
+
+  function Context(tryLocsList) {
+    // The root entry object (effectively a try statement without a catch
+    // or a finally block) gives us a place to store values thrown from
+    // locations where there is no enclosing try statement.
+    this.tryEntries = [{ tryLoc: "root" }];
+    tryLocsList.forEach(pushTryEntry, this);
+    this.reset(true);
+  }
+
+  exports.keys = function(object) {
+    var keys = [];
+    for (var key in object) {
+      keys.push(key);
+    }
+    keys.reverse();
+
+    // Rather than returning an object with a next method, we keep
+    // things simple and return the next function itself.
+    return function next() {
+      while (keys.length) {
+        var key = keys.pop();
+        if (key in object) {
+          next.value = key;
+          next.done = false;
+          return next;
+        }
+      }
+
+      // To avoid creating an additional object, we just hang the .value
+      // and .done properties off the next function object itself. This
+      // also ensures that the minifier will not anonymize the function.
+      next.done = true;
+      return next;
+    };
+  };
+
+  function values(iterable) {
+    if (iterable) {
+      var iteratorMethod = iterable[iteratorSymbol];
+      if (iteratorMethod) {
+        return iteratorMethod.call(iterable);
+      }
+
+      if (typeof iterable.next === "function") {
+        return iterable;
+      }
+
+      if (!isNaN(iterable.length)) {
+        var i = -1, next = function next() {
+          while (++i < iterable.length) {
+            if (hasOwn.call(iterable, i)) {
+              next.value = iterable[i];
+              next.done = false;
+              return next;
+            }
+          }
+
+          next.value = undefined;
+          next.done = true;
+
+          return next;
+        };
+
+        return next.next = next;
+      }
+    }
+
+    // Return an iterator with no values.
+    return { next: doneResult };
+  }
+  exports.values = values;
+
+  function doneResult() {
+    return { value: undefined, done: true };
+  }
+
+  Context.prototype = {
+    constructor: Context,
+
+    reset: function(skipTempReset) {
+      this.prev = 0;
+      this.next = 0;
+      // Resetting context._sent for legacy support of Babel's
+      // function.sent implementation.
+      this.sent = this._sent = undefined;
+      this.done = false;
+      this.delegate = null;
+
+      this.method = "next";
+      this.arg = undefined;
+
+      this.tryEntries.forEach(resetTryEntry);
+
+      if (!skipTempReset) {
+        for (var name in this) {
+          // Not sure about the optimal order of these conditions:
+          if (name.charAt(0) === "t" &&
+              hasOwn.call(this, name) &&
+              !isNaN(+name.slice(1))) {
+            this[name] = undefined;
+          }
+        }
+      }
+    },
+
+    stop: function() {
+      this.done = true;
+
+      var rootEntry = this.tryEntries[0];
+      var rootRecord = rootEntry.completion;
+      if (rootRecord.type === "throw") {
+        throw rootRecord.arg;
+      }
+
+      return this.rval;
+    },
+
+    dispatchException: function(exception) {
+      if (this.done) {
+        throw exception;
+      }
+
+      var context = this;
+      function handle(loc, caught) {
+        record.type = "throw";
+        record.arg = exception;
+        context.next = loc;
+
+        if (caught) {
+          // If the dispatched exception was caught by a catch block,
+          // then let that catch block handle the exception normally.
+          context.method = "next";
+          context.arg = undefined;
+        }
+
+        return !! caught;
+      }
+
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        var record = entry.completion;
+
+        if (entry.tryLoc === "root") {
+          // Exception thrown outside of any try block that could handle
+          // it, so set the completion value of the entire function to
+          // throw the exception.
+          return handle("end");
+        }
+
+        if (entry.tryLoc <= this.prev) {
+          var hasCatch = hasOwn.call(entry, "catchLoc");
+          var hasFinally = hasOwn.call(entry, "finallyLoc");
+
+          if (hasCatch && hasFinally) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            } else if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else if (hasCatch) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            }
+
+          } else if (hasFinally) {
+            if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else {
+            throw new Error("try statement without catch or finally");
+          }
+        }
+      }
+    },
+
+    abrupt: function(type, arg) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc <= this.prev &&
+            hasOwn.call(entry, "finallyLoc") &&
+            this.prev < entry.finallyLoc) {
+          var finallyEntry = entry;
+          break;
+        }
+      }
+
+      if (finallyEntry &&
+          (type === "break" ||
+           type === "continue") &&
+          finallyEntry.tryLoc <= arg &&
+          arg <= finallyEntry.finallyLoc) {
+        // Ignore the finally entry if control is not jumping to a
+        // location outside the try/catch block.
+        finallyEntry = null;
+      }
+
+      var record = finallyEntry ? finallyEntry.completion : {};
+      record.type = type;
+      record.arg = arg;
+
+      if (finallyEntry) {
+        this.method = "next";
+        this.next = finallyEntry.finallyLoc;
+        return ContinueSentinel;
+      }
+
+      return this.complete(record);
+    },
+
+    complete: function(record, afterLoc) {
+      if (record.type === "throw") {
+        throw record.arg;
+      }
+
+      if (record.type === "break" ||
+          record.type === "continue") {
+        this.next = record.arg;
+      } else if (record.type === "return") {
+        this.rval = this.arg = record.arg;
+        this.method = "return";
+        this.next = "end";
+      } else if (record.type === "normal" && afterLoc) {
+        this.next = afterLoc;
+      }
+
+      return ContinueSentinel;
+    },
+
+    finish: function(finallyLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.finallyLoc === finallyLoc) {
+          this.complete(entry.completion, entry.afterLoc);
+          resetTryEntry(entry);
+          return ContinueSentinel;
+        }
+      }
+    },
+
+    "catch": function(tryLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc === tryLoc) {
+          var record = entry.completion;
+          if (record.type === "throw") {
+            var thrown = record.arg;
+            resetTryEntry(entry);
+          }
+          return thrown;
+        }
+      }
+
+      // The context.catch method must only be called with a location
+      // argument that corresponds to a known catch block.
+      throw new Error("illegal catch attempt");
+    },
+
+    delegateYield: function(iterable, resultName, nextLoc) {
+      this.delegate = {
+        iterator: values(iterable),
+        resultName: resultName,
+        nextLoc: nextLoc
+      };
+
+      if (this.method === "next") {
+        // Deliberately forget the last sent value so that we don't
+        // accidentally pass it on to the delegate.
+        this.arg = undefined;
+      }
+
+      return ContinueSentinel;
+    }
+  };
+
+  // Regardless of whether this script is executing as a CommonJS module
+  // or not, return the runtime object so that we can declare the variable
+  // regeneratorRuntime in the outer scope, which allows this module to be
+  // injected easily by `bin/regenerator --include-runtime script.js`.
+  return exports;
+
+}(
+  // If this script is executing as a CommonJS module, use module.exports
+  // as the regeneratorRuntime namespace. Otherwise create a new empty
+  // object. Either way, the resulting object will be used to initialize
+  // the regeneratorRuntime variable at the top of this file.
+   true ? module.exports : undefined
+));
+
+try {
+  regeneratorRuntime = runtime;
+} catch (accidentalStrictMode) {
+  // This module should not be running in strict mode, so the above
+  // assignment should always work unless something is misconfigured. Just
+  // in case runtime.js accidentally runs in strict mode, we can escape
+  // strict mode using a global Function call. This could conceivably fail
+  // if a Content Security Policy forbids using Function, but in that case
+  // the proper solution is to fix the accidental strict mode problem. If
+  // you've misconfigured your bundler to force strict mode and applied a
+  // CSP to forbid Function, and you're not willing to fix either of those
+  // problems, please detail your unique predicament in a GitHub issue.
+  Function("r", "regeneratorRuntime = r")(runtime);
+}
+
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports) {
 
 // https://github.com/adriancooney/console.snapshot
@@ -806,7 +1610,7 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 })(console);
 
 /***/ }),
-/* 24 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -815,6 +1619,10 @@ __webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, "HttpSupervisor", function() { return /* reexport */ http_supervisor_HttpSupervisor; });
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
+var slicedToArray = __webpack_require__(11);
+var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/typeof.js
 var helpers_typeof = __webpack_require__(5);
@@ -867,6 +1675,7 @@ var Messages = {
   REQUEST_NO: 'Request No',
   URL: 'Url',
   PATH: 'Path',
+  QUERY: 'Query',
   METHOD: 'Type',
   PAYLOAD: 'Payload',
   PAYLOAD_SIZE: 'Payload Size',
@@ -887,7 +1696,11 @@ var Messages = {
   TIME_END: 'Time End',
   IMPORTED_SUCCESS: 'Configuration Imported Successsfully!',
   IMPORTED_FAILURE: 'Failed to import configuration!',
-  NO_DUPLICATE_REQUESTS: 'No duplicate requests found'
+  NO_DUPLICATE_REQUESTS: 'No duplicate requests found',
+  HAS_DUPLICATES: 'Has Duplicates?',
+  DUPLICATE_REQUESTS: 'Duplicate Requests',
+  CATEGORY: 'Category',
+  TAGS: 'Tags'
 };
 /**
  * The different color codes by supervisor.
@@ -905,7 +1718,11 @@ var Colors = {
   MEDIUM_GRAY: '#ccc',
   LIGHT_GRAY: '#eee',
   ERROR_MEDIUM: '#ff6e92',
-  WARN_MEDIUM: '#e3b842'
+  WARN_MEDIUM: '#e3b842',
+  WARN_DARK: '#bd8f15',
+  YELLOW: '#f5e340',
+  LIGHT_BLUE: '#b3d0f2',
+  DARK_BLUE: '#082f5e'
 };
 /**
  * The different statuses of supervisor.
@@ -1023,7 +1840,9 @@ var SEARCH_OPERATOR = {
   CONTAINS: 'contains',
   NOT_CONTAINS: '!contains',
   MATCHES: 'matches',
-  NOT_MATCHES: '!matches'
+  NOT_MATCHES: '!matches',
+  IN: 'in',
+  NOT_IN: '!in'
 };
 /**
  * Export file types.
@@ -1200,17 +2019,21 @@ function matchCriteria(criteria, object) {
     } else if (operator === SEARCH_OPERATOR.GREATER_EQUAL) {
       results.push(v >= value);
     } else if (operator === SEARCH_OPERATOR.STARTS_WITH) {
-      results.push(typeof object[field] === 'string' && v.startsWith(value));
+      results.push(typeof v === 'string' && v.startsWith(value));
     } else if (operator === SEARCH_OPERATOR.ENDS_WITH) {
-      results.push(typeof object[field] === 'string' && v.endsWith(value));
+      results.push(typeof v === 'string' && v.endsWith(value));
     } else if (operator === SEARCH_OPERATOR.CONTAINS) {
-      results.push(typeof object[field] === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+      results.push(typeof v === 'string' && v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.NOT_CONTAINS) {
-      results.push(typeof object[field] === 'string' && !v.toLowerCase().indexOf(value.toLowerCase()) > -1);
+      results.push(typeof v === 'string' && !v.toLowerCase().indexOf(value.toLowerCase()) > -1);
     } else if (operator === SEARCH_OPERATOR.MATCHES) {
-      results.push(typeof object[field] === 'string' && matchesGlob(value, v));
+      results.push(typeof v === 'string' && matchesGlob(value, v));
     } else if (operator === SEARCH_OPERATOR.NOT_MATCHES) {
-      results.push(typeof object[field] === 'string' && !matchesGlob(value, v));
+      results.push(typeof v === 'string' && !matchesGlob(value, v));
+    } else if (operator === SEARCH_OPERATOR.IN) {
+      results.push(Array.isArray(value) && value.indexOf(v) > -1);
+    } else if (operator === SEARCH_OPERATOR.NOT_IN) {
+      results.push(Array.isArray(value) && value.indexOf(v) === -1);
     }
   });
   return results.filter(function (r) {
@@ -1281,6 +2104,26 @@ function copyText(content) {
   input.setSelectionRange(0, 99999);
   document.execCommand('copy');
   input.remove();
+} // https://stackoverflow.com/questions/6491463/accessing-nested-javascript-objects-and-arrays-by-string-path
+
+function readValue(o, s) {
+  s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+
+  s = s.replace(/^\./, ''); // strip a leading dot
+
+  var a = s.split('.');
+
+  for (var i = 0, n = a.length; i < n; ++i) {
+    var k = a[i];
+
+    if (k in o) {
+      o = o[k];
+    } else {
+      return;
+    }
+  }
+
+  return o;
 }
 // CONCATENATED MODULE: ./src/http-request-info.js
 
@@ -1302,8 +2145,6 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
     defineProperty_default()(this, "_urlObj", null);
 
     defineProperty_default()(this, "id", -1);
-
-    defineProperty_default()(this, "_url", null);
 
     defineProperty_default()(this, "method", 'GET');
 
@@ -1335,6 +2176,16 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "pending", true);
 
+    defineProperty_default()(this, "category", null);
+
+    defineProperty_default()(this, "label", null);
+
+    defineProperty_default()(this, "labelPending", null);
+
+    defineProperty_default()(this, "errorLabel", null);
+
+    defineProperty_default()(this, "tags", new Set());
+
     this.id = id;
     this.url = url;
     this.method = method;
@@ -1363,12 +2214,6 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
      */
 
     /**
-     * The url.
-     * @type {string}
-     * @private
-     */
-
-    /**
      * Returns the url.
      * @return {string}
      */
@@ -1381,8 +2226,6 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
      */
     ,
     set: function set(value) {
-      this._url = value;
-
       if (value) {
         this._urlObj = isAbsolute(value) ? new URL(value) : new URL(value, document.location.origin);
       } else {
@@ -1420,6 +2263,16 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
       return this._urlObj ? this._urlObj.search : null;
     }
     /**
+     * Returns path with domain.
+     * @return {string}
+     */
+
+  }, {
+    key: "pathDomain",
+    get: function get() {
+      return this._urlObj ? "".concat(this.domain).concat(this.path) : null;
+    }
+    /**
      * The path with query.
      * @type {string}
      */
@@ -1432,6 +2285,16 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
       }
 
       return this.query ? "".concat(this.path).concat(this.query) : this.path;
+    }
+    /**
+     * Returns url object.
+     * @return {URL}
+     */
+
+  }, {
+    key: "urlObj",
+    get: function get() {
+      return this._urlObj;
     }
     /**
      * The request type (GET, POST etc.)
@@ -1496,7 +2359,7 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
   }, {
     key: "clone",
     value: function clone() {
-      return Object.assign(HttpRequestInfo.prototype, this);
+      return Object.assign(new HttpRequestInfo(), this);
     }
   }]);
 
@@ -1509,11 +2372,11 @@ var assertThisInitialized = __webpack_require__(2);
 var assertThisInitialized_default = /*#__PURE__*/__webpack_require__.n(assertThisInitialized);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/inherits.js
-var inherits = __webpack_require__(7);
+var inherits = __webpack_require__(8);
 var inherits_default = /*#__PURE__*/__webpack_require__.n(inherits);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js
-var possibleConstructorReturn = __webpack_require__(8);
+var possibleConstructorReturn = __webpack_require__(9);
 var possibleConstructorReturn_default = /*#__PURE__*/__webpack_require__.n(possibleConstructorReturn);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/getPrototypeOf.js
@@ -1521,7 +2384,7 @@ var getPrototypeOf = __webpack_require__(6);
 var getPrototypeOf_default = /*#__PURE__*/__webpack_require__.n(getPrototypeOf);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/wrapNativeSuper.js
-var wrapNativeSuper = __webpack_require__(9);
+var wrapNativeSuper = __webpack_require__(10);
 var wrapNativeSuper_default = /*#__PURE__*/__webpack_require__.n(wrapNativeSuper);
 
 // CONCATENATED MODULE: ./src/collection.js
@@ -1580,7 +2443,7 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
 
     defineProperty_default()(assertThisInitialized_default()(_this), "_sortArgs", []);
 
-    defineProperty_default()(assertThisInitialized_default()(_this), "_query", null);
+    defineProperty_default()(assertThisInitialized_default()(_this), "_query", []);
 
     (_this2 = _this).push.apply(_this2, toConsumableArray_default()(items));
 
@@ -1625,7 +2488,7 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
 
     /**
      * The field by which the collection's groups are grouped by.
-     * @type {null}
+     * @type {string}
      * @private
      */
 
@@ -1772,7 +2635,7 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
         return this;
       }
 
-      this._groupArgs = args;
+      this._groupArgs = [].concat(args);
       this._groups = [];
       this._childrenGroupedBy = args.shift();
 
@@ -1821,6 +2684,8 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
       if (!args.length) {
         return this;
       }
+
+      this._sortArgs = args;
 
       if (this.hasGroups) {
         this._groups.forEach(function (group) {
@@ -1958,6 +2823,16 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
         return rv;
       }, new Map());
     }
+  }, {
+    key: "clone",
+    value: function clone() {
+      var _collection$search$gr, _collection$search;
+
+      var collection = new Collection(this._originalItems.map(function (item) {
+        return item.clone();
+      }));
+      return (_collection$search$gr = (_collection$search = collection.search.apply(collection, toConsumableArray_default()(this._query))).groupBy.apply(_collection$search, toConsumableArray_default()(this._groupArgs))).sortBy.apply(_collection$search$gr, toConsumableArray_default()(this._sortArgs));
+    }
   }]);
 
   return Collection;
@@ -2046,7 +2921,7 @@ var event_emitter_EventEmitter = /*#__PURE__*/function () {
 
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/construct.js
-var construct = __webpack_require__(11);
+var construct = __webpack_require__(14);
 var construct_default = /*#__PURE__*/__webpack_require__.n(construct);
 
 // CONCATENATED MODULE: ./src/session.js
@@ -2111,6 +2986,7 @@ var session_Session = /*#__PURE__*/function (_Set) {
 
 
 
+
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { defineProperty_default()(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
@@ -2122,7 +2998,8 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 
 /**
- * Supervises HTTP Network Traffic. Helps to identify query, group, sort, export, visualize requests and much more.
+ * Supervises HTTP Network Traffic. Helps to identify duplicate requests. Also helps to query, group,
+ * sort, export, visualize requests and much more.
  */
 
 var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
@@ -2184,6 +3061,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_lockConsole", false);
 
+    defineProperty_default()(this, "_urlConfig", {});
+
     defineProperty_default()(this, "_requests", new session_Session());
 
     defineProperty_default()(this, "_sessions", new Map());
@@ -2209,6 +3088,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     defineProperty_default()(this, "_nativeSend", XMLHttpRequest.prototype.send);
 
     defineProperty_default()(this, "_nativeSetRequestHeader", XMLHttpRequest.prototype.setRequestHeader);
+
+    defineProperty_default()(this, "_callsSummary", []);
 
     this._widget = widget || FAKE;
     this._reporter = reporter || FAKE;
@@ -2236,8 +3117,9 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
    * @param {boolean} [config.loadChart] True to use chart.js library for data visualization.
    * @param {boolean} [config.keyboardEvents] True to use keyboard events for operating control panel.
    * @param {boolean} [config.persistConfig] True to persist config in local storage.
-   * @param {Array} [config.watches] Collection of watches.
    * @param {boolean} [config.lockConsole] True to lock console.
+   * @param {object} [config.watches] Collection of watches.
+   * @param {object} [config.urlConfig] User friendly labels with dynamic values for urls.
    * @param {boolean} [loadConfigFromStore = true] True to load the config from local storage.
    */
 
@@ -2366,6 +3248,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
     /**
+     * The display labels for urls and other configuration for respective urls.
+     * @type {object}
+     * @private
+     */
+
+    /**
      * Collection of captured requests.
      * @type {Set}
      * @private
@@ -2440,6 +3328,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     /**
      * XMLHttpRequest native `setRequestHeader` method.
      * @type {function}
+     * @private
+     */
+
+    /**
+     * Helps to find duplicates.
+     * @type {Array}
      * @private
      */
 
@@ -2832,9 +3726,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       var storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
-
-      this._setConfig(_objectSpread(_objectSpread({}, storedConfig), config)); // Listen to the `request-end` event to display request details based on the properties.
-
+      this.setConfig(_objectSpread(_objectSpread({}, storedConfig), config)); // Listen to the `request-end` event to display request details based on the properties.
 
       this.on(SupervisorEvents.REQUEST_END, function (supervisor, request) {
         if (_this._silent) {
@@ -2864,10 +3756,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         if (watchMatches.length) {
           _this._reporter.report(request);
         }
-      }); // Update the configuration to the storage.
-
-      this._updateStorage(); // Render the widget, initialize the reporter and start monitoring.
-
+      }); // Render the widget, initialize the reporter and start monitoring.
 
       this._render();
 
@@ -2930,6 +3819,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._reporter.clear();
 
       this._requests.clear();
+
+      this._callsSummary = [];
 
       this._triggerEvent(SupervisorEvents.CLEAR);
     }
@@ -3140,37 +4031,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       if (args.length === 1 && ['number', 'string'].has(typeof_default()(args[0]))) {
-        var arg = args[0];
-        var query;
-
-        if (typeof arg === 'string') {
-          if (REQUEST_TYPE.hasOwnProperty(arg)) {
-            query = {
-              field: 'method',
-              operator: SEARCH_OPERATOR.EQUALS,
-              value: arg
-            };
-          } else if (arg.indexOf('*') > -1) {
-            query = {
-              field: 'method',
-              operator: SEARCH_OPERATOR.MATCHES,
-              value: arg
-            };
-          } else {
-            query = {
-              field: isAbsolute(arg) ? 'url' : 'path',
-              operator: SEARCH_OPERATOR.CONTAINS,
-              value: arg
-            };
-          }
-        } else {
-          query = {
-            field: 'responseStatus',
-            operator: SEARCH_OPERATOR.EQUALS,
-            value: arg
-          };
-        }
-
+        var arg = args[0],
+            query = typeof arg === 'string' ? this._prepareQuery(arg) : {
+          field: 'responseStatus',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: arg
+        };
         return this.query(query);
       }
 
@@ -3288,26 +4154,41 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
   }, {
     key: "duplicates",
-    value: function duplicates() {
-      var duplicateRequests = [];
-      var requests = this.group('url', 'method', 'payload');
-      requests.groups.forEach(function (a) {
-        a.groups.forEach(function (b) {
-          if (b.items.length > 1) {
-            var _b$items$ = b.items[0],
-                url = _b$items$.url,
-                method = _b$items$.method,
-                payload = _b$items$.payload;
-            duplicateRequests.push({
-              url: url,
-              method: method,
-              payload: payload,
-              count: b.items.length
-            });
-          }
+    value: function duplicates(id) {
+      if (!id) {
+        var duplicateRequestIds = this._callsSummary.filter(function (r) {
+          return r.count > 1;
+        }).reduce(function (a, c) {
+          return [].concat(toConsumableArray_default()(a), toConsumableArray_default()(c.requests));
+        }, []).map(function (r) {
+          return r.id;
         });
-      });
-      return duplicateRequests;
+
+        return this.query([{
+          field: 'id',
+          operator: SEARCH_OPERATOR.IN,
+          value: duplicateRequestIds
+        }], ['pathQuery', 'method', 'payload']);
+      }
+
+      var request = this.get(id),
+          url = request.url,
+          method = request.method,
+          payload = request.payload;
+
+      var reqSummary = this._callsSummary.find(function (r) {
+        return r.url === url && r.method === method && r.payload === payload;
+      }),
+          requestIds = toConsumableArray_default()(reqSummary.requests);
+
+      requestIds.splice(requestIds.indexOf(request), 1);
+      return this.query([{
+        field: 'id',
+        operator: SEARCH_OPERATOR.IN,
+        value: requestIds.map(function (r) {
+          return r.id;
+        })
+      }]);
     }
     /**
      * Returns true if there are duplicate requests.
@@ -3317,7 +4198,73 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "hasDuplicates",
     value: function hasDuplicates() {
-      return this.duplicateRequests().length > 0;
+      return this.duplicates().length > 0;
+    }
+    /**
+     * Returns the related requests.
+     * @param id
+     * @return {Collection}
+     */
+
+  }, {
+    key: "related",
+    value: function related(id) {
+      var request = this.get(id);
+
+      if (!request) {
+        return null;
+      }
+
+      return this.query([{
+        field: 'url',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: request.url
+      }], ['url', 'method', 'payload']);
+    }
+    /**
+     * Returns the parameters that exceeded quota.
+     * @param request
+     * @return {object}
+     */
+
+  }, {
+    key: "exceededParameters",
+    value: function exceededParameters(request) {
+      return {
+        payload: request.payloadSize > this._quota.maxPayloadSize,
+        response: request.responseSize > this._quota.maxResponseSize,
+        duration: request.duration > this._quota.maxDuration
+      };
+    }
+    /**
+     * Sorts the requests based on the passed arguments and print them.
+     * @param {...*} sortArgs The sort parameters.
+     */
+
+  }, {
+    key: "sortPrint",
+    value: function sortPrint() {
+      this.print(this.sort.apply(this, arguments));
+    }
+    /**
+     * Groups the requests based on the passed fields and print them.
+     * @param {...string} groupArgs The group fields.
+     */
+
+  }, {
+    key: "groupPrint",
+    value: function groupPrint() {
+      this.print(this.group.apply(this, arguments));
+    }
+    /**
+     * Search requests based on the passed arguments. Also, sorts and groups.
+     * @param {...*} searchArgs The search arguments.
+     */
+
+  }, {
+    key: "queryPrint",
+    value: function queryPrint() {
+      this.print(this.query.apply(this, arguments));
     }
     /**
      * Prints the requests based on the passed arguments.
@@ -3344,29 +4291,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       if (typeof firstArg === 'string') {
-        var query;
-
-        if (REQUEST_TYPE.hasOwnProperty(firstArg)) {
-          query = {
-            field: 'method',
-            operator: SEARCH_OPERATOR.EQUALS,
-            value: firstArg
-          };
-        } else if (firstArg.indexOf('*') > -1) {
-          query = {
-            field: 'method',
-            operator: SEARCH_OPERATOR.MATCHES,
-            value: firstArg
-          };
-        } else {
-          query = {
-            field: isAbsolute(firstArg) ? 'url' : 'path',
-            operator: SEARCH_OPERATOR.CONTAINS,
-            value: firstArg
-          };
-        }
-
-        this._reporter.report(this.query(query));
+        this._reporter.report(this.query(this._prepareQuery(firstArg)));
 
         return;
       }
@@ -3385,11 +4310,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       if (Array.isArray(firstArg || secondArg || thirdArg)) {
-        var _query2 = args[0],
+        var query = args[0],
             groupArgs = args[1],
             sortArgs = args[2];
 
-        this._reporter.report(this.query(_query2, groupArgs, sortArgs));
+        this._reporter.report(this.query(query, groupArgs, sortArgs));
 
         return;
       }
@@ -3465,12 +4390,13 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Prints duplicate requests.
+     * @param {number} [id] Request id.
      */
 
   }, {
     key: "printDuplicates",
-    value: function printDuplicates() {
-      this._reporter.table(this.duplicates());
+    value: function printDuplicates(id) {
+      this._reporter.report(this.duplicates(id));
     }
     /**
      * Compares two requests and print the differences.
@@ -3488,18 +4414,17 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         return;
       }
 
-      var array = [];
-      var propsToCompare = ['url', 'method', 'payload', 'response', 'responseStatus'];
-      propsToCompare.forEach(function (prop) {
-        array.push({
-          field: prop,
-          request1: request1[prop],
-          request2: request2[prop],
-          same: JSON.stringify(request1[prop]) === JSON.stringify(request2[prop])
-        });
-      });
+      this._reporter.printComparison(request1, request2);
+    }
+    /**
+     * Print related requests.
+     * @param id
+     */
 
-      this._reporter.table(array);
+  }, {
+    key: "printRelated",
+    value: function printRelated(id) {
+      this._reporter.report(this.related(id));
     }
     /**
      * Displays the bar chart of responsive size.
@@ -3613,13 +4538,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
             return;
           }
 
-          _this3._setConfig(content.config);
+          _this3.setConfig(content.config);
 
           _this3._updateStorage();
 
           window.alert(Messages.IMPORTED_SUCCESS);
-
-          _this3._triggerEvent(SupervisorEvents.CONFIG_CHANGE, content.config);
         };
 
         reader.readAsText(fileInput.files[0]);
@@ -3691,7 +4614,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
         if (exportConfig) {
           content = {
-            config: this._getConfig()
+            config: this.getConfig()
           };
           fileName = "HttpSupervisorConfiguration.json";
         } else {
@@ -3740,30 +4663,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       var watchId = this._watchId();
 
       if (args.length === 1 && typeof args[0] === 'string') {
-        var arg = args[0];
-        var watchArgs;
-
-        if (REQUEST_TYPE.hasOwnProperty(arg)) {
-          watchArgs = {
-            field: 'method',
-            operator: SEARCH_OPERATOR.EQUALS,
-            value: arg
-          };
-        } else if (arg.indexOf('*') > -1) {
-          watchArgs = {
-            field: 'method',
-            operator: SEARCH_OPERATOR.MATCHES,
-            value: arg
-          };
-        } else {
-          watchArgs = {
-            field: isAbsolute(arg) ? 'url' : 'path',
-            operator: SEARCH_OPERATOR.CONTAINS,
-            value: arg
-          };
-        }
-
-        this._watches.set(watchId, watchArgs);
+        this._watches.set(watchId, this._prepareQuery(args[0]));
       } else {
         this._watches.set(watchId, args);
       }
@@ -3932,13 +4832,89 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         return false;
       }
 
-      if (this._exclude !== null && toConsumableArray_default()(this._exclude).filter(function (pattern) {
-        return matchesGlob(pattern, xhr[XHR_METADATA_KEY].url);
+      if (this._include !== null && toConsumableArray_default()(this._include).filter(function (pattern) {
+        return matchesGlob(pattern, url);
       }).length === 0) {
         return false;
       }
 
       return true;
+    }
+    /**
+     * Returns the configuration of supervisor.
+     * @returns {object}
+     */
+
+  }, {
+    key: "getConfig",
+    value: function getConfig() {
+      return {
+        include: this._include !== null ? toConsumableArray_default()(this._include) : null,
+        exclude: this._exclude !== null ? toConsumableArray_default()(this._exclude) : null,
+        silent: this._silent,
+        traceEachRequest: this._traceEachRequest,
+        alertOnError: this._alertOnError,
+        alertOnExceedQuota: this._alertOnExceedQuota,
+        alertOnRequestStart: this._alertOnRequestStart,
+        renderUI: this._renderUI,
+        groupBy: this._groupBy,
+        sortBy: this._sortBy,
+        keyboardEvents: this._keyboardEvents,
+        lockConsole: this._lockConsole,
+        usePerformance: this._usePerformance,
+        quota: this._quota,
+        watches: mapToJson(this._watches),
+        urlConfig: this._urlConfig
+      };
+    }
+    /**
+     * Sets the configuration of supervisor.
+     * @param config
+     */
+
+  }, {
+    key: "setConfig",
+    value: function setConfig(config) {
+      var include = config.include,
+          exclude = config.exclude,
+          renderUI = config.renderUI,
+          traceEachRequest = config.traceEachRequest,
+          alertOnError = config.alertOnError,
+          alertOnExceedQuota = config.alertOnExceedQuota,
+          alertOnRequestStart = config.alertOnRequestStart,
+          silent = config.silent,
+          quota = config.quota,
+          groupBy = config.groupBy,
+          sortBy = config.sortBy,
+          usePerformance = config.usePerformance,
+          monkeyPatchFetch = config.monkeyPatchFetch,
+          loadChart = config.loadChart,
+          keyboardEvents = config.keyboardEvents,
+          watches = config.watches,
+          persistConfig = config.persistConfig,
+          lockConsole = config.lockConsole,
+          urlConfig = config.urlConfig;
+      Array.isArray(include) && (this._include = new Set(include));
+      Array.isArray(exclude) && (this._exclude = new Set(exclude));
+      typeof renderUI === 'boolean' && (this._renderUI = renderUI);
+      typeof silent === 'boolean' && (this._silent = silent);
+      typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
+      typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
+      typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
+      typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
+      typeof_default()(quota) === 'object' && (this._quota = _objectSpread(_objectSpread({}, this._quota), quota));
+      Array.isArray(groupBy) && (this._groupBy = groupBy);
+      Array.isArray(sortBy) && (this._sortBy = sortBy);
+      typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
+      typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
+      typeof loadChart === 'boolean' && (this._loadChart = loadChart);
+      typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
+      typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
+      typeof_default()(watches) === 'object' && watches !== null && (this._watches = new Map(Object.entries(this._watches)));
+      typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
+      typeof_default()(urlConfig) === 'object' && urlConfig !== null && (this._urlConfig = urlConfig);
+
+      this._updateStorage();
     }
     /**
      * Render the UI.
@@ -4228,7 +5204,148 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       httpRequestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, httpRequestInfo, xhrOrResponse);
       httpRequestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, httpRequestInfo, xhrOrResponse);
 
+      this._setUrlMeta(httpRequestInfo);
+
       this._triggerEvent(SupervisorEvents.REQUEST_END, httpRequestInfo, xhrOrResponse);
+    }
+    /**
+     * Sets url metadata info to request object.
+     * @param request
+     * @private
+     */
+
+  }, {
+    key: "_setUrlMeta",
+    value: function _setUrlMeta(request) {
+      var pathDomain = request.pathDomain,
+          method = request.method;
+      var regex1 = new RegExp(/{([a-zA-Z0-9_$.]+)}/g),
+          regex2 = new RegExp(/[^{}]*(?=})/g);
+      var urlConfigUpdated = {};
+      Object.entries(this._urlConfig).forEach(function (_ref2) {
+        var _ref3 = slicedToArray_default()(_ref2, 2),
+            k = _ref3[0],
+            v = _ref3[1];
+
+        return Object.keys(v).forEach(function (u) {
+          return urlConfigUpdated["".concat(k).concat(u)] = v[u];
+        });
+      });
+      var urlParts = pathDomain.toLowerCase().split('/');
+      var matchedEntry = Object.keys(urlConfigUpdated).find(function (u) {
+        u = u.replace(regex1, '*').toLowerCase();
+        var uParts = u.split('/');
+        var isMatch = true;
+
+        for (var i = 0; i < urlParts.length; i++) {
+          if (uParts[i] !== '*' && uParts[i] !== urlParts[i]) {
+            isMatch = false;
+            break;
+          }
+        }
+
+        return isMatch;
+      });
+
+      if (!matchedEntry) {
+        return {};
+      }
+
+      var matchedValue = urlConfigUpdated[matchedEntry];
+
+      if (typeof matchedValue === 'string') {
+        request.label = matchedValue;
+      } else if (typeof_default()(matchedValue) === 'object' && matchedEntry !== null) {
+        request.category = matchedValue.category;
+        matchedValue.tags && (request.tags = new Set(matchedValue.tags));
+
+        if (matchedValue.hasOwnProperty(method)) {
+          var t = matchedValue[method];
+
+          if (typeof t === 'string') {
+            request.label = t;
+          } else {
+            request.label = t.label;
+            request.labelPending = t.labelPending;
+            request.errorLabel = t.error;
+          }
+        } else {
+          request.label = matchedValue.label;
+          request.labelPending = matchedValue.labelPending;
+          request.errorLabel = matchedValue.error;
+        }
+      }
+
+      var matchedEntryParts = matchedEntry.split('/'),
+          tokensObj = {};
+      matchedEntryParts.forEach(function (part, i) {
+        if (!regex1.test(part)) {
+          return;
+        }
+
+        var _part$match = part.match(regex2),
+            _part$match2 = slicedToArray_default()(_part$match, 1),
+            token = _part$match2[0];
+
+        tokensObj[token] = urlParts[i];
+      });
+
+      var replaceTokens = function replaceTokens(str) {
+        toConsumableArray_default()(str.matchAll(regex1)).forEach(function (_ref4) {
+          var _ref5 = slicedToArray_default()(_ref4, 2),
+              part1 = _ref5[0],
+              part2 = _ref5[1];
+
+          if (part2.startsWith('$response') && request.response) {
+            var val = readValue(request.response, part2.replace(/\$response./, ''));
+            val !== null && val !== undefined && (request.label = request.label.replaceAll(part1, val));
+          } else if (part2.startsWith('$payload') && request.payload) {
+            var _val = readValue(request.response, part2.replace(/\$payload./, ''));
+
+            _val !== null && _val !== undefined && (request.label = request.label.replaceAll(part1, _val));
+          } else if (part2.startsWith('$query')) {
+            var queryParams = new Map(new URLSearchParams(request.query));
+
+            var _val2 = queryParams.get(part2.replace(/\$query./, ''));
+
+            _val2 !== null && _val2 !== undefined && (request.label = request.label.replaceAll(part1, _val2));
+          } else {
+            tokensObj.hasOwnProperty(part2) && (request.label = request.label.replaceAll(part1, tokensObj[part2]));
+          }
+        });
+      };
+
+      request.label && replaceTokens(request.label);
+      request.labelPending && replaceTokens(request.labelPending);
+    }
+    /**
+     * Add the request to the summary request which helps to find duplicates.
+     * @param request
+     * @private
+     */
+
+  }, {
+    key: "_addToCallsSummary",
+    value: function _addToCallsSummary(request) {
+      var url = request.url,
+          method = request.method,
+          payload = request.payload,
+          reqSummary = this._callsSummary.find(function (r) {
+        return r.url === url && r.method === method && r.payload === payload;
+      });
+
+      if (reqSummary) {
+        reqSummary.count += 1;
+        reqSummary.requests.push(request);
+      } else {
+        this._callsSummary.push({
+          url: url,
+          method: method,
+          payload: payload,
+          count: 1,
+          requests: [request]
+        });
+      }
     }
     /**
      * Increments the call counter.
@@ -4266,6 +5383,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._requests.add(request);
 
       this._activeSessionId && this._sessions.get(this._activeSessionId).add(request);
+
+      this._setUrlMeta(request);
+
+      this._addToCallsSummary(request);
     }
     /**
      * Returns true if `performance.getEntriesByType` is supported.
@@ -4337,80 +5458,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         return;
       }
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._getConfig()));
-    }
-    /**
-     * Returns the configuration of supervisor.
-     * @private
-     */
-
-  }, {
-    key: "_getConfig",
-    value: function _getConfig() {
-      return {
-        include: this._include !== null ? toConsumableArray_default()(this._include) : null,
-        exclude: this._exclude !== null ? toConsumableArray_default()(this._exclude) : null,
-        silent: this._silent,
-        traceEachRequest: this._traceEachRequest,
-        alertOnError: this._alertOnError,
-        alertOnExceedQuota: this._alertOnExceedQuota,
-        alertOnRequestStart: this._alertOnRequestStart,
-        renderUI: this._renderUI,
-        groupBy: this._groupBy,
-        sortBy: this._sortBy,
-        keyboardEvents: this._keyboardEvents,
-        lockConsole: this._lockConsole,
-        usePerformance: this._usePerformance,
-        quota: this._quota,
-        watches: JSON.stringify(toConsumableArray_default()(this._watches.entries())),
-        sessions: JSON.stringify(toConsumableArray_default()(this._sessions.entries()))
-      };
-    }
-    /**
-     * Sets the configuration of supervisor.
-     * @param config
-     * @private
-     */
-
-  }, {
-    key: "_setConfig",
-    value: function _setConfig(config) {
-      var include = config.include,
-          exclude = config.exclude,
-          renderUI = config.renderUI,
-          traceEachRequest = config.traceEachRequest,
-          alertOnError = config.alertOnError,
-          alertOnExceedQuota = config.alertOnExceedQuota,
-          alertOnRequestStart = config.alertOnRequestStart,
-          silent = config.silent,
-          quota = config.quota,
-          groupBy = config.groupBy,
-          sortBy = config.sortBy,
-          usePerformance = config.usePerformance,
-          monkeyPatchFetch = config.monkeyPatchFetch,
-          loadChart = config.loadChart,
-          keyboardEvents = config.keyboardEvents,
-          watches = config.watches,
-          persistConfig = config.persistConfig,
-          lockConsole = config.lockConsole;
-      Array.isArray(include) && (this._include = new Set(include));
-      Array.isArray(exclude) && (this._exclude = new Set(exclude));
-      typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-      typeof silent === 'boolean' && (this._silent = silent);
-      typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
-      typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
-      typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
-      typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
-      typeof_default()(quota) === 'object' && (this._quota = _objectSpread(_objectSpread({}, this._quota), quota));
-      Array.isArray(groupBy) && (this._groupBy = groupBy);
-      Array.isArray(sortBy) && (this._sortBy = sortBy);
-      typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
-      typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-      typeof loadChart === 'boolean' && (this._loadChart = loadChart);
-      typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
-      typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
-      Array.isArray(watches) && (this._watches = new Map(this._watches));
-      typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.getConfig()));
+      [SupervisorStatus.Idle, SupervisorStatus.Busy].has(this._status) && this._triggerEvent(SupervisorEvents.CONFIG_CHANGE, this.getConfig());
     }
     /**
      * Returns `true` if the request matches the arguments.
@@ -4420,6 +5469,50 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     key: "_matchWatch",
     value: function _matchWatch(argsArray, request) {
       return matchCriteria(argsArray, request);
+    }
+    /**
+     * Prepares query if input is string.
+     * @param str
+     */
+
+  }, {
+    key: "_prepareQuery",
+    value: function _prepareQuery(str) {
+      var query;
+
+      if (REQUEST_TYPE.hasOwnProperty(str)) {
+        query = {
+          field: 'method',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: str
+        };
+      } else if (str.toLowerCase().startsWith('label:')) {
+        query = {
+          field: 'label',
+          operator: SEARCH_OPERATOR.CONTAINS,
+          value: str.replace(/label:/, '')
+        };
+      } else if (str.startsWith('category:')) {
+        query = {
+          field: 'category',
+          operator: SEARCH_OPERATOR.CONTAINS,
+          value: str.replace(/category:/, '')
+        };
+      } else if (str.indexOf('*') > -1) {
+        query = {
+          field: 'url',
+          operator: SEARCH_OPERATOR.MATCHES,
+          value: str
+        };
+      } else {
+        query = {
+          field: isAbsolute(str) ? 'url' : 'path',
+          operator: SEARCH_OPERATOR.CONTAINS,
+          value: str
+        };
+      }
+
+      return query;
     }
   }]);
 
@@ -4448,7 +5541,7 @@ function http_supervisor_widget_isNativeReflectConstruct() { if (typeof Reflect 
  */
 
 var template = document.createElement('template');
-template.innerHTML = "\n<style>\n  :host {\n    --color: #eee;\n    --bg-color: #333;\n    --hover-color: #5ab7fa;\n    --disabled-color: #ccc;\n    --border-color: #666;\n    --font-size: 12px;\n    --index: 20000;\n    --popover-width: 350px;\n    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);\n    color: var(--color);\n    font-family: Arial, \"Helvetica Neue\", Helvetica, sans-serif;\n  }\n\n  .http-supervisor-container {\n    position: fixed;\n    top: 0;\n    right: calc(50% - 91px);\n    z-index: var(--index);\n    display: flex;\n    justify-content: center;\n    align-items:center;\n    background-color: var(--bg-color);\n    border: solid 1px var(--border-color);\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n    font-size: var(--font-size);\n    box-sizing: border-box;\n    color: var(--font-color);\n    box-shadow: var(--box-shadow);\n  }\n\n   button, button:active, button:focus, button:hover, span {\n    width: 30px;\n    height: 26px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    box-sizing: border-box;\n    background: none;\n    box-shadow: none;\n    outline: none;\n  }\n\n  button:not(:disabled) {\n    cursor:pointer;\n  }\n\n  button svg {\n    color: var(--color);\n  }\n\n  button:disabled svg {\n    color: var(--disabled-color);\n  }\n\n  button:not(:disabled):hover svg {\n    color: var(--hover-color);\n  }\n\n  button, span, button:hover {\n    border-right: solid 1px var(--border-color);\n  }\n\n  .counts-label {\n    width: auto;\n    padding: 0 8px;\n  }\n\n  .popover-overlay {\n    position: fixed;\n    top: 0;\n    left: 0;\n    bottom: 0;\n    right: 0;\n    content: ' ';\n    display: none;\n  }\n\n  .popover-content {\n    position: fixed;\n    top: 38px;\n    width: var(--popover-width);\n    background-color: var(--bg-color);\n    right: calc(50% - 216px);\n    border-radius: 6px;\n    padding: 20px;\n    font-size: var(--font-size);\n    box-shadow: var(--box-shadow);\n    z-index: var(--index);\n    display: none;\n  }\n\n  .popover-content .popover-close {\n    position: absolute;\n    right: 8px;\n    top: 8px;\n  }\n\n  .active {\n    display: block;\n  }\n\n  .popover-content:before {\n    position: absolute;\n    z-index: -1;\n    content: \"\";\n    right: calc(50% - 65px);\n    top: -10px;\n    border-style: solid;\n    border-width: 0 10px 10px 10px;\n    border-color: transparent transparent var(--bg-color) transparent;\n  }\n\n  .popover-content input[type=\"number\"], .popover-content input[type=\"text\"] {\n    background-color: transparent;\n    color: var(--color);\n    outline: none;\n    border: none;\n    border-bottom: solid 1px var(--border-color);\n    font-size: var(--font-size);\n    width: 60px;\n  }\n\n  .popover-content form {\n    margin-bottom: 0;\n  }\n\n  .popover-content form div {\n    display: flex;\n    align-items: center;\n  }\n\n  .popover-content h4 {\n    margin: 0;\n    margin-bottom: 8px;\n    color: var(--disabled-color);\n    text-transform: uppercase;\n    font-size: 8px;\n    letter-spacing: 1px;\n  }\n\n  .popover-content fieldset {\n    display: grid;\n    grid-template-columns: 50% 50%;\n    grid-column-gap: 5px;\n    grid-row-gap: 4px;\n    border: dashed 1px var(--border-color);\n    margin-bottom: 15px;\n    padding: 6px 12px;\n  }\n\n  .popover-content .first div label {\n    width: 140px;\n  }\n\n  .popover-content .second div label {\n    width: 80px;\n  }\n\n  .popover-content .third {\n    display: flex;\n    border: none;\n    padding: 0;\n  }\n\n  .popover-content .third button {\n    border: solid 1px var(--border-color);\n  }\n\n  .popover-content .fourth {\n    margin-bottom: 0;\n    display: none;\n  }\n\n  .popover-content .fourth.active {\n    display: grid;\n  }\n  \n  .fourth .span2 {\n    grid-column: 1 / span 2;\n  }\n\n  .advanced-container {\n    display: flex;\n    align-items: center;\n  }\n\n  .advanced-container svg {\n    width: 10px;\n    height: 10px;\n    position: relative;\n    top: -5px;\n    margin-left: 5px;\n  }\n</style>\n<div class=\"http-supervisor-container\">\n   <button>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"currentColor\" class=\"bi bi-play\" viewBox=\"0 0 16 16\">\n       <path d=\"M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z\"/>\n    </svg>\n   </button>\n   <button style=\"display: none;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stop-circle\" viewBox=\"0 0 16 16\">\n        <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"/>\n        <path d=\"M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z\"/>\n      </svg>\n   </button>\n   <button disabled>\n    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-eye\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z\"/>\n      <path d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>\n    </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">\n        <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>\n        <path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>\n      </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n        <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n        <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n      </svg>\n  </button>\n   <span class=\"counts-label\">\n     0 / 0\n   </span>\n   <button style=\"border:none;\">\n     <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-three-dots-vertical\" viewBox=\"0 0 16 16\">\n     <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n   </svg>\n   </button>\n</div>\n<div class=\"popover\">\n  <div class=\"popover-overlay\"></div>\n  <div class=\"popover-content\">\n    <a href=\"#\" class=\"popover-close\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"#ccc\" class=\"bi bi-x-circle-fill\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z\"/>\n    </svg>\n    </a>\n    <form>\n      <h4>Options</h4>\n      <fieldset class=\"first\">\n        <div>\n          <label>Silent:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Trace Request:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Error:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Quota Exceed:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Request Start:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Lock Console:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n\n      <h4>Quota</h4>\n      <fieldset class=\"second\">\n        <div>\n          <label>Payload:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Response:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Duration:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n      </fieldset>\n\n      <h4>Visualization</h4>\n      <fieldset class=\"third\">\n        <button title=\"Response Size Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size And Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size Distribution\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pie-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z\"/>\n            </svg>\n        </button>\n      </fieldset>\n\n      <div class=\"advanced-container\">\n        <h4>Advanced</h4>\n        <svg style=\"cursor:pointer\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-down expand\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n          <path fill-rule=\"evenodd\" d=\"M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n        </svg>\n        <svg style=\"cursor:pointer; display: none\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-up collapse\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z\"/>\n          <path fill-rule=\"evenodd\" d=\"M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z\"/>\n        </svg>\n      </div>\n\n      <fieldset class=\"fourth\">\n        <div class=\"span2\">\n          <label>Include:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div class=\"span2\">\n          <label>Exclude:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div>\n          <label>Keyboard Events:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Persist Config:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Use Performance:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n    </form>\n  </div>\n</div>\n";
+template.innerHTML = "\n<style>\n  :host {\n    --color: #eee;\n    --bg-color: #333;\n    --hover-color: #5ab7fa;\n    --disabled-color: #ccc;\n    --border-color: #666;\n    --font-size: 12px;\n    --index: 20000;\n    --popover-width: 350px;\n    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);\n    color: var(--color);\n    font-family: Arial, \"Helvetica Neue\", Helvetica, sans-serif;\n  }\n\n  .http-supervisor-container {\n    position: fixed;\n    top: 0;\n    right: calc(50% - 91px);\n    z-index: var(--index);\n    display: flex;\n    justify-content: center;\n    align-items:center;\n    background-color: var(--bg-color);\n    border: solid 1px var(--border-color);\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n    font-size: var(--font-size);\n    box-sizing: border-box;\n    color: var(--font-color);\n    box-shadow: var(--box-shadow);\n  }\n\n   button, button:active, button:focus, button:hover, span {\n    width: 30px;\n    height: 26px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    box-sizing: border-box;\n    background: none;\n    box-shadow: none;\n    outline: none;\n  }\n\n  button:not(:disabled) {\n    cursor:pointer;\n  }\n\n  button svg {\n    color: var(--color);\n  }\n\n  button:disabled svg {\n    color: var(--disabled-color);\n  }\n\n  button:not(:disabled):hover svg {\n    color: var(--hover-color);\n  }\n\n  button, span, button:hover {\n    border-right: solid 1px var(--border-color);\n  }\n\n  .counts-label {\n    width: auto;\n    padding: 0 8px;\n  }\n\n  .popover-overlay {\n    position: fixed;\n    top: 0;\n    left: 0;\n    bottom: 0;\n    right: 0;\n    content: ' ';\n    display: none;\n  }\n\n  .popover-content {\n    position: fixed;\n    top: 38px;\n    width: var(--popover-width);\n    background-color: var(--bg-color);\n    right: calc(50% - 216px);\n    border-radius: 6px;\n    padding: 20px;\n    font-size: var(--font-size);\n    box-shadow: var(--box-shadow);\n    z-index: var(--index);\n    display: none;\n  }\n\n  .popover-content .popover-close {\n    position: absolute;\n    right: 8px;\n    top: 8px;\n  }\n\n  .active {\n    display: block;\n  }\n\n  .popover-content:before {\n    position: absolute;\n    z-index: -1;\n    content: \"\";\n    right: calc(50% - 65px);\n    top: -10px;\n    border-style: solid;\n    border-width: 0 10px 10px 10px;\n    border-color: transparent transparent var(--bg-color) transparent;\n  }\n\n  .popover-content input[type=\"number\"], .popover-content input[type=\"text\"] {\n    background-color: transparent;\n    color: var(--color);\n    outline: none;\n    border: none;\n    border-bottom: solid 1px var(--border-color);\n    font-size: var(--font-size);\n    width: 60px;\n  }\n\n  .popover-content form {\n    margin-bottom: 0;\n  }\n\n  .popover-content form div {\n    display: flex;\n    align-items: center;\n  }\n\n  .popover-content h4 {\n    margin: 0;\n    margin-bottom: 8px;\n    color: var(--disabled-color);\n    text-transform: uppercase;\n    font-size: 8px;\n    letter-spacing: 1px;\n  }\n\n  .popover-content fieldset {\n    display: grid;\n    grid-template-columns: 50% 50%;\n    grid-column-gap: 5px;\n    grid-row-gap: 4px;\n    border: dashed 1px var(--border-color);\n    margin-bottom: 15px;\n    padding: 6px 12px;\n  }\n\n  .popover-content .first div label {\n    width: 140px;\n  }\n\n  .popover-content .second div label {\n    width: 80px;\n  }\n\n  .popover-content .third {\n    display: flex;\n    border: none;\n    padding: 0;\n  }\n\n  .popover-content button {\n    border: solid 1px var(--border-color);\n  }\n\n  .popover-content .fourth {\n    margin-bottom: 0;\n    display: none;\n  }\n\n  .popover-content .fourth.active {\n    display: grid;\n  }\n  \n  .fourth .span2 {\n    grid-column: 1 / span 2;\n  }\n\n  .advanced-container {\n    display: flex;\n    align-items: center;\n  }\n\n  .advanced-container svg {\n    width: 10px;\n    height: 10px;\n    position: relative;\n    top: -5px;\n    margin-left: 5px;\n  }\n</style>\n<div class=\"http-supervisor-container\">\n   <button>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"currentColor\" class=\"bi bi-play\" viewBox=\"0 0 16 16\">\n       <path d=\"M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z\"/>\n    </svg>\n   </button>\n   <button style=\"display: none;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stop-circle\" viewBox=\"0 0 16 16\">\n        <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"/>\n        <path d=\"M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z\"/>\n      </svg>\n   </button>\n   <button disabled>\n    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-eye\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z\"/>\n      <path d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>\n    </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">\n        <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>\n        <path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>\n      </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n        <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n        <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n      </svg>\n  </button>\n   <span class=\"counts-label\">\n     0 / 0\n   </span>\n   <button style=\"border:none;\">\n     <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-three-dots-vertical\" viewBox=\"0 0 16 16\">\n     <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n   </svg>\n   </button>\n</div>\n<div class=\"popover\">\n  <div class=\"popover-overlay\"></div>\n  <div class=\"popover-content\">\n    <a href=\"#\" class=\"popover-close\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"#ccc\" class=\"bi bi-x-circle-fill\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z\"/>\n    </svg>\n    </a>\n    <form>\n      <h4>Options</h4>\n      <fieldset class=\"first\">\n        <div>\n          <label>Silent:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Trace Request:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Error:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Quota Exceed:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Request Start:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Lock Console:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n\n      <h4>Quota</h4>\n      <fieldset class=\"second\">\n        <div>\n          <label>Payload:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Response:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Duration:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n      </fieldset>\n\n      <h4>Visualization</h4>\n      <fieldset class=\"third\">\n        <button title=\"Response Size Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size And Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size Distribution\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pie-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z\"/>\n            </svg>\n        </button>\n      </fieldset>\n\n      <div class=\"advanced-container\">\n        <h4>Advanced</h4>\n        <svg style=\"cursor:pointer\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-down expand\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n          <path fill-rule=\"evenodd\" d=\"M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n        </svg>\n        <svg style=\"cursor:pointer; display: none\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-up collapse\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z\"/>\n          <path fill-rule=\"evenodd\" d=\"M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z\"/>\n        </svg>\n      </div>\n\n      <fieldset class=\"fourth\">\n        <div class=\"span2\">\n          <label>Include:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div class=\"span2\">\n          <label>Exclude:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div>\n          <label>Keyboard Events:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Persist Config:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Use Performance:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div style=\"grid-column: span 2;\">\n          <button title=\"Import Configuration\" style=\"margin-right: 5px;\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-down\" viewBox=\"0 0 16 16\">\n              <path fill-rule=\"evenodd\" d=\"M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z\"/>\n              <path fill-rule=\"evenodd\" d=\"M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z\"/>\n            </svg>\n          </button>\n          <button title=\"Export Configuration\" style=\"margin-right: 5px;\">\n             <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n              <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n              <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n            </svg>\n          </button>\n          <button title=\"Apply Changes\" style=\"margin-right: 5px;\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-check2\" viewBox=\"0 0 16 16\">\n              <path d=\"M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z\"/>\n            </svg>\n          </button>\n          <button title=\"Reset Changes\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-x\" viewBox=\"0 0 16 16\">\n              <path d=\"M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z\"/>\n            </svg>\n          </button>\n        </div>\n        <div style=\"grid-column: span 2;\">\n          <textarea rows=\"10\" style=\"width: 100%;resize: vertical; font-size: 0.7rem;border-radius: 5px;\"></textarea>\n        </div>\n      </fieldset>\n    </form>\n  </div>\n</div>\n";
 /**
  * The wrapper class that controls the supervisor web component.
  */
@@ -4693,7 +5786,19 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
       });
 
       this._el.subscribe('alertRequestStartChange', function (ctrl) {
-        _this._httpSupervisor.alertOnRequestStart = ctrl.checked;
+        return _this._httpSupervisor.alertOnRequestStart = ctrl.checked;
+      });
+
+      this._el.subscribe('importConfig', function () {
+        return _this._httpSupervisor["import"]();
+      });
+
+      this._el.subscribe('exportConfig', function () {
+        return _this._httpSupervisor["export"]('json', true);
+      });
+
+      this._el.subscribe('applyConfig', function () {
+        return _this._httpSupervisor.setConfig(_this._el.config);
       });
 
       if (status === SupervisorStatus.Busy) {
@@ -4737,7 +5842,8 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
         persistConfig: persistConfig,
         lockConsole: lockConsole,
         silent: silent,
-        alertOnRequestStart: alertOnRequestStart
+        alertOnRequestStart: alertOnRequestStart,
+        config: this._httpSupervisor.getConfig()
       });
     }
     /**
@@ -4800,8 +5906,6 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
   var _super = http_supervisor_widget_createSuper(HtmlSupervisorWidgetElement);
 
-  // Panel Controls
-  // Popover Controls
   function HtmlSupervisorWidgetElement() {
     var _this2;
 
@@ -4869,6 +5973,18 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_alertRequestStartCheckbox", null);
 
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_importConfigButton", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_exportConfigButton", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_applyConfigButton", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_resetConfigButton", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_configTextArea", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_config", null);
+
     _this2._handleKeyPress = _this2._handleKeyPress.bind(assertThisInitialized_default()(_this2));
 
     var shadowRoot = _this2.attachShadow({
@@ -4878,7 +5994,7 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
     shadowRoot.appendChild(template.content.cloneNode(true));
     _this2._popover = shadowRoot.querySelector('.popover-content');
 
-    var _ref = [].concat(toConsumableArray_default()(Array.from(shadowRoot.querySelector('.http-supervisor-container').children)), toConsumableArray_default()(Array.from(_this2._popover.querySelectorAll('input,button'))));
+    var _ref = [].concat(toConsumableArray_default()(Array.from(shadowRoot.querySelector('.http-supervisor-container').children)), toConsumableArray_default()(Array.from(_this2._popover.querySelectorAll('input,button,textarea'))));
 
     _this2._startButton = _ref[0];
     _this2._stopButton = _ref[1];
@@ -4905,6 +6021,11 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
     _this2._keyboardEventsCheckbox = _ref[22];
     _this2._persistConfigCheckbox = _ref[23];
     _this2._usePerformanceAPICheckbox = _ref[24];
+    _this2._importConfigButton = _ref[25];
+    _this2._exportConfigButton = _ref[26];
+    _this2._applyConfigButton = _ref[27];
+    _this2._resetConfigButton = _ref[28];
+    _this2._configTextArea = _ref[29];
     _this2._eventsAndControls = {
       start: _this2._startButton,
       stop: _this2._stopButton,
@@ -4928,7 +6049,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       persistConfigChange: _this2._persistConfigCheckbox,
       lockConsoleChange: _this2._lockConsoleCheckbox,
       silentChange: _this2._silentCheckbox,
-      alertRequestStartChange: _this2._alertRequestStartCheckbox
+      alertRequestStartChange: _this2._alertRequestStartCheckbox,
+      importConfig: _this2._importConfigButton,
+      exportConfig: _this2._exportConfigButton,
+      applyConfig: _this2._applyConfigButton
     };
     _this2._expandButton = shadowRoot.querySelector('.expand');
     _this2._collapseButton = shadowRoot.querySelector('.collapse');
@@ -4980,10 +6104,23 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       }
     });
 
+    _this2._resetConfigButton.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      _this2._configTextArea.value = _this2._config;
+    });
+
     return _this2;
   }
 
   createClass_default()(HtmlSupervisorWidgetElement, [{
+    key: "config",
+    get: // Panel Controls
+    // Popover Controls
+    function get() {
+      return this._config;
+    }
+  }, {
     key: "setState",
     value: function setState(_ref2) {
       var include = _ref2.include,
@@ -4997,7 +6134,8 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
           persistConfig = _ref2.persistConfig,
           lockConsole = _ref2.lockConsole,
           silent = _ref2.silent,
-          alertOnRequestStart = _ref2.alertOnRequestStart;
+          alertOnRequestStart = _ref2.alertOnRequestStart,
+          config = _ref2.config;
       Array.isArray(include) && (this._includeTextbox.value = include.join(','));
       Array.isArray(exclude) && (this._excludeTextbox.value = exclude.join(','));
       this._traceEachRequestCheckbox.checked = traceEachRequest;
@@ -5016,6 +6154,7 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       [this._traceEachRequestCheckbox, this._alertOnErrorCheckbox, this._alertOnQuotaExceedCheckbox, this._alertRequestStartCheckbox].forEach(function (c) {
         return c.disabled = silent;
       });
+      this._configTextArea.value = this._config = JSON.stringify(config, null, 2);
     }
   }, {
     key: "subscribe",
@@ -5027,6 +6166,11 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       ctrl.addEventListener(evtName, function (e) {
         e.preventDefault();
         e.stopPropagation();
+
+        if (evt === 'applyConfig') {
+          _this3._config = JSON.parse(_this3._configTextArea.value);
+        }
+
         handler(ctrl, _this3);
       });
     }
@@ -5046,7 +6190,6 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
     key: "updateCalls",
     value: function updateCalls(count1, count2) {
       this._callsCountLabel.innerText = "".concat(count1, " / ").concat(count2);
-      ;
     }
   }, {
     key: "logIsEmpty",
@@ -5141,17 +6284,31 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 if (!window.customElements.get('http-supervisor-widget')) {
   window.customElements.define('http-supervisor-widget', http_supervisor_widget_HtmlSupervisorWidgetElement);
 }
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
-var slicedToArray = __webpack_require__(14);
-var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/asyncToGenerator.js
+var asyncToGenerator = __webpack_require__(12);
+var asyncToGenerator_default = /*#__PURE__*/__webpack_require__.n(asyncToGenerator);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/regenerator/index.js
+var regenerator = __webpack_require__(7);
+var regenerator_default = /*#__PURE__*/__webpack_require__.n(regenerator);
 
 // EXTERNAL MODULE: ./src/console-snapshot.js
-var console_snapshot = __webpack_require__(23);
+var console_snapshot = __webpack_require__(26);
 
 // CONCATENATED MODULE: ./src/console-reporter.js
 
 
 
+
+
+
+
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 
 
@@ -5164,6 +6321,18 @@ var console_snapshot = __webpack_require__(23);
  */
 
 var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
+  /**
+   * Http supervisor.
+   * @type {HttpSupervisor}
+   * @private
+   */
+
+  /**
+   * True to lock console.
+   * @type {boolean}
+   * @private
+   */
+
   /**
    * Canvas element used for chart generation.
    * @type {HTMLCanvasElement}
@@ -5195,10 +6364,24 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
    */
 
   /**
+   * True to enable slow writing to console to avoid choking it.
+   * @type {boolean}
+   * @private
+   */
+
+  /**
+   * Number of ms to wait before writing the object to console.
+   * @type {number}
+   * @private
+   */
+
+  /**
    * Ctor.
    */
   function ConsoleReporter() {
     classCallCheck_default()(this, ConsoleReporter);
+
+    defineProperty_default()(this, "_supervisor", null);
 
     defineProperty_default()(this, "_lockConsole", true);
 
@@ -5212,6 +6395,10 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_originalConsole", window.console);
 
+    defineProperty_default()(this, "_delayWrite", true);
+
+    defineProperty_default()(this, "_writeDelay", 50);
+
     this._initChart = this._initChart.bind(this);
   }
   /**
@@ -5223,6 +6410,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   createClass_default()(ConsoleReporter, [{
     key: "init",
     value: function init(httpSupervisor) {
+      this._supervisor = httpSupervisor;
       var lockConsole = httpSupervisor.lockConsole,
           loadChart = httpSupervisor.loadChart;
       this._lockConsole = lockConsole;
@@ -5242,53 +6430,155 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
   }, {
     key: "report",
-    value: function report(arg1, arg2) {
-      if (arguments.length === 1) {
-        if (!arg1) {
-          this.print(Messages.NO_REQUEST, 'inherit', true);
-          return;
-        } else if (arg1 instanceof http_request_info_HttpRequestInfo || arg1 instanceof collection_Collection) {
-          if (arg1 instanceof collection_Collection && !arg1.hasGroups && !arg1.hasItems) {
-            this.print(Messages.NO_REQUESTS, 'inherit', true);
-            return;
+    value: function () {
+      var _report = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee(arg1, arg2) {
+        var _args = arguments;
+        return regenerator_default.a.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                if (!(_args.length === 1)) {
+                  _context.next = 17;
+                  break;
+                }
+
+                if (arg1) {
+                  _context.next = 6;
+                  break;
+                }
+
+                this.print(Messages.NO_REQUEST, 'inherit', true);
+                return _context.abrupt("return");
+
+              case 6:
+                if (!(arg1 instanceof http_request_info_HttpRequestInfo || arg1 instanceof collection_Collection)) {
+                  _context.next = 14;
+                  break;
+                }
+
+                if (!(arg1 instanceof collection_Collection && !arg1.hasGroups && !arg1.hasItems)) {
+                  _context.next = 10;
+                  break;
+                }
+
+                this.print(Messages.NO_REQUESTS, 'inherit', true);
+                return _context.abrupt("return");
+
+              case 10:
+                _context.next = 12;
+                return this._reportObject(arg1.clone());
+
+              case 12:
+                _context.next = 16;
+                break;
+
+              case 14:
+                this.printTitle(Messages.METRICS_SUMMARY);
+
+                this._reportStats(arg1);
+
+              case 16:
+                return _context.abrupt("return");
+
+              case 17:
+                if (!(_args.length === 2 && arg1 instanceof collection_Collection)) {
+                  _context.next = 25;
+                  break;
+                }
+
+                if (!(!arg1.hasGroups && !arg1.hasItems)) {
+                  _context.next = 21;
+                  break;
+                }
+
+                this.print(Messages.NO_REQUESTS, 'inherit', true);
+                return _context.abrupt("return");
+
+              case 21:
+                this.printTitle(Messages.REQUESTS_INFO);
+                _context.next = 24;
+                return this._reportObject(arg1.clone());
+
+              case 24:
+                return _context.abrupt("return");
+
+              case 25:
+                if (!(!arg2.hasGroups && !arg2.hasItems)) {
+                  _context.next = 28;
+                  break;
+                }
+
+                this.print(Messages.NO_REQUESTS, 'inherit', true);
+                return _context.abrupt("return");
+
+              case 28:
+                this.printTitle(Messages.METRICS_SUMMARY);
+
+                this._reportStats(arg1);
+
+                this["break"]();
+                this.printTitle(Messages.REQUESTS_INFO);
+                _context.next = 34;
+                return this._reportObject(arg2.clone());
+
+              case 34:
+              case "end":
+                return _context.stop();
+            }
           }
+        }, _callee, this);
+      }));
 
-          this._reportObject(arg1);
-        } else {
-          this.printTitle(Messages.METRICS_SUMMARY);
-
-          this._reportStats(arg1);
-        }
-
-        return;
+      function report(_x, _x2) {
+        return _report.apply(this, arguments);
       }
 
-      if (arguments.length === 2 && arg1 instanceof collection_Collection) {
-        if (!arg1.hasGroups && !arg1.hasItems) {
-          this.print(Messages.NO_REQUESTS, 'inherit', true);
-          return;
-        }
+      return report;
+    }()
+    /**
+     * Compare the requests and print the results.
+     * @param req1
+     * @param req2
+     */
 
-        this.printTitle(Messages.REQUESTS_INFO);
-
-        this._reportObject(arg1, arg2);
-
-        return;
-      }
-
-      if (!arg2.hasGroups && !arg2.hasItems) {
-        this.print(Messages.NO_REQUESTS, 'inherit', true);
-        return;
-      }
-
-      this.printTitle(Messages.METRICS_SUMMARY);
-
-      this._reportStats(arg1);
-
+  }, {
+    key: "printComparison",
+    value: function printComparison(req1, req2) {
+      this.printTitle("Comparing Requests ".concat(req1.id, " and ").concat(req2.id));
+      this.printKeyValue('Property', 'Url');
+      this.printKeyValue('Request 1', req1.url);
+      this.printKeyValue('Request 2', req2.url);
+      this.printKeyValue('Same', req1.url === req2.url ? 'Yes' : 'No');
       this["break"]();
-      this.printTitle(Messages.REQUESTS_INFO);
-
-      this._reportObject(arg2);
+      this.printKeyValue('Property', 'Payload');
+      this.printKeyValue('Request 1', req1.payload || '-');
+      this.printKeyValue('Request 2', req2.payload || '-');
+      this.printKeyValue('Same', JSON.stringify(req1.payload) === JSON.stringify(req2.payload) ? 'Yes' : 'No');
+      this["break"]();
+      this.printKeyValue('Property', 'Payload Size');
+      this.printKeyValue('Request 1', req1.payloadSize || '-');
+      this.printKeyValue('Request 2', req2.payloadSize || '-');
+      this.printKeyValue('Same', req1.payloadSize === req2.payloadSize ? 'Yes' : 'No');
+      this["break"]();
+      this.printKeyValue('Property', 'Response');
+      this.printKeyValue('Request 1', req1.response || '-');
+      this.printKeyValue('Request 2', req2.response || '-');
+      this.printKeyValue('Same', JSON.stringify(req1.response) === JSON.stringify(req2.response) ? 'Yes' : 'No');
+      this["break"]();
+      this.printKeyValue('Property', 'Response Size');
+      this.printKeyValue('Request 1', req1.responseSize || '-');
+      this.printKeyValue('Request 2', req2.responseSize || '-');
+      this.printKeyValue('Same', req1.responseSize === req2.responseSize ? 'Yes' : 'No');
+      this["break"]();
+      this.printKeyValue('Property', 'Status');
+      this.printKeyValue('Request 1', req1.responseStatus);
+      this.printKeyValue('Request 2', req2.responseStatus);
+      this.printKeyValue('Same', req1.responseStatus === req2.responseStatus ? 'Yes' : 'No');
+      this["break"]();
+      this.printKeyValue('Property', 'Duration');
+      this.printKeyValue('Request 1', req1.duration);
+      this.printKeyValue('Request 2', req2.duration);
+      this.printKeyValue('Same', req1.duration === req2.duration ? 'Yes' : 'No');
     }
     /**
      * Create chart in canvans and render in console.
@@ -5490,8 +6780,8 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "printTitle",
     value: function printTitle(message) {
-      var bgColor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Colors.GRAY;
-      this.print(message, 'inherit', true, "padding: 5px 250px; background-color: ".concat(bgColor, "; color: ").concat(Colors.WHITE, ";margin-bottom: 10px;"));
+      var bgColor = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Colors.DARK_BLUE;
+      this.print(message, 'inherit', true, "padding: 5px 250px; background-color: #237aa6; color: ".concat(Colors.WHITE, ";margin-bottom: 10px;border-radius:3px;"));
     }
     /**
      * Prints row.
@@ -5507,22 +6797,28 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
      * Prints field name and value.
      * @param head
      * @param value
+     * @param titleWidth
+     * @param valueColor
      */
 
   }, {
     key: "printKeyValue",
     value: function printKeyValue(head, value) {
+      var titleWidth = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 30;
+      var valueColor = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'inherit';
+
       if (value !== null && typeof_default()(value) === 'object') {
-        this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ":"), "font-weight: bold; color: inherit;", value);
+        this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, titleWidth), ":"), "font-weight: bold; color: inherit;", value);
 
         return;
       }
 
-      this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, 30), ": %c").concat(value), "font-weight: bold; color: inherit;", "color: inherit;");
+      this._invokeConsole('log', "%c".concat(this._appendTextWithSpaces(head, titleWidth), ": %c").concat(value), "font-weight: bold; color: inherit;", "color: ".concat(valueColor, ";"));
     }
     /**
      * Prints many fields and values in single row.
      * @param obj
+     * @param titleWidth
      */
 
   }, {
@@ -5530,6 +6826,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     value: function printKeyValueMany(obj) {
       var _this2 = this;
 
+      var titleWidth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 30;
       var msgs = [];
       var styles = [];
       Object.entries(obj).forEach(function (_ref, index) {
@@ -5537,7 +6834,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             title = _ref2[0],
             value = _ref2[1];
 
-        msgs.push("%c".concat(index === 0 ? _this2._appendTextWithSpaces(title, 30) : title, ": %c").concat(value));
+        msgs.push("%c".concat(index === 0 ? _this2._appendTextWithSpaces(title, titleWidth) : title, ": %c").concat(value));
         styles.push("font-weight: bold; color: inherit", "color: inherit;");
         index < Object.keys(obj).length - 1 && styles.push("color: ".concat(Colors.MEDIUM_GRAY));
       });
@@ -5668,8 +6965,11 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "_appendTextWithSpaces",
     value: function _appendTextWithSpaces(title, size) {
+      var equal = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       title = title || '-';
-      return "".concat(title).concat(Array(size - title.toString().length).fill(' ').join(''));
+      var diff = size - title.toString().length,
+          halfDiff = Math.round(diff / 2);
+      return equal ? "".concat(Array(halfDiff).fill(' ').join('')).concat(title).concat(Array(diff - halfDiff).fill(' ').join('')) : "".concat(title).concat(Array(diff).fill(' ').join(''));
     }
   }, {
     key: "_reportStats",
@@ -5699,111 +6999,290 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     }
   }, {
     key: "_reportObject",
-    value: function _reportObject(requestOrCollection) {
-      var _this3 = this;
+    value: function () {
+      var _reportObject2 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee4(requestOrCollection) {
+        var _this3 = this;
 
-      if (requestOrCollection === null) {
-        this.print(Messages.NO_REQUEST, 'inherit', true);
-        return;
-      }
+        var code;
+        return regenerator_default.a.wrap(function _callee4$(_context4) {
+          while (1) {
+            switch (_context4.prev = _context4.next) {
+              case 0:
+                code = /*#__PURE__*/function () {
+                  var _ref4 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee2() {
+                    var id, pending, error, url, label, labelPending, errorLabel, category, tags, path, query, pathQuery, method, payload, payloadSize, duration, response, responseSize, responseStatus, errorDescription, initiatorType, payloadByPerformance, exceedsQuota, borderColor, requestLabel, displayUrl, duplicates, duplicatesCount, exceededParameters, statusTextColor, payloadColor, responseColor, durationColor, _iterator, _step, group, name, groupedBy, count, groupName, _iterator2, _step2, item;
 
-      if (requestOrCollection instanceof http_request_info_HttpRequestInfo) {
-        var id = requestOrCollection.id,
-            pending = requestOrCollection.pending,
-            error = requestOrCollection.error,
-            url = requestOrCollection.url,
-            pathQuery = requestOrCollection.pathQuery,
-            method = requestOrCollection.method,
-            payload = requestOrCollection.payload,
-            payloadSize = requestOrCollection.payloadSize,
-            duration = requestOrCollection.duration,
-            response = requestOrCollection.response,
-            responseSize = requestOrCollection.responseSize,
-            responseStatus = requestOrCollection.responseStatus,
-            errorDescription = requestOrCollection.errorDescription,
-            initiatorType = requestOrCollection.initiatorType,
-            payloadByPerformance = requestOrCollection.payloadByPerformance,
-            exceedsQuota = requestOrCollection.exceedsQuota;
-        var borderColor = Colors.GRAY;
+                    return regenerator_default.a.wrap(function _callee2$(_context2) {
+                      while (1) {
+                        switch (_context2.prev = _context2.next) {
+                          case 0:
+                            if (!(requestOrCollection === null)) {
+                              _context2.next = 3;
+                              break;
+                            }
 
-        if (pending) {
-          borderColor = Colors.LIGHT_GRAY;
-        } else if (error) {
-          borderColor = Colors.ERROR_MEDIUM;
-        } else if (exceedsQuota) {
-          borderColor = Colors.WARN_MEDIUM;
-        }
+                            _this3.print(Messages.NO_REQUEST, 'inherit', true);
 
-        var displayUrl;
+                            return _context2.abrupt("return");
 
-        if (pathQuery.length <= 75) {
-          displayUrl = pathQuery;
-        } else {
-          displayUrl = pathQuery.substring(0, 10) + '...' + pathQuery.substring(pathQuery.length - 62);
-        }
+                          case 3:
+                            if (!(requestOrCollection instanceof http_request_info_HttpRequestInfo)) {
+                              _context2.next = 36;
+                              break;
+                            }
 
-        this._invokeConsole('groupCollapsed', "%c#".concat(this._appendTextWithSpaces(requestOrCollection.id, 3), " %c").concat(this._appendTextWithSpaces(requestOrCollection.method, 6), "  ").concat(this._appendTextWithSpaces(displayUrl, 80), " ").concat(this._appendTextWithSpaces(pending ? '-' : requestOrCollection.responseStatus, 5), " ").concat(this._appendTextWithSpaces(pending ? '-' : formatBytes(requestOrCollection.responseSize), 10), " ").concat(this._appendTextWithSpaces(pending ? '-' : formatTime(requestOrCollection.duration), 10)), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: inherit;");
+                            id = requestOrCollection.id, pending = requestOrCollection.pending, error = requestOrCollection.error, url = requestOrCollection.url, label = requestOrCollection.label, labelPending = requestOrCollection.labelPending, errorLabel = requestOrCollection.errorLabel, category = requestOrCollection.category, tags = requestOrCollection.tags, path = requestOrCollection.path, query = requestOrCollection.query, pathQuery = requestOrCollection.pathQuery, method = requestOrCollection.method, payload = requestOrCollection.payload, payloadSize = requestOrCollection.payloadSize, duration = requestOrCollection.duration, response = requestOrCollection.response, responseSize = requestOrCollection.responseSize, responseStatus = requestOrCollection.responseStatus, errorDescription = requestOrCollection.errorDescription, initiatorType = requestOrCollection.initiatorType, payloadByPerformance = requestOrCollection.payloadByPerformance, exceedsQuota = requestOrCollection.exceedsQuota;
+                            borderColor = Colors.GRAY;
 
-        this.printKeyValue(Messages.REQUEST_NO, id);
-        this.printKeyValue(Messages.URL, url);
-        this.printKeyValue(Messages.PATH, pathQuery);
-        this.printKeyValue(Messages.METHOD, method);
-        this.printKeyValue(Messages.PAYLOAD, payload || '-');
-        this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize));
-        this.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration));
-        this.printKeyValue(Messages.RESPONSE, response || '-');
-        this.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize));
-        this.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus);
-        this.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
-        this.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
-        this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
-        this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
-        this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
+                            if (pending) {
+                              borderColor = Colors.LIGHT_GRAY;
+                            } else if (error) {
+                              borderColor = Colors.ERROR_MEDIUM;
+                            } else if (exceedsQuota) {
+                              borderColor = Colors.WARN_MEDIUM;
+                            }
 
-        this._invokeConsole('groupEnd');
+                            if (requestOrCollection.error) {
+                              requestLabel = errorLabel || label;
+                            } else {
+                              requestLabel = pending && labelPending ? labelPending : label;
+                            }
 
-        return;
-      }
+                            if (requestLabel) {
+                              displayUrl = requestLabel.length < 75 ? _this3._appendTextWithSpaces(requestLabel, 75) : "".concat(requestLabel.substring(0, 72), "...");
+                            } else {
+                              if (pathQuery.length <= 75) {
+                                displayUrl = pathQuery;
+                              } else {
+                                displayUrl = pathQuery.substring(0, 10) + '...' + pathQuery.substring(pathQuery.length - 62);
+                              }
+                            }
 
-      if (!requestOrCollection.hasItems && !requestOrCollection.hasGroups) {
-        return;
-      }
+                            duplicates = toConsumableArray_default()(_this3._supervisor.duplicates(id)), duplicatesCount = duplicates.length + 1, exceededParameters = _this3._supervisor.exceededParameters(requestOrCollection);
+                            statusTextColor = Colors.LIGHT_GRAY;
 
-      if (requestOrCollection.hasGroups) {
-        requestOrCollection.groups.forEach(function (group) {
-          var name = group.name,
-              groupedBy = group.groupedBy,
-              count = group.count;
+                            if (!pending) {
+                              statusTextColor = error ? Colors.ERROR : Colors.SUCCESS;
+                            }
 
-          if (typeof name === 'undefined') {
-            _this3.groupStart("- %c[".concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
-          } else if (name !== null && typeof_default()(name) === 'object') {
-            _this3.groupStart("".concat(groupedBy, ": %c[").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"), name);
-          } else {
-            var groupName = name;
+                            payloadColor = exceededParameters.payload === true ? Colors.WARN_DARK : 'inherit', responseColor = exceededParameters.response === true ? Colors.WARN_DARK : 'inherit', durationColor = exceededParameters.duration === true ? Colors.WARN_DARK : 'inherit';
 
-            if (typeof name === 'number') {
-              if (['payloadSize', 'responseSize'].has(groupedBy)) {
-                groupName = formatBytes(name);
-              } else if (groupedBy === 'duration') {
-                groupName = formatTime(name);
-              }
+                            _this3._invokeConsole('groupCollapsed', "%c#".concat(_this3._appendTextWithSpaces(id, 3), " %c").concat(_this3._appendTextWithSpaces(method + ' %c', 9, true), "  %c").concat(_this3._appendTextWithSpaces(displayUrl, 80), " %c").concat(_this3._appendTextWithSpaces(pending ? '-' : responseStatus, 5), " %c").concat(_this3._appendTextWithSpaces(pending ? '-' : formatBytes(responseSize), 10), " %c").concat(_this3._appendTextWithSpaces(pending ? '-' : formatTime(duration), 10), " ").concat(duplicatesCount > 1 ? '%c' + duplicatesCount + '' : '%c'), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.WHITE, ";background-color: ").concat(pending ? Colors.LIGHT_BLUE : Colors.DARK_BLUE, ";padding: 3px 10px;border-radius:3px;"), "", "color: inherit;", "color: ".concat(statusTextColor), "color: ".concat(responseColor), "color: ".concat(durationColor), "background-color:".concat(Colors.YELLOW, ";color: #666;font-size:0.6rem;padding: 3px;"));
+
+                            _this3.printKeyValue(Messages.REQUEST_NO, id);
+
+                            category && _this3.printKeyValue(Messages.CATEGORY, category);
+                            tags.size > 0 && _this3.printKeyValue(Messages.TAGS, toConsumableArray_default()(tags).join(', '));
+
+                            _this3.printKeyValue(Messages.URL, url);
+
+                            _this3.printKeyValue(Messages.PATH, path);
+
+                            _this3.printKeyValue(Messages.QUERY, query || '-');
+
+                            _this3.printKeyValue(Messages.METHOD, method);
+
+                            _this3.printKeyValue(Messages.PAYLOAD, payload || '-');
+
+                            _this3.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize), 30, payloadColor);
+
+                            _this3.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration), 30, durationColor);
+
+                            _this3.printKeyValue(Messages.RESPONSE, response || '-');
+
+                            _this3.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize), 30, responseColor);
+
+                            _this3.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus, 30, statusTextColor);
+
+                            _this3.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
+
+                            _this3.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
+
+                            _this3.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
+
+                            _this3.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
+
+                            _this3.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
+
+                            _this3.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1);
+
+                            duplicatesCount > 1 && _this3.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(function (r) {
+                              return r.id;
+                            }).join(', '));
+
+                            _this3._invokeConsole('groupEnd');
+
+                            return _context2.abrupt("return");
+
+                          case 36:
+                            if (!(!requestOrCollection.hasItems && !requestOrCollection.hasGroups)) {
+                              _context2.next = 38;
+                              break;
+                            }
+
+                            return _context2.abrupt("return");
+
+                          case 38:
+                            if (!requestOrCollection.hasGroups) {
+                              _context2.next = 60;
+                              break;
+                            }
+
+                            _iterator = _createForOfIteratorHelper(requestOrCollection.groups);
+                            _context2.prev = 40;
+
+                            _iterator.s();
+
+                          case 42:
+                            if ((_step = _iterator.n()).done) {
+                              _context2.next = 51;
+                              break;
+                            }
+
+                            group = _step.value;
+                            name = group.name, groupedBy = group.groupedBy, count = group.count;
+
+                            if (typeof name === 'undefined') {
+                              _this3.groupStart("- %c[".concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
+                            } else if (name !== null && typeof_default()(name) === 'object') {
+                              _this3.groupStart("".concat(groupedBy, ": %c[").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"), name);
+                            } else {
+                              groupName = name;
+
+                              if (typeof name === 'number') {
+                                if (['payloadSize', 'responseSize'].has(groupedBy)) {
+                                  groupName = formatBytes(name);
+                                } else if (groupedBy === 'duration') {
+                                  groupName = formatTime(name);
+                                }
+                              }
+
+                              _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
+                            }
+
+                            _context2.next = 48;
+                            return _this3._reportObject(group);
+
+                          case 48:
+                            _this3.groupEnd();
+
+                          case 49:
+                            _context2.next = 42;
+                            break;
+
+                          case 51:
+                            _context2.next = 56;
+                            break;
+
+                          case 53:
+                            _context2.prev = 53;
+                            _context2.t0 = _context2["catch"](40);
+
+                            _iterator.e(_context2.t0);
+
+                          case 56:
+                            _context2.prev = 56;
+
+                            _iterator.f();
+
+                            return _context2.finish(56);
+
+                          case 59:
+                            return _context2.abrupt("return");
+
+                          case 60:
+                            _iterator2 = _createForOfIteratorHelper(requestOrCollection.items);
+                            _context2.prev = 61;
+
+                            _iterator2.s();
+
+                          case 63:
+                            if ((_step2 = _iterator2.n()).done) {
+                              _context2.next = 69;
+                              break;
+                            }
+
+                            item = _step2.value;
+                            _context2.next = 67;
+                            return _this3._reportObject(item);
+
+                          case 67:
+                            _context2.next = 63;
+                            break;
+
+                          case 69:
+                            _context2.next = 74;
+                            break;
+
+                          case 71:
+                            _context2.prev = 71;
+                            _context2.t1 = _context2["catch"](61);
+
+                            _iterator2.e(_context2.t1);
+
+                          case 74:
+                            _context2.prev = 74;
+
+                            _iterator2.f();
+
+                            return _context2.finish(74);
+
+                          case 77:
+                          case "end":
+                            return _context2.stop();
+                        }
+                      }
+                    }, _callee2, null, [[40, 53, 56, 59], [61, 71, 74, 77]]);
+                  }));
+
+                  return function code() {
+                    return _ref4.apply(this, arguments);
+                  };
+                }();
+
+                if (this._delayWrite) {
+                  _context4.next = 3;
+                  break;
+                }
+
+                return _context4.abrupt("return", code());
+
+              case 3:
+                return _context4.abrupt("return", new Promise(function (res) {
+                  setTimeout( /*#__PURE__*/asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee3() {
+                    return regenerator_default.a.wrap(function _callee3$(_context3) {
+                      while (1) {
+                        switch (_context3.prev = _context3.next) {
+                          case 0:
+                            _context3.next = 2;
+                            return code();
+
+                          case 2:
+                            res();
+
+                          case 3:
+                          case "end":
+                            return _context3.stop();
+                        }
+                      }
+                    }, _callee3);
+                  })), _this3._writeDelay);
+                }));
+
+              case 4:
+              case "end":
+                return _context4.stop();
             }
-
-            _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
           }
+        }, _callee4, this);
+      }));
 
-          _this3._reportObject(group);
-
-          _this3.groupEnd();
-        });
-        return;
+      function _reportObject(_x3) {
+        return _reportObject2.apply(this, arguments);
       }
 
-      requestOrCollection.items.forEach(function (item) {
-        return _this3._reportObject(item);
-      });
-    }
+      return _reportObject;
+    }()
   }, {
     key: "_colorize",
     value: function _colorize(opaque, context) {

@@ -174,7 +174,7 @@ template.innerHTML = `
     padding: 0;
   }
 
-  .popover-content .third button {
+  .popover-content button {
     border: solid 1px var(--border-color);
   }
 
@@ -353,6 +353,33 @@ template.innerHTML = `
           <label>Use Performance:</label>
           <input type="checkbox" />
         </div>
+        <div style="grid-column: span 2;">
+          <button title="Import Configuration" style="margin-right: 5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-down" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z"/>
+              <path fill-rule="evenodd" d="M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z"/>
+            </svg>
+          </button>
+          <button title="Export Configuration" style="margin-right: 5px;">
+             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z"/>
+              <path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z"/>
+            </svg>
+          </button>
+          <button title="Apply Changes" style="margin-right: 5px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+              <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+            </svg>
+          </button>
+          <button title="Reset Changes">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+        </div>
+        <div style="grid-column: span 2;">
+          <textarea rows="10" style="width: 100%;resize: vertical; font-size: 0.7rem;border-radius: 5px;"></textarea>
+        </div>
       </fieldset>
     </form>
   </div>
@@ -493,9 +520,10 @@ export default class HttpSupervisorWidget {
     this._el.subscribe('persistConfigChange', ctrl => this._httpSupervisor.persistConfig = ctrl.checked);
     this._el.subscribe('lockConsoleChange', ctrl => this._httpSupervisor.lockConsole = ctrl.checked);
     this._el.subscribe('silentChange', ctrl => this._httpSupervisor.silent = ctrl.checked);
-    this._el.subscribe('alertRequestStartChange', ctrl => {
-      this._httpSupervisor.alertOnRequestStart = ctrl.checked;
-    });
+    this._el.subscribe('alertRequestStartChange', ctrl => this._httpSupervisor.alertOnRequestStart = ctrl.checked);
+    this._el.subscribe('importConfig', () => this._httpSupervisor.import());
+    this._el.subscribe('exportConfig', () => this._httpSupervisor.export('json', true));
+    this._el.subscribe('applyConfig', () => this._httpSupervisor.setConfig(this._el.config));
 
     if (status === SupervisorStatus.Busy) {
       this._onStart();
@@ -537,7 +565,8 @@ export default class HttpSupervisorWidget {
       persistConfig,
       lockConsole,
       silent,
-      alertOnRequestStart
+      alertOnRequestStart,
+      config: this._httpSupervisor.getConfig()
     });
   }
 
@@ -616,6 +645,17 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _collapisbleFieldSet = null;
   _silentCheckbox = null;
   _alertRequestStartCheckbox = null;
+  _importConfigButton = null;
+  _exportConfigButton = null;
+  _applyConfigButton = null;
+  _resetConfigButton = null;
+  _configTextArea = null;
+
+  _config = null;
+
+  get config() {
+    return this._config;
+  }
 
   constructor() {
     super();
@@ -651,10 +691,15 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._excludeTextbox,
       this._keyboardEventsCheckbox,
       this._persistConfigCheckbox,
-      this._usePerformanceAPICheckbox
+      this._usePerformanceAPICheckbox,
+      this._importConfigButton,
+      this._exportConfigButton,
+      this._applyConfigButton,
+      this._resetConfigButton,
+      this._configTextArea
     ] = [
       ...Array.from(shadowRoot.querySelector('.http-supervisor-container').children),
-      ...Array.from(this._popover.querySelectorAll('input,button'))
+      ...Array.from(this._popover.querySelectorAll('input,button,textarea'))
     ];
 
     this._eventsAndControls = {
@@ -680,7 +725,10 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       persistConfigChange: this._persistConfigCheckbox,
       lockConsoleChange: this._lockConsoleCheckbox,
       silentChange: this._silentCheckbox,
-      alertRequestStartChange: this._alertRequestStartCheckbox
+      alertRequestStartChange: this._alertRequestStartCheckbox,
+      importConfig: this._importConfigButton,
+      exportConfig: this._exportConfigButton,
+      applyConfig: this._applyConfigButton
     };
 
     this._expandButton = shadowRoot.querySelector('.expand');
@@ -727,6 +775,12 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
         this._unlistenToKeyPressEvent();
       }
     });
+
+    this._resetConfigButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this._configTextArea.value = this._config;
+    });
   }
 
   setState({
@@ -741,7 +795,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     persistConfig,
     lockConsole,
     silent,
-    alertOnRequestStart
+    alertOnRequestStart,
+    config
   }) {
     Array.isArray(include) && (this._includeTextbox.value = include.join(','));
     Array.isArray(exclude) && (this._excludeTextbox.value = exclude.join(','));
@@ -764,6 +819,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._alertOnQuotaExceedCheckbox,
       this._alertRequestStartCheckbox
     ].forEach(c => c.disabled = silent);
+    this._configTextArea.value = this._config = JSON.stringify(config, null, 2);
   }
 
   subscribe(evt, handler) {
@@ -773,6 +829,11 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     ctrl.addEventListener(evtName, (e) => {
       e.preventDefault();
       e.stopPropagation();
+
+      if (evt === 'applyConfig') {
+        this._config = JSON.parse(this._configTextArea.value);
+      }
+
       handler(ctrl, this);
     });
   }
@@ -788,7 +849,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   }
 
   updateCalls(count1, count2) {
-    this._callsCountLabel.innerText = `${count1} / ${count2}`;;
+    this._callsCountLabel.innerText = `${count1} / ${count2}`;
   }
 
   logIsEmpty() {

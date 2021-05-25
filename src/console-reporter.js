@@ -9,6 +9,18 @@ import './console-snapshot';
  */
 export default class ConsoleReporter {
 
+  /**
+   * Http supervisor.
+   * @type {HttpSupervisor}
+   * @private
+   */
+  _supervisor = null;
+
+  /**
+   * True to lock console.
+   * @type {boolean}
+   * @private
+   */
   _lockConsole = true;
 
   /**
@@ -47,6 +59,20 @@ export default class ConsoleReporter {
   _originalConsole = window.console;
 
   /**
+   * True to enable slow writing to console to avoid choking it.
+   * @type {boolean}
+   * @private
+   */
+  _delayWrite = true;
+
+  /**
+   * Number of ms to wait before writing the object to console.
+   * @type {number}
+   * @private
+   */
+  _writeDelay = 50;
+
+  /**
    * Ctor.
    */
   constructor() {
@@ -58,6 +84,7 @@ export default class ConsoleReporter {
    * @param {HttpSupervisor} httpSupervisor
    */
   init(httpSupervisor) {
+    this._supervisor = httpSupervisor;
     const { lockConsole, loadChart } = httpSupervisor;
     this._lockConsole = lockConsole;
     this._lockConsole && this.acquireLock();
@@ -73,7 +100,7 @@ export default class ConsoleReporter {
    * @param arg1
    * @param arg2
    */
-  report(arg1, arg2) {
+  async report(arg1, arg2) {
     if (arguments.length === 1) {
       if (!arg1) {
         this.print(Messages.NO_REQUEST, 'inherit', true);
@@ -84,7 +111,7 @@ export default class ConsoleReporter {
           return;
         }
 
-        this._reportObject(arg1);
+        await this._reportObject(arg1.clone());
       } else {
         this.printTitle(Messages.METRICS_SUMMARY);
         this._reportStats(arg1);
@@ -100,7 +127,7 @@ export default class ConsoleReporter {
       }
 
       this.printTitle(Messages.REQUESTS_INFO);
-      this._reportObject(arg1, arg2);
+      await this._reportObject(arg1.clone());
       return;
     }
 
@@ -113,7 +140,56 @@ export default class ConsoleReporter {
     this._reportStats(arg1);
     this.break();
     this.printTitle(Messages.REQUESTS_INFO);
-    this._reportObject(arg2);
+    await this._reportObject(arg2.clone());
+  }
+
+  /**
+   * Compare the requests and print the results.
+   * @param req1
+   * @param req2
+   */
+  printComparison(req1, req2) {
+    this.printTitle(`Comparing Requests ${req1.id} and ${req2.id}`);
+    this.printKeyValue('Property', 'Url');
+    this.printKeyValue('Request 1', req1.url);
+    this.printKeyValue('Request 2', req2.url);
+    this.printKeyValue('Same', req1.url === req2.url ? 'Yes' : 'No');
+    this.break();
+
+    this.printKeyValue('Property', 'Payload');
+    this.printKeyValue('Request 1', req1.payload || '-');
+    this.printKeyValue('Request 2', req2.payload || '-');
+    this.printKeyValue('Same', JSON.stringify(req1.payload) === JSON.stringify(req2.payload) ? 'Yes' : 'No');
+    this.break();
+
+    this.printKeyValue('Property', 'Payload Size');
+    this.printKeyValue('Request 1', req1.payloadSize || '-');
+    this.printKeyValue('Request 2', req2.payloadSize || '-');
+    this.printKeyValue('Same', req1.payloadSize === req2.payloadSize ? 'Yes' : 'No');
+    this.break();
+
+    this.printKeyValue('Property', 'Response');
+    this.printKeyValue('Request 1', req1.response || '-');
+    this.printKeyValue('Request 2', req2.response || '-');
+    this.printKeyValue('Same', JSON.stringify(req1.response) === JSON.stringify(req2.response) ? 'Yes' : 'No');
+    this.break();
+
+    this.printKeyValue('Property', 'Response Size');
+    this.printKeyValue('Request 1', req1.responseSize || '-');
+    this.printKeyValue('Request 2', req2.responseSize || '-');
+    this.printKeyValue('Same', req1.responseSize === req2.responseSize ? 'Yes' : 'No');
+    this.break();
+
+    this.printKeyValue('Property', 'Status');
+    this.printKeyValue('Request 1', req1.responseStatus);
+    this.printKeyValue('Request 2', req2.responseStatus);
+    this.printKeyValue('Same', req1.responseStatus === req2.responseStatus ? 'Yes' : 'No');
+    this.break();
+
+    this.printKeyValue('Property', 'Duration');
+    this.printKeyValue('Request 1', req1.duration);
+    this.printKeyValue('Request 2', req2.duration);
+    this.printKeyValue('Same', req1.duration === req2.duration ? 'Yes' : 'No');
   }
 
   /**
@@ -294,8 +370,8 @@ export default class ConsoleReporter {
    * @param message
    * @param bgColor
    */
-  printTitle(message, bgColor = Colors.GRAY) {
-    this.print(message, 'inherit', true, `padding: 5px 250px; background-color: ${bgColor}; color: ${Colors.WHITE};margin-bottom: 10px;`);
+  printTitle(message, bgColor = Colors.DARK_BLUE) {
+    this.print(message, 'inherit', true, `padding: 5px 250px; background-color: #237aa6; color: ${Colors.WHITE};margin-bottom: 10px;border-radius:3px;`);
   }
 
   /**
@@ -310,25 +386,28 @@ export default class ConsoleReporter {
    * Prints field name and value.
    * @param head
    * @param value
+   * @param titleWidth
+   * @param valueColor
    */
-  printKeyValue(head, value) {
+  printKeyValue(head, value, titleWidth = 30, valueColor = 'inherit') {
     if (value !== null && typeof value === 'object') {
-      this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}:`, `font-weight: bold; color: inherit;`, value);
+      this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, titleWidth)}:`, `font-weight: bold; color: inherit;`, value);
       return;
     }
 
-    this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, 30)}: %c${value}`, `font-weight: bold; color: inherit;`, `color: inherit;`);
+    this._invokeConsole('log', `%c${this._appendTextWithSpaces(head, titleWidth)}: %c${value}`, `font-weight: bold; color: inherit;`, `color: ${valueColor};`);
   }
 
   /**
    * Prints many fields and values in single row.
    * @param obj
+   * @param titleWidth
    */
-  printKeyValueMany(obj) {
+  printKeyValueMany(obj, titleWidth = 30) {
     let msgs = [];
     let styles = [];
     Object.entries(obj).forEach(([title, value], index) => {
-      msgs.push(`%c${index === 0 ? this._appendTextWithSpaces(title, 30) : title}: %c${value}`);
+      msgs.push(`%c${index === 0 ? this._appendTextWithSpaces(title, titleWidth) : title}: %c${value}`);
       styles.push(`font-weight: bold; color: inherit`, `color: inherit;`);
       index < Object.keys(obj).length - 1 && styles.push(`color: ${Colors.MEDIUM_GRAY}`);
     });
@@ -428,9 +507,10 @@ export default class ConsoleReporter {
     document.body.appendChild(this._canvasEl);
   }
 
-  _appendTextWithSpaces(title, size) {
+  _appendTextWithSpaces(title, size, equal = false) {
     title = title || '-';
-    return `${title}${Array(size - title.toString().length).fill(' ').join('')}`;
+    const diff = size - title.toString().length, halfDiff = Math.round(diff / 2);
+    return equal ? `${Array(halfDiff).fill(' ').join('')}${title}${Array(diff - halfDiff).fill(' ').join('')}` : `${title}${Array(diff).fill(' ').join('')}`;
   }
 
   _reportStats({
@@ -463,102 +543,164 @@ export default class ConsoleReporter {
     this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
   }
 
-  _reportObject(requestOrCollection) {
-    if (requestOrCollection === null) {
-      this.print(Messages.NO_REQUEST, 'inherit', true);
-      return;
-    }
-
-    if (requestOrCollection instanceof HttpRequestInfo) {
-      const {
-        id,
-        pending,
-        error,
-        url,
-        pathQuery,
-        method,
-        payload,
-        payloadSize,
-        duration,
-        response,
-        responseSize,
-        responseStatus,
-        errorDescription,
-        initiatorType,
-        payloadByPerformance,
-        exceedsQuota
-      } = requestOrCollection;
-
-      let borderColor = Colors.GRAY;
-      if (pending) {
-        borderColor = Colors.LIGHT_GRAY;
-      } else if (error) {
-        borderColor = Colors.ERROR_MEDIUM;
-      } else if (exceedsQuota) {
-        borderColor = Colors.WARN_MEDIUM;
+  async _reportObject(requestOrCollection) {
+    const code = async () => {
+      if (requestOrCollection === null) {
+        this.print(Messages.NO_REQUEST, 'inherit', true);
+        return;
       }
 
-      let displayUrl;
-      if (pathQuery.length <= 75) {
-        displayUrl = pathQuery;
-      } else {
-        displayUrl = pathQuery.substring(0, 10) + '...' + pathQuery.substring(pathQuery.length - 62);
-      }
+      if (requestOrCollection instanceof HttpRequestInfo) {
+        const {
+          id,
+          pending,
+          error,
+          url,
+          label,
+          labelPending,
+          errorLabel,
+          category,
+          tags,
+          path,
+          query,
+          pathQuery,
+          method,
+          payload,
+          payloadSize,
+          duration,
+          response,
+          responseSize,
+          responseStatus,
+          errorDescription,
+          initiatorType,
+          payloadByPerformance,
+          exceedsQuota
+        } = requestOrCollection;
 
-      this._invokeConsole('groupCollapsed', `%c#${this._appendTextWithSpaces(requestOrCollection.id, 3)} %c${this._appendTextWithSpaces(requestOrCollection.method, 6)}  ${this._appendTextWithSpaces(displayUrl, 80)} ${this._appendTextWithSpaces(pending ? '-' : requestOrCollection.responseStatus, 5)} ${this._appendTextWithSpaces(pending ? '-' : formatBytes(requestOrCollection.responseSize), 10)} ${this._appendTextWithSpaces(pending ? '-' : formatTime(requestOrCollection.duration), 10)}`, `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`, `color: inherit;`);
-      this.printKeyValue(Messages.REQUEST_NO, id);
-      this.printKeyValue(Messages.URL, url);
-      this.printKeyValue(Messages.PATH, pathQuery);
-      this.printKeyValue(Messages.METHOD, method);
-      this.printKeyValue(Messages.PAYLOAD, payload || '-');
-      this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize));
-      this.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration));
-      this.printKeyValue(Messages.RESPONSE, response || '-');
-      this.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize));
-      this.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus);
-      this.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
-      this.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
-      this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
-      this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
-      this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
-      this._invokeConsole('groupEnd');
-      return;
-    }
-
-    if (!requestOrCollection.hasItems && !requestOrCollection.hasGroups) {
-      return;
-    }
-
-    if (requestOrCollection.hasGroups) {
-      requestOrCollection.groups.forEach(group => {
-        const { name, groupedBy, count } = group;
-
-        if (typeof name === 'undefined') {
-          this.groupStart(`- %c[${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
-        } else if (name !== null && typeof name === 'object') {
-          this.groupStart(`${groupedBy}: %c[${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
-        } else {
-          let groupName = name;
-
-          if (typeof name === 'number') {
-            if (['payloadSize', 'responseSize'].has(groupedBy)) {
-              groupName = formatBytes(name);
-            } else if (groupedBy === 'duration') {
-              groupName = formatTime(name);
-            }
-          }
-
-          this.groupStart(`${groupName} %c- [${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
+        let borderColor = Colors.GRAY;
+        if (pending) {
+          borderColor = Colors.LIGHT_GRAY;
+        } else if (error) {
+          borderColor = Colors.ERROR_MEDIUM;
+        } else if (exceedsQuota) {
+          borderColor = Colors.WARN_MEDIUM;
         }
 
-        this._reportObject(group);
-        this.groupEnd();
-      });
+        let requestLabel;
+        if (requestOrCollection.error) {
+          requestLabel = errorLabel || label;
+        } else {
+          requestLabel = pending && labelPending ? labelPending : label;
+        }
 
-      return;
+        let displayUrl;
+        if (requestLabel) {
+          displayUrl = requestLabel.length < 75 ? this._appendTextWithSpaces(requestLabel, 75) : `${requestLabel.substring(0, 72)}...`;
+        } else {
+          if (pathQuery.length <= 75) {
+            displayUrl = pathQuery;
+          } else {
+            displayUrl = pathQuery.substring(0, 10) + '...' + pathQuery.substring(pathQuery.length - 62);
+          }
+        }
+
+        const duplicates = [...this._supervisor.duplicates(id)],
+          duplicatesCount = duplicates.length + 1,
+          exceededParameters = this._supervisor.exceededParameters(requestOrCollection);
+
+        let statusTextColor = Colors.LIGHT_GRAY;
+        if (!pending) {
+          statusTextColor = error ? Colors.ERROR : Colors.SUCCESS;
+        }
+
+        const payloadColor = exceededParameters.payload === true ? Colors.WARN_DARK : 'inherit',
+          responseColor = exceededParameters.response === true ? Colors.WARN_DARK : 'inherit',
+          durationColor = exceededParameters.duration === true ? Colors.WARN_DARK : 'inherit';
+
+        this._invokeConsole(
+          'groupCollapsed',
+          `%c#${this._appendTextWithSpaces(id, 3)} %c${this._appendTextWithSpaces(method + ' %c', 9, true)}  %c${this._appendTextWithSpaces(displayUrl, 80)} %c${this._appendTextWithSpaces(pending ? '-' : responseStatus, 5)} %c${this._appendTextWithSpaces(pending ? '-' : formatBytes(responseSize), 10)} %c${this._appendTextWithSpaces(pending ? '-' : formatTime(duration), 10)} ${duplicatesCount > 1 ? '%c' + duplicatesCount + '' : '%c'}`,
+          `color: ${Colors.GRAY}; padding: 5px; border-left: solid 4px ${borderColor}; font-size: 0.6rem;`,
+          `color: ${Colors.WHITE};background-color: ${pending ? Colors.LIGHT_BLUE : Colors.DARK_BLUE};padding: 3px 10px;border-radius:3px;`,
+          ``,
+          `color: inherit;`,
+          `color: ${statusTextColor}`,
+          `color: ${responseColor}`,
+          `color: ${durationColor}`,
+          `background-color:${Colors.YELLOW};color: #666;font-size:0.6rem;padding: 3px;`);
+
+        this.printKeyValue(Messages.REQUEST_NO, id);
+        category && this.printKeyValue(Messages.CATEGORY, category);
+        tags.size > 0 && this.printKeyValue(Messages.TAGS, [...tags].join(', '));
+        this.printKeyValue(Messages.URL, url);
+        this.printKeyValue(Messages.PATH, path);
+        this.printKeyValue(Messages.QUERY, query || '-');
+        this.printKeyValue(Messages.METHOD, method);
+        this.printKeyValue(Messages.PAYLOAD, payload || '-');
+        this.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize), 30, payloadColor);
+        this.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration), 30, durationColor);
+        this.printKeyValue(Messages.RESPONSE, response || '-');
+        this.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize), 30, responseColor);
+        this.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus, 30, statusTextColor);
+        this.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
+        this.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
+        this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
+        this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
+        this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
+        this.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1);
+        duplicatesCount > 1 && this.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(r => r.id).join(', '));
+        this._invokeConsole('groupEnd');
+        return;
+      }
+
+      if (!requestOrCollection.hasItems && !requestOrCollection.hasGroups) {
+        return;
+      }
+
+      if (requestOrCollection.hasGroups) {
+        for (const group of requestOrCollection.groups) {
+          const { name, groupedBy, count } = group;
+
+          if (typeof name === 'undefined') {
+            this.groupStart(`- %c[${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
+          } else if (name !== null && typeof name === 'object') {
+            this.groupStart(`${groupedBy}: %c[${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`, name);
+          } else {
+            let groupName = name;
+
+            if (typeof name === 'number') {
+              if (['payloadSize', 'responseSize'].has(groupedBy)) {
+                groupName = formatBytes(name);
+              } else if (groupedBy === 'duration') {
+                groupName = formatTime(name);
+              }
+            }
+
+            this.groupStart(`${groupName} %c- [${count}]`, `font-size: 0.6rem; color: ${Colors.GRAY};`);
+          }
+
+          await this._reportObject(group);
+          this.groupEnd();
+        }
+
+        return;
+      }
+
+      for (const item of requestOrCollection.items) {
+        await this._reportObject(item);
+      }
+    };
+
+    if (!this._delayWrite) {
+      return code();
     }
 
-    requestOrCollection.items.forEach(item => this._reportObject(item));
+    return new Promise(res => {
+      setTimeout(async () => {
+        await code();
+        res();
+      }, this._writeDelay);
+    });
   }
 
   _colorize(opaque, context) {

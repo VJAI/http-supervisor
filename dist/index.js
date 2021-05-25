@@ -1,1 +1,1 @@
-module.exports = require('./http.supervisor-2.0.30');
+module.exports = require('./http.supervisor-2.0.36');
