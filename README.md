@@ -6,10 +6,9 @@
 
 ## Intro
 
-A simple library also available as [chrome addon](https://chrome.google.com/webstore/detail/http-supervisor/ilfhanegmhjioandehhnopokeoeefonj) that helps to audit HTTP requests and identify the requests that exceeds the set quota. It also helps to find duplicate requests. Not only that you can group, sort, search and export requests.
+A simple library also available as [chrome addon](https://chrome.google.com/webstore/detail/http-supervisor/ilfhanegmhjioandehhnopokeoeefonj) that helps to find duplicate HTTP requests made during a particular period. It also helps to audit requests and identify the ones that exceeds the set quota. You can also group, sort, search and export requests through a simple API.
 
-The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object for you 
-to work with requests from developer console.
+The tool renders a simple UI that provides controls to capture the requests and print to console in a better readable format. It also provides a global object (`http`) to work with requests from developer console.
 
 Last but not least it also provides visualization support using the chart.js library.
 
@@ -50,8 +49,8 @@ Please feel free to use it and share your feedback.
 
 ## Features
 
-- Auditing Requests By Setting Quota
 - Finding Duplicate Requests
+- Auditing Requests By Setting Quota
 - Searching Requests Based On Different Criteria
 - Nested Grouping
 - Multi Sorting
@@ -61,6 +60,7 @@ Please feel free to use it and share your feedback.
 - Visualization Through Charts
 - Watching Requests
 - Copying Requests
+- Passing Metadata (label, category) To Urls
 
 
 ## Install
@@ -236,12 +236,18 @@ http.print(request);
 http.print(collection);
 ```
 
-### Finding Duplicate Requests
+## Finding Duplicate Requests
 
 You can find duplicate calls made during a particular session by calling `duplicates` method.
 
 ```
 const duplicateRequests = http.duplicates();
+```
+
+You can also print the duplicate requests in console by calling `printDuplicates()` method.
+
+```
+http.printDuplicates();
 ```
 
 
@@ -275,9 +281,30 @@ http.import();
 The library provides methods to visualize data through charts. The `timeChart` method prints the time taken by each request through a bar chart. 
 There are other methods to visualize different information please check the API section.
 
-```
+```js
 http.timeChart()
 ```
+
+
+## Comparing Requests
+
+You can compare two requests by calling the `compare()` method.
+
+```js
+http.compare(requestId1, requestId2);
+```
+
+The above method compares the two requests and prints the comparison.
+
+
+## Finding Related Requests
+
+You can find related requests of a request by calling the `related()` method. You can print them by calling `printRelated()` method.
+
+```js
+http.printRelated(requestId);
+```
+
 
 
 ## API

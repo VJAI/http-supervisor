@@ -29,7 +29,7 @@ import {
   safeParse,
   matchesGlob,
   copyText,
-  mapToJson, readValue
+  mapToJson, readValue, trimEndSlash
 } from './util';
 import { Session }     from './session';
 
@@ -38,6 +38,33 @@ import { Session }     from './session';
  * sort, export, visualize requests and much more.
  */
 export default class HttpSupervisor {
+
+  static get defaultConfig() {
+    return {
+      include: null,
+      exclude: null,
+      renderUI: true,
+      quota: {
+        maxPayloadSize: 10240, // 10kb
+        maxResponseSize: 10240, // 10kb
+        maxDuration: 1000 // 1s
+      },
+      silent: false,
+      traceEachRequest: false,
+      alertOnError: true,
+      alertOnExceedQuota: true,
+      alertOnRequestStart: false,
+      groupBy: ['pathQuery', 'method'],
+      sortBy: [{ field: 'id', dir: 'asc' }],
+      usePerformance: true,
+      monkeyPatchFetch: true,
+      loadChart: true,
+      keyboardEvents: true,
+      persistConfig: true,
+      lockConsole: false,
+      urlConfig: {}
+    }
+  }
 
   /**
    * The UI widget through which user can interact with supervisor.
@@ -65,130 +92,126 @@ export default class HttpSupervisor {
    * @type {Set}
    * @private
    */
-  _include = null;
+  _include = HttpSupervisor.defaultConfig.include;
 
   /**
    * The url that matches these patterns will be ignored.
    * @type {Set}
    * @private
    */
-  _exclude = null;
+  _exclude = HttpSupervisor.defaultConfig.exclude;
 
   /**
    * True to render UI.
    * @type {boolean}
    * @private
    */
-  _renderUI = true;
+  _renderUI = HttpSupervisor.defaultConfig.renderUI;
 
   /**
    * Request Quota.
    * @type {object}
    * @private
    */
-  _quota = {
-    maxPayloadSize: 10240, // 10kb
-    maxResponseSize: 10240, // 10kb
-    maxDuration: 1000 // 1s
-  };
+  _quota = HttpSupervisor.defaultConfig.quota;
 
   /**
    * True to not display any messages in console or the passed reporter.
    * @type {boolean}
    * @private
    */
-  _silent = false;
+  _silent = HttpSupervisor.defaultConfig.silent;
 
   /**
    * Displays each completed request.
    * @type {boolean}
    * @private
    */
-  _traceEachRequest = false;
+  _traceEachRequest = HttpSupervisor.defaultConfig.traceEachRequest;
 
   /**
    * Displays failed request.
    * @type {boolean}
    * @private
    */
-  _alertOnError = true;
+  _alertOnError = HttpSupervisor.defaultConfig.alertOnError;
 
   /**
    * Displays requests that exceeded quota.
    * @type {boolean}
    * @private
    */
-  _alertOnExceedQuota = true;
+  _alertOnExceedQuota = HttpSupervisor.defaultConfig.alertOnExceedQuota;
 
   /**
    * True to alert on request start.
    * @type {boolean}
    * @private
    */
-  _alertOnRequestStart = false;
+  _alertOnRequestStart = HttpSupervisor.defaultConfig.alertOnRequestStart;
 
   /**
    * Grouping parameters used in displaying requests.
    * @type {string[]}
    * @private
    */
-  _groupBy = ['pathQuery', 'method'];
+  _groupBy = HttpSupervisor.defaultConfig.groupBy;
 
   /**
    * Sorting parameters used in displaying requests.
    * @type {*[]}
    * @private
    */
-  _sortBy = [{ field: 'id', dir: 'asc' }];
+  _sortBy = HttpSupervisor.defaultConfig.sortBy;
 
   /**
    * Uses `performance.getEntriesByType` for capturing accurate duration and payload size.
    * @type {boolean}
    * @private
    */
-  _usePerformance = true;
+  _usePerformance = HttpSupervisor.defaultConfig.usePerformance;
 
   /**
    * True to monkey patch fetch requests.
    * @type {boolean}
    * @private
    */
-  _monkeyPatchFetch = true;
+  _monkeyPatchFetch = HttpSupervisor.defaultConfig.monkeyPatchFetch;
 
   /**
    * True to use `chart.js` library for data visualization.
    * @type {boolean}
    * @private
    */
-  _loadChart = true;
+  _loadChart = HttpSupervisor.defaultConfig.loadChart;
 
   /**
    * True to use keyboard events for operating control panel.
    * @type {boolean}
    * @private
    */
-  _keyboardEvents = true;
+  _keyboardEvents = HttpSupervisor.defaultConfig.keyboardEvents;
 
   /**
    * True to persist config in local storage.
    * @type {boolean}
    * @private
    */
-  _persistConfig = true;
+  _persistConfig = HttpSupervisor.defaultConfig.persistConfig;
 
   /**
    * True to lock dev console.
    * @type {boolean}
    * @private
    */
-  _lockConsole = false;
+  _lockConsole = HttpSupervisor.defaultConfig.lockConsole;
 
   /**
    * The display labels for urls and other configuration for respective urls.
    * @type {object}
    * @private
    */
-  _urlConfig = {};
+  _urlConfig = HttpSupervisor.defaultConfig.urlConfig;
 
   /**
    * Collection of captured requests.
@@ -656,7 +679,7 @@ export default class HttpSupervisor {
     }
 
     const storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
-    this.setConfig({ ...storedConfig, ...config });
+    this.setConfig({ ...config, ...storedConfig });
 
     // Listen to the `request-end` event to display request details based on the properties.
     this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
@@ -1501,8 +1524,6 @@ export default class HttpSupervisor {
     return true;
   }
 
-
-
   /**
    * Returns the configuration of supervisor.
    * @returns {object}
@@ -1555,25 +1576,25 @@ export default class HttpSupervisor {
       urlConfig
     } = config;
 
-    Array.isArray(include) && (this._include = new Set(include));
-    Array.isArray(exclude) && (this._exclude = new Set(exclude));
-    typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-    typeof silent === 'boolean' && (this._silent = silent);
-    typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
-    typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
-    typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
-    typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
-    typeof quota === 'object' && (this._quota = { ...this._quota, ...quota });
-    Array.isArray(groupBy) && (this._groupBy = groupBy);
-    Array.isArray(sortBy) && (this._sortBy = sortBy);
-    typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
-    typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-    typeof loadChart === 'boolean' && (this._loadChart = loadChart);
-    typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
-    typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
-    typeof watches === 'object' && watches !== null  && (this._watches = new Map(Object.entries(this._watches)));
-    typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
-    typeof urlConfig === 'object' && urlConfig !== null && (this._urlConfig = urlConfig);
+    this._include = Array.isArray(include) ? new Set(include) : HttpSupervisor.defaultConfig.include;
+    this._exclude = Array.isArray(exclude) ? new Set(exclude) : HttpSupervisor.defaultConfig.exclude;
+    this._renderUI = typeof renderUI === 'boolean' ? renderUI : HttpSupervisor.defaultConfig.renderUI;
+    this._silent = typeof silent === 'boolean' ? silent : HttpSupervisor.defaultConfig.silent;
+    this._traceEachRequest = typeof traceEachRequest === 'boolean' ? traceEachRequest : HttpSupervisor.defaultConfig.traceEachRequest;
+    this._alertOnError = typeof alertOnError === 'boolean' ? alertOnError : HttpSupervisor.defaultConfig.alertOnError;
+    this._alertOnExceedQuota = typeof alertOnExceedQuota === 'boolean' ? alertOnExceedQuota : HttpSupervisor.defaultConfig.alertOnExceedQuota;
+    this._alertOnRequestStart = typeof alertOnRequestStart === 'boolean' ? alertOnRequestStart : HttpSupervisor.defaultConfig.alertOnRequestStart;
+    this._quota = typeof quota === 'object' ? { ...this._quota, ...quota } : HttpSupervisor.defaultConfig.quota;
+    this._groupBy = Array.isArray(groupBy) ? groupBy : HttpSupervisor.defaultConfig.groupBy;
+    this._sortBy = Array.isArray(sortBy) ? sortBy : HttpSupervisor.defaultConfig.sortBy;
+    this._usePerformance = typeof usePerformance === 'boolean' ? usePerformance : HttpSupervisor.defaultConfig.usePerformance;
+    this._monkeyPatchFetch = typeof monkeyPatchFetch === 'boolean' ? monkeyPatchFetch : HttpSupervisor.defaultConfig.monkeyPatchFetch;
+    this._loadChart = typeof loadChart === 'boolean' ? loadChart : HttpSupervisor.defaultConfig.loadChart;
+    this._keyboardEvents = typeof keyboardEvents === 'boolean' ? keyboardEvents : HttpSupervisor.defaultConfig.keyboardEvents;
+    this._persistConfig = persistConfig ? typeof persistConfig === 'boolean' : HttpSupervisor.defaultConfig.persistConfig;
+    this._watches = typeof watches === 'object' && watches !== null ? new Map(Object.entries(this._watches)) : new Map();
+    this._lockConsole = typeof lockConsole === 'boolean' ? lockConsole : HttpSupervisor.defaultConfig.lockConsole;
+    this._urlConfig = typeof urlConfig === 'object' ? urlConfig : {};
     this._updateStorage();
   }
 
@@ -1693,13 +1714,20 @@ export default class HttpSupervisor {
 
     parameters.shift();
 
+    if (!url || !this.canAllowUrl(url)) {
+      delete xhr[XHR_METADATA_KEY];
+      this._nativeOpen.call(xhr, ...parameters);
+      return;
+    }
+
     const id = this._id();
 
     if (this._isPerformanceSupported()) {
       parameters[1] = this._appendRequestIdToUrl(url, id);
     }
 
-    const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo(id);
+    const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo();
+    httpRequestInfo.id = id;
     httpRequestInfo.url = url;
     httpRequestInfo.method = method.toUpperCase();
     xhr[XHR_METADATA_KEY] = httpRequestInfo;
@@ -1721,16 +1749,14 @@ export default class HttpSupervisor {
 
     parameters.shift();
 
-    if (!this.canAllowUrl(xhr[XHR_METADATA_KEY].url)) {
+    const httpRequestInfo = xhr[XHR_METADATA_KEY];
+
+    if (!httpRequestInfo || !httpRequestInfo.url) {
+      delete xhr[XHR_METADATA_KEY];
       this._nativeSend.call(xhr, ...parameters);
       return;
     }
 
-    // Increment the call counter.
-    this._increment();
-
-    // Update the request.
-    const httpRequestInfo = xhr[XHR_METADATA_KEY];
     httpRequestInfo.initiatorType = InitiatorType.XHR;
     httpRequestInfo.payload = safeParse(payload);
     httpRequestInfo.payloadSize = byteSize(httpRequestInfo.payload ? JSON.stringify(httpRequestInfo.payload) : '');
@@ -1764,7 +1790,6 @@ export default class HttpSupervisor {
         return;
       }
 
-      this._decrement();
       httpRequestInfo.responseStatus = xhr.status;
       httpRequestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
       this._fillParametersAndFireEvents(httpRequestInfo, xhr);
@@ -1789,7 +1814,7 @@ export default class HttpSupervisor {
 
     parameters.shift();
 
-    const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo(this._id());
+    const httpRequestInfo = xhr[XHR_METADATA_KEY] || new HttpRequestInfo();
     const reqHeaders = httpRequestInfo.requestHeaders || new Map();
     reqHeaders.set(header, value);
     httpRequestInfo.requestHeaders = reqHeaders;
@@ -1832,6 +1857,7 @@ export default class HttpSupervisor {
     httpRequestInfo.exceedsQuota && this._triggerEvent(SupervisorEvents.EXCEEDS_QUOTA, httpRequestInfo, xhrOrResponse);
 
     this._setUrlMeta(httpRequestInfo);
+    this._decrement();
     this._triggerEvent(SupervisorEvents.REQUEST_END, httpRequestInfo, xhrOrResponse);
   }
 
@@ -1848,11 +1874,16 @@ export default class HttpSupervisor {
     const urlConfigUpdated = {};
     Object.entries(this._urlConfig).forEach(([k, v]) => Object.keys(v).forEach(u => urlConfigUpdated[`${k}${u}`] = v[u]));
 
-    const urlParts = pathDomain.toLowerCase().split('/');
+    const urlParts = trimEndSlash(pathDomain).toLowerCase().split('/');
 
     const matchedEntry = Object.keys(urlConfigUpdated).find(u => {
-      u = u.replace(regex1, '*').toLowerCase();
+      u = trimEndSlash(u).replace(regex1, '*').toLowerCase();
       const uParts = u.split('/');
+
+      if (urlParts.length !== uParts.length) {
+        return false;
+      }
+
       let isMatch = true;
 
       for (let i = 0; i < urlParts.length; i++) {
@@ -1910,7 +1941,7 @@ export default class HttpSupervisor {
           const val = readValue(request.response, part2.replace(/\$response./, ''));
           (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
         } else if (part2.startsWith('$payload') && request.payload) {
-          const val = readValue(request.response, part2.replace(/\$payload./, ''));
+          const val = readValue(request.payload, part2.replace(/\$payload./, ''));
           (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
         } else if (part2.startsWith('$query')) {
           const queryParams = new Map(new URLSearchParams(request.query));
@@ -1973,6 +2004,7 @@ export default class HttpSupervisor {
     this._activeSessionId && this._sessions.get(this._activeSessionId).add(request);
     this._setUrlMeta(request);
     this._addToCallsSummary(request);
+    this._increment();
   }
 
   /**

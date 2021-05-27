@@ -22,7 +22,7 @@
   function getBox(width, height) {
     return {
       string: "+",
-      style: "font-size: 1px; padding: " + Math.floor(height/2) + "px " + Math.floor(width/2) + "px; line-height: " + height + "px;"
+      style: "font-size: 1px; padding: " + Math.floor(height/2) + "px " + Math.floor(width/2) + "px;"
     }
   }
 
@@ -211,14 +211,11 @@
    * @param  {HTMLCanvasElement} canvas The canvas element
    * @return {null}
    */
-  console.screenshot = function(canvas, scale) {
+  console.screenshot = function(canvas, width, height) {
     var url = canvas.toDataURL(),
-      width = canvas.width,
-      height = canvas.height,
-      scale = scale || 1,
-      dim = getBox(width * scale, height * scale);
+      dim = getBox(width, height);
 
-    console.log("%c" + dim.string, dim.style + "background-image: url(" + url + "); background-size: " + (width * scale) + "px " + (height * scale) + "px; color: transparent;background-repeat:no;");
+    console.log("%c" + dim.string, dim.style + "background-image: url(" + url + "); background-size: " + width + "px " + height + "px; color: transparent;background-repeat:no-repeat;");
   };
 
   /**

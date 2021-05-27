@@ -1377,7 +1377,7 @@ try {
   function getBox(width, height) {
     return {
       string: "+",
-      style: "font-size: 1px; padding: " + Math.floor(height / 2) + "px " + Math.floor(width / 2) + "px; line-height: " + height + "px;"
+      style: "font-size: 1px; padding: " + Math.floor(height / 2) + "px " + Math.floor(width / 2) + "px;"
     };
   }
   /**
@@ -1584,13 +1584,10 @@ try {
    */
 
 
-  console.screenshot = function (canvas, scale) {
+  console.screenshot = function (canvas, width, height) {
     var url = canvas.toDataURL(),
-        width = canvas.width,
-        height = canvas.height,
-        scale = scale || 1,
-        dim = getBox(width * scale, height * scale);
-    console.log("%c" + dim.string, dim.style + "background-image: url(" + url + "); background-size: " + width * scale + "px " + height * scale + "px; color: transparent;background-repeat:no;");
+        dim = getBox(width, height);
+    console.log("%c" + dim.string, dim.style + "background-image: url(" + url + "); background-size: " + width + "px " + height + "px; color: transparent;background-repeat:no-repeat;");
   };
   /**
    * Snapshot/Profile a canvas element
@@ -2124,6 +2121,9 @@ function readValue(o, s) {
   }
 
   return o;
+}
+function trimEndSlash(url) {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
 }
 // CONCATENATED MODULE: ./src/http-request-info.js
 
@@ -3017,51 +3017,41 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_eventEmitter", null);
 
-    defineProperty_default()(this, "_include", null);
+    defineProperty_default()(this, "_include", HttpSupervisor.defaultConfig.include);
 
-    defineProperty_default()(this, "_exclude", null);
+    defineProperty_default()(this, "_exclude", HttpSupervisor.defaultConfig.exclude);
 
-    defineProperty_default()(this, "_renderUI", true);
+    defineProperty_default()(this, "_renderUI", HttpSupervisor.defaultConfig.renderUI);
 
-    defineProperty_default()(this, "_quota", {
-      maxPayloadSize: 10240,
-      // 10kb
-      maxResponseSize: 10240,
-      // 10kb
-      maxDuration: 1000 // 1s
+    defineProperty_default()(this, "_quota", HttpSupervisor.defaultConfig.quota);
 
-    });
+    defineProperty_default()(this, "_silent", HttpSupervisor.defaultConfig.silent);
 
-    defineProperty_default()(this, "_silent", false);
+    defineProperty_default()(this, "_traceEachRequest", HttpSupervisor.defaultConfig.traceEachRequest);
 
-    defineProperty_default()(this, "_traceEachRequest", false);
+    defineProperty_default()(this, "_alertOnError", HttpSupervisor.defaultConfig.alertOnError);
 
-    defineProperty_default()(this, "_alertOnError", true);
+    defineProperty_default()(this, "_alertOnExceedQuota", HttpSupervisor.defaultConfig.alertOnExceedQuota);
 
-    defineProperty_default()(this, "_alertOnExceedQuota", true);
+    defineProperty_default()(this, "_alertOnRequestStart", HttpSupervisor.defaultConfig.alertOnRequestStart);
 
-    defineProperty_default()(this, "_alertOnRequestStart", false);
+    defineProperty_default()(this, "_groupBy", HttpSupervisor.defaultConfig.groupBy);
 
-    defineProperty_default()(this, "_groupBy", ['pathQuery', 'method']);
+    defineProperty_default()(this, "_sortBy", HttpSupervisor.defaultConfig.sortBy);
 
-    defineProperty_default()(this, "_sortBy", [{
-      field: 'id',
-      dir: 'asc'
-    }]);
+    defineProperty_default()(this, "_usePerformance", HttpSupervisor.defaultConfig.usePerformance);
 
-    defineProperty_default()(this, "_usePerformance", true);
+    defineProperty_default()(this, "_monkeyPatchFetch", HttpSupervisor.defaultConfig.monkeyPatchFetch);
 
-    defineProperty_default()(this, "_monkeyPatchFetch", true);
+    defineProperty_default()(this, "_loadChart", HttpSupervisor.defaultConfig.loadChart);
 
-    defineProperty_default()(this, "_loadChart", true);
+    defineProperty_default()(this, "_keyboardEvents", HttpSupervisor.defaultConfig.keyboardEvents);
 
-    defineProperty_default()(this, "_keyboardEvents", true);
+    defineProperty_default()(this, "_persistConfig", HttpSupervisor.defaultConfig.persistConfig);
 
-    defineProperty_default()(this, "_persistConfig", true);
+    defineProperty_default()(this, "_lockConsole", HttpSupervisor.defaultConfig.lockConsole);
 
-    defineProperty_default()(this, "_lockConsole", false);
-
-    defineProperty_default()(this, "_urlConfig", {});
+    defineProperty_default()(this, "_urlConfig", HttpSupervisor.defaultConfig.urlConfig);
 
     defineProperty_default()(this, "_requests", new session_Session());
 
@@ -3127,216 +3117,6 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   createClass_default()(HttpSupervisor, [{
     key: "busy",
     get:
-    /**
-     * The UI widget through which user can interact with supervisor.
-     * @type {object}
-     * @private
-     */
-
-    /**
-     * The reporter that displays the metrics and requests info captured in a particular period.
-     * @type {object}
-     * @private
-     */
-
-    /**
-     * Event emitter.
-     * @type {EventEmitter}
-     * @private
-     */
-
-    /**
-     * The url that matches these patterns will be captured.
-     * @type {Set}
-     * @private
-     */
-
-    /**
-     * The url that matches these patterns will be ignored.
-     * @type {Set}
-     * @private
-     */
-
-    /**
-     * True to render UI.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * Request Quota.
-     * @type {object}
-     * @private
-     */
-
-    /**
-     * True to not display any messages in console or the passed reporter.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * Displays each completed request.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * Displays failed request.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * Displays requests that exceeded quota.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * True to alert on request start.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * Grouping parameters used in displaying requests.
-     * @type {string[]}
-     * @private
-     */
-
-    /**
-     * Sorting parameters used in displaying requests.
-     * @type {*[]}
-     * @private
-     */
-
-    /**
-     * Uses `performance.getEntriesByType` for capturing accurate duration and payload size.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * True to monkey patch fetch requests.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * True to use `chart.js` library for data visualization.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * True to use keyboard events for operating control panel.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * True to persist config in local storage.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * True to lock dev console.
-     * @type {boolean}
-     * @private
-     */
-
-    /**
-     * The display labels for urls and other configuration for respective urls.
-     * @type {object}
-     * @private
-     */
-
-    /**
-     * Collection of captured requests.
-     * @type {Set}
-     * @private
-     */
-
-    /**
-     * Collection of recorded sessions.
-     * @type {Map}
-     * @private
-     */
-
-    /**
-     * Collection of watches.
-     * @type {Map}
-     * @private
-     */
-
-    /**
-     * Current status of the supervisor.
-     * @type {string}
-     * @private
-     */
-
-    /**
-     * Current on-going requests count.
-     * @type {number}
-     * @private
-     */
-
-    /**
-     * The id generator function.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * The id generator function for watches.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * The id generator function for sessions.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * The current active session id.
-     * @type {number}
-     * @private
-     */
-
-    /**
-     * Native `fetch` method.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * XMLHttpRequest native `open` method.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * XMLHttpRequest native `send` method.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * XMLHttpRequest native `setRequestHeader` method.
-     * @type {function}
-     * @private
-     */
-
-    /**
-     * Helps to find duplicates.
-     * @type {Array}
-     * @private
-     */
-
     /**
      * Returns `true` if busy.
      * @return {boolean}
@@ -3726,7 +3506,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       var storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
-      this.setConfig(_objectSpread(_objectSpread({}, storedConfig), config)); // Listen to the `request-end` event to display request details based on the properties.
+      this.setConfig(_objectSpread(_objectSpread({}, config), storedConfig)); // Listen to the `request-end` event to display request details based on the properties.
 
       this.on(SupervisorEvents.REQUEST_END, function (supervisor, request) {
         if (_this._silent) {
@@ -4894,25 +4674,25 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           persistConfig = config.persistConfig,
           lockConsole = config.lockConsole,
           urlConfig = config.urlConfig;
-      Array.isArray(include) && (this._include = new Set(include));
-      Array.isArray(exclude) && (this._exclude = new Set(exclude));
-      typeof renderUI === 'boolean' && (this._renderUI = renderUI);
-      typeof silent === 'boolean' && (this._silent = silent);
-      typeof traceEachRequest === 'boolean' && (this._traceEachRequest = traceEachRequest);
-      typeof alertOnError === 'boolean' && (this._alertOnError = alertOnError);
-      typeof alertOnExceedQuota === 'boolean' && (this._alertOnExceedQuota = alertOnExceedQuota);
-      typeof alertOnRequestStart === 'boolean' && (this._alertOnRequestStart = alertOnRequestStart);
-      typeof_default()(quota) === 'object' && (this._quota = _objectSpread(_objectSpread({}, this._quota), quota));
-      Array.isArray(groupBy) && (this._groupBy = groupBy);
-      Array.isArray(sortBy) && (this._sortBy = sortBy);
-      typeof usePerformance === 'boolean' && (this._usePerformance = usePerformance);
-      typeof monkeyPatchFetch === 'boolean' && (this._monkeyPatchFetch = monkeyPatchFetch);
-      typeof loadChart === 'boolean' && (this._loadChart = loadChart);
-      typeof keyboardEvents === 'boolean' && (this._keyboardEvents = keyboardEvents);
-      typeof persistConfig === 'boolean' && (this._persistConfig = persistConfig);
-      typeof_default()(watches) === 'object' && watches !== null && (this._watches = new Map(Object.entries(this._watches)));
-      typeof lockConsole === 'boolean' && (this._lockConsole = lockConsole);
-      typeof_default()(urlConfig) === 'object' && urlConfig !== null && (this._urlConfig = urlConfig);
+      this._include = Array.isArray(include) ? new Set(include) : HttpSupervisor.defaultConfig.include;
+      this._exclude = Array.isArray(exclude) ? new Set(exclude) : HttpSupervisor.defaultConfig.exclude;
+      this._renderUI = typeof renderUI === 'boolean' ? renderUI : HttpSupervisor.defaultConfig.renderUI;
+      this._silent = typeof silent === 'boolean' ? silent : HttpSupervisor.defaultConfig.silent;
+      this._traceEachRequest = typeof traceEachRequest === 'boolean' ? traceEachRequest : HttpSupervisor.defaultConfig.traceEachRequest;
+      this._alertOnError = typeof alertOnError === 'boolean' ? alertOnError : HttpSupervisor.defaultConfig.alertOnError;
+      this._alertOnExceedQuota = typeof alertOnExceedQuota === 'boolean' ? alertOnExceedQuota : HttpSupervisor.defaultConfig.alertOnExceedQuota;
+      this._alertOnRequestStart = typeof alertOnRequestStart === 'boolean' ? alertOnRequestStart : HttpSupervisor.defaultConfig.alertOnRequestStart;
+      this._quota = typeof_default()(quota) === 'object' ? _objectSpread(_objectSpread({}, this._quota), quota) : HttpSupervisor.defaultConfig.quota;
+      this._groupBy = Array.isArray(groupBy) ? groupBy : HttpSupervisor.defaultConfig.groupBy;
+      this._sortBy = Array.isArray(sortBy) ? sortBy : HttpSupervisor.defaultConfig.sortBy;
+      this._usePerformance = typeof usePerformance === 'boolean' ? usePerformance : HttpSupervisor.defaultConfig.usePerformance;
+      this._monkeyPatchFetch = typeof monkeyPatchFetch === 'boolean' ? monkeyPatchFetch : HttpSupervisor.defaultConfig.monkeyPatchFetch;
+      this._loadChart = typeof loadChart === 'boolean' ? loadChart : HttpSupervisor.defaultConfig.loadChart;
+      this._keyboardEvents = typeof keyboardEvents === 'boolean' ? keyboardEvents : HttpSupervisor.defaultConfig.keyboardEvents;
+      this._persistConfig = persistConfig ? typeof persistConfig === 'boolean' : HttpSupervisor.defaultConfig.persistConfig;
+      this._watches = typeof_default()(watches) === 'object' && watches !== null ? new Map(Object.entries(this._watches)) : new Map();
+      this._lockConsole = typeof lockConsole === 'boolean' ? lockConsole : HttpSupervisor.defaultConfig.lockConsole;
+      this._urlConfig = typeof_default()(urlConfig) === 'object' ? urlConfig : {};
 
       this._updateStorage();
     }
@@ -5039,7 +4819,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_open",
     value: function _open() {
-      var _this$_nativeOpen;
+      var _this$_nativeOpen2;
 
       if (!this.busy) {
         return;
@@ -5051,18 +4831,29 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           url = parameters[2];
       parameters.shift();
 
+      if (!url || !this.canAllowUrl(url)) {
+        var _this$_nativeOpen;
+
+        delete xhr[XHR_METADATA_KEY];
+
+        (_this$_nativeOpen = this._nativeOpen).call.apply(_this$_nativeOpen, [xhr].concat(parameters));
+
+        return;
+      }
+
       var id = this._id();
 
       if (this._isPerformanceSupported()) {
         parameters[1] = this._appendRequestIdToUrl(url, id);
       }
 
-      var httpRequestInfo = xhr[XHR_METADATA_KEY] || new http_request_info_HttpRequestInfo(id);
+      var httpRequestInfo = xhr[XHR_METADATA_KEY] || new http_request_info_HttpRequestInfo();
+      httpRequestInfo.id = id;
       httpRequestInfo.url = url;
       httpRequestInfo.method = method.toUpperCase();
       xhr[XHR_METADATA_KEY] = httpRequestInfo;
 
-      (_this$_nativeOpen = this._nativeOpen).call.apply(_this$_nativeOpen, [xhr].concat(parameters));
+      (_this$_nativeOpen2 = this._nativeOpen).call.apply(_this$_nativeOpen2, [xhr].concat(parameters));
     }
     /**
      * Sends XHR request.
@@ -5083,20 +4874,18 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           xhr = parameters[0],
           payload = parameters[1];
       parameters.shift();
+      var httpRequestInfo = xhr[XHR_METADATA_KEY];
 
-      if (!this.canAllowUrl(xhr[XHR_METADATA_KEY].url)) {
+      if (!httpRequestInfo || !httpRequestInfo.url) {
         var _this$_nativeSend;
+
+        delete xhr[XHR_METADATA_KEY];
 
         (_this$_nativeSend = this._nativeSend).call.apply(_this$_nativeSend, [xhr].concat(parameters));
 
         return;
-      } // Increment the call counter.
+      }
 
-
-      this._increment(); // Update the request.
-
-
-      var httpRequestInfo = xhr[XHR_METADATA_KEY];
       httpRequestInfo.initiatorType = InitiatorType.XHR;
       httpRequestInfo.payload = safeParse(payload);
       httpRequestInfo.payloadSize = byteSize(httpRequestInfo.payload ? JSON.stringify(httpRequestInfo.payload) : '');
@@ -5126,8 +4915,6 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         if (xhr.readyState !== XMLHttpRequest.DONE) {
           return;
         }
-
-        _this5._decrement();
 
         httpRequestInfo.responseStatus = xhr.status;
         httpRequestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
@@ -5159,7 +4946,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           header = parameters[1],
           value = parameters[2];
       parameters.shift();
-      var httpRequestInfo = xhr[XHR_METADATA_KEY] || new http_request_info_HttpRequestInfo(this._id());
+      var httpRequestInfo = xhr[XHR_METADATA_KEY] || new http_request_info_HttpRequestInfo();
       var reqHeaders = httpRequestInfo.requestHeaders || new Map();
       reqHeaders.set(header, value);
       httpRequestInfo.requestHeaders = reqHeaders;
@@ -5206,6 +4993,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
       this._setUrlMeta(httpRequestInfo);
 
+      this._decrement();
+
       this._triggerEvent(SupervisorEvents.REQUEST_END, httpRequestInfo, xhrOrResponse);
     }
     /**
@@ -5231,10 +5020,15 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           return urlConfigUpdated["".concat(k).concat(u)] = v[u];
         });
       });
-      var urlParts = pathDomain.toLowerCase().split('/');
+      var urlParts = trimEndSlash(pathDomain).toLowerCase().split('/');
       var matchedEntry = Object.keys(urlConfigUpdated).find(function (u) {
-        u = u.replace(regex1, '*').toLowerCase();
+        u = trimEndSlash(u).replace(regex1, '*').toLowerCase();
         var uParts = u.split('/');
+
+        if (urlParts.length !== uParts.length) {
+          return false;
+        }
+
         var isMatch = true;
 
         for (var i = 0; i < urlParts.length; i++) {
@@ -5300,7 +5094,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
             var val = readValue(request.response, part2.replace(/\$response./, ''));
             val !== null && val !== undefined && (request.label = request.label.replaceAll(part1, val));
           } else if (part2.startsWith('$payload') && request.payload) {
-            var _val = readValue(request.response, part2.replace(/\$payload./, ''));
+            var _val = readValue(request.payload, part2.replace(/\$payload./, ''));
 
             _val !== null && _val !== undefined && (request.label = request.label.replaceAll(part1, _val));
           } else if (part2.startsWith('$query')) {
@@ -5387,6 +5181,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._setUrlMeta(request);
 
       this._addToCallsSummary(request);
+
+      this._increment();
     }
     /**
      * Returns true if `performance.getEntriesByType` is supported.
@@ -5514,6 +5310,46 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
       return query;
     }
+  }], [{
+    key: "defaultConfig",
+    get: function get() {
+      return {
+        include: null,
+        exclude: null,
+        renderUI: true,
+        quota: {
+          maxPayloadSize: 10240,
+          // 10kb
+          maxResponseSize: 10240,
+          // 10kb
+          maxDuration: 1000 // 1s
+
+        },
+        silent: false,
+        traceEachRequest: false,
+        alertOnError: true,
+        alertOnExceedQuota: true,
+        alertOnRequestStart: false,
+        groupBy: ['pathQuery', 'method'],
+        sortBy: [{
+          field: 'id',
+          dir: 'asc'
+        }],
+        usePerformance: true,
+        monkeyPatchFetch: true,
+        loadChart: true,
+        keyboardEvents: true,
+        persistConfig: true,
+        lockConsole: false,
+        urlConfig: {}
+      };
+    }
+    /**
+     * The UI widget through which user can interact with supervisor.
+     * @type {object}
+     * @private
+     */
+
   }]);
 
   return HttpSupervisor;
@@ -6633,7 +6469,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           }
         });
       } else if (type === 'bubble') {
-        myChart = new Chart(ctx, {
+        myChart = window.myChart = new Chart(ctx, {
           type: 'bubble',
           data: {
             datasets: [{
@@ -6675,7 +6511,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           }
         });
       } else if (type === 'pie') {
-        myChart = new Chart(ctx, {
+        myChart = window.myChart = new Chart(ctx, {
           type: 'pie',
           data: {
             labels: labels,
@@ -6705,7 +6541,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       }
 
       setTimeout(function () {
-        _this._invokeConsole('screenshot', _this._canvasEl, .5, .35);
+        _this._invokeConsole('screenshot', _this._canvasEl, 500, 300);
 
         myChart.destroy();
         myChart = null;
@@ -6959,6 +6795,8 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       this._canvasEl = document.createElement('canvas');
       this._canvasEl.style.width = "".concat(this._chartWidth, "px");
       this._canvasEl.style.height = "".concat(this._chartHeight, "px");
+      this._canvasEl.width = this._chartWidth;
+      this._canvasEl.height = this._chartHeight;
       this._canvasEl.style.display = 'none';
       document.body.appendChild(this._canvasEl);
     }

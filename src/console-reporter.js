@@ -241,7 +241,7 @@ export default class ConsoleReporter {
         }
       });
     } else if (type === 'bubble') {
-      myChart = new Chart(ctx, {
+      myChart = window.myChart = new Chart(ctx, {
         type: 'bubble',
         data: {
           datasets: [{
@@ -283,7 +283,7 @@ export default class ConsoleReporter {
         }
       });
     } else if (type === 'pie') {
-      myChart = new Chart(ctx, {
+      myChart = window.myChart = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: labels,
@@ -313,7 +313,7 @@ export default class ConsoleReporter {
     }
 
     setTimeout(() => {
-      this._invokeConsole('screenshot', this._canvasEl, .5, .35);
+      this._invokeConsole('screenshot', this._canvasEl, 500, 300);
       myChart.destroy();
       myChart = null;
     }, 500);
@@ -502,6 +502,8 @@ export default class ConsoleReporter {
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;
     this._canvasEl.style.height = `${this._chartHeight}px`;
+    this._canvasEl.width = this._chartWidth;
+    this._canvasEl.height = this._chartHeight;
     this._canvasEl.style.display = 'none';
 
     document.body.appendChild(this._canvasEl);

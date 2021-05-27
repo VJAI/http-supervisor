@@ -261,3 +261,7 @@ export function readValue(o, s) {
   }
   return o;
 }
+
+export function trimEndSlash(url) {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+}
