@@ -50,10 +50,10 @@ export default class HttpSupervisor {
         maxDuration: 1000 // 1s
       },
       silent: false,
-      traceEachRequest: false,
+      traceEachRequest: true,
       alertOnError: true,
       alertOnExceedQuota: true,
-      alertOnRequestStart: false,
+      alertOnRequestStart: true,
       groupBy: ['pathQuery', 'method'],
       sortBy: [{ field: 'id', dir: 'asc' }],
       usePerformance: true,
@@ -855,6 +855,14 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns the request that has maximum payload size.
+   * @return {HttpRequestInfo}
+   */
+  maxPayloadRequest() {
+    return this.sort({ field: 'payloadSize', dir: 'desc' }).first;
+  }
+
+  /**
    * Returns the request that has maximum response size.
    * @returns {HttpRequestInfo}
    */
@@ -949,7 +957,7 @@ export default class HttpSupervisor {
    * @returns {number}
    */
   totalPayload() {
-    return [...this._requests].reduce((a, b) => a + b.payloadSize, 0);
+    return this.query().total('payloadSize');
   }
 
   /**
@@ -957,7 +965,7 @@ export default class HttpSupervisor {
    * @returns {number}
    */
   totalSize() {
-    return [...this._requests].reduce((a, b) => a + b.responseSize, 0);
+    return this.query().total('responseSize');
   }
 
   /**
@@ -1038,10 +1046,16 @@ export default class HttpSupervisor {
    * @return {object}
    */
   exceededParameters(request) {
+    const {
+      maxPayloadSize = this._quota.maxPayloadSize,
+      maxResponseSize = this._quota.maxResponseSize,
+      maxDuration = this._quota.maxDuration
+    } = request.quota || {};
+
     return {
-      payload: request.payloadSize > this._quota.maxPayloadSize,
-      response: request.responseSize > this._quota.maxResponseSize,
-      duration: request.duration > this._quota.maxDuration
+      payload: request.payloadSize > maxPayloadSize,
+      response: request.responseSize > maxResponseSize,
+      duration: request.duration > maxDuration
     };
   }
 
@@ -1049,7 +1063,7 @@ export default class HttpSupervisor {
    * Sorts the requests based on the passed arguments and print them.
    * @param {...*} sortArgs The sort parameters.
    */
-  sortPrint(...sortArgs) {
+  printSort(...sortArgs) {
     this.print(this.sort(...sortArgs));
   }
 
@@ -1057,7 +1071,7 @@ export default class HttpSupervisor {
    * Groups the requests based on the passed fields and print them.
    * @param {...string} groupArgs The group fields.
    */
-  groupPrint(...groupArgs) {
+  printGroup(...groupArgs) {
     this.print(this.group(...groupArgs));
   }
 
@@ -1065,7 +1079,7 @@ export default class HttpSupervisor {
    * Search requests based on the passed arguments. Also, sorts and groups.
    * @param {...*} searchArgs The search arguments.
    */
-  queryPrint(...searchArgs) {
+  printQuery(...searchArgs) {
     this.print(this.query(...searchArgs));
   }
 
@@ -1101,20 +1115,14 @@ export default class HttpSupervisor {
       return;
     }
 
-    this._reporter.report({
-      totalRequests: this.totalRequests,
-      getRequestsCount: this.query(REQUEST_TYPE.GET).count,
-      postRequestsCount: this.query(REQUEST_TYPE.POST).count,
-      putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
-      deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
-      failedRequests: this.failed().count,
-      requestsExceededQuota: this.exceeded().count,
-      maxPayloadSize: this.maxPayload(),
-      maxResponseSize: this.maxResponse(),
-      maxDuration: this.maxDuration(),
-      totalPayloadSize: this.totalPayload(),
-      totalResponseSize: this.totalSize()
-    }, this.query(null, this._groupBy, this._sortBy));
+    this._reporter.report(this._getStats(), this.query(null, this._groupBy, this._sortBy));
+  }
+
+  /**
+   * Print statistics.
+   */
+  printStats() {
+    this._reporter.reportStats(this._getStats());
   }
 
   /**
@@ -1143,6 +1151,13 @@ export default class HttpSupervisor {
    */
   printLast() {
     this._reporter.report(this.last());
+  }
+
+  /**
+   * Prints the request that has maximum payload.
+   */
+  printPayloadSizeRequest() {
+    this._reporter.report(this.maxPayloadRequest());
   }
 
   /**
@@ -1418,12 +1433,24 @@ export default class HttpSupervisor {
   /**
    * Re-issues ajax request for the passed http request.
    * @param id
+   * @param count
+   * @param parallel
    * @param type
-   * @param reqOptions
    */
-  fire(id, type = InitiatorType.XHR, reqOptions = {}) {
+  async fire(id, count = 1, parallel = true, type = InitiatorType.XHR) {
     const request = this.get(id);
-    request && request.fire(type, reqOptions);
+
+    if (!request) {
+      return;
+    }
+
+    for (let i = 0; i < count; i++) {
+      if (parallel) {
+        request.fire(type);
+      } else {
+       await request.fire(type);
+      }
+    }
   }
 
   /**
@@ -1596,6 +1623,15 @@ export default class HttpSupervisor {
     this._lockConsole = typeof lockConsole === 'boolean' ? lockConsole : HttpSupervisor.defaultConfig.lockConsole;
     this._urlConfig = typeof urlConfig === 'object' ? urlConfig : {};
     this._updateStorage();
+  }
+
+  /**
+   * Creates and returns new collection from the passed requests.
+   * @param requests
+   * @return {Collection}
+   */
+  collection(...requests) {
+    return new Collection(requests.map(r => this.get(r)));
   }
 
   /**
@@ -1915,11 +1951,13 @@ export default class HttpSupervisor {
           request.label = t.label;
           request.labelPending = t.labelPending;
           request.errorLabel = t.error;
+          request.quota = t.quota;
         }
       } else {
         request.label = matchedValue.label;
         request.labelPending = matchedValue.labelPending;
         request.errorLabel = matchedValue.error;
+        request.quota = matchedValue.quota;
       }
     }
 
@@ -2038,7 +2076,12 @@ export default class HttpSupervisor {
    * @private
    */
   _isExceededQuota(request) {
-    return request.payloadSize > this._quota.maxPayloadSize || request.responseSize > this._quota.maxResponseSize || request.duration > this._quota.maxDuration;
+    const {
+      maxPayloadSize = this._quota.maxPayloadSize,
+      maxResponseSize = this._quota.maxResponseSize,
+      maxDuration = this._quota.maxDuration
+    } = request.quota || {};
+    return request.payloadSize > maxPayloadSize || request.responseSize > maxResponseSize || request.duration > maxDuration;
   }
 
   /**
@@ -2081,6 +2124,8 @@ export default class HttpSupervisor {
       query = { field: 'label', operator: SEARCH_OPERATOR.CONTAINS, value: str.replace(/label:/, '') };
     } else if (str.startsWith('category:')) {
       query = { field: 'category', operator: SEARCH_OPERATOR.CONTAINS, value: str.replace(/category:/, '') };
+    } else if (str.startsWith('tag:')) {
+      query = { field: 'tags', operator: SEARCH_OPERATOR.INCLUDE, value: str.replace(/tag:/, '') };
     } else if (str.indexOf('*') > -1) {
       query = { field: 'url', operator: SEARCH_OPERATOR.MATCHES, value: str };
     } else {
@@ -2088,5 +2133,26 @@ export default class HttpSupervisor {
     }
 
     return query;
+  }
+
+  _getStats() {
+    return {
+      allRequests: this.query(),
+      totalRequests: this.totalRequests,
+      getRequestsCount: this.query(REQUEST_TYPE.GET).count,
+      postRequestsCount: this.query(REQUEST_TYPE.POST).count,
+      putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
+      deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
+      failedRequests: this.failed(),
+      requestsExceededQuota: this.exceeded(),
+      maxPayloadSize: this.maxPayload(),
+      maxResponseSize: this.maxResponse(),
+      maxDuration: this.maxDuration(),
+      totalPayloadSize: this.totalPayload(),
+      totalResponseSize: this.totalSize(),
+      maxPayloadRequest: this.maxPayloadRequest(),
+      maxResponseRequest: this.maxSizeRequest(),
+      maxDurationRequest: this.maxDurationRequest()
+    };
   }
 }

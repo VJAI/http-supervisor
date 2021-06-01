@@ -21,6 +21,7 @@ export const Messages = {
   MAX_DURATION: 'Max Duration',
   TOTAL_PAYLOAD_SIZE: 'Total Payload Size',
   TOTAL_RESPONSE_SIZE: 'Total Response Size',
+  TOTAL_DURATION: 'Total Duration',
   GET: 'GET',
   POST: 'POST',
   PUT: 'PUT',
@@ -53,7 +54,13 @@ export const Messages = {
   HAS_DUPLICATES: 'Has Duplicates?',
   DUPLICATE_REQUESTS: 'Duplicate Requests',
   CATEGORY: 'Category',
-  TAGS: 'Tags'
+  TAGS: 'Tags',
+  AVERAGE_PAYLOAD_SIZE: 'Average Payload',
+  AVERAGE_RESPONSE_SIZE: 'Average Response',
+  AVERAGE_DURATION: 'Average Duration',
+  MAX_PAYLOAD_REQUEST: 'Max Payload Request',
+  MAX_RESPONSE_REQUEST: 'Max Response Request',
+  MAX_DURATION_REQUEST: 'Max Duration Request'
 };
 
 /**
@@ -191,7 +198,9 @@ export const SEARCH_OPERATOR = {
   MATCHES: 'matches',
   NOT_MATCHES: '!matches',
   IN: 'in',
-  NOT_IN: '!in'
+  NOT_IN: '!in',
+  INCLUDE: 'include',
+  EXCLUDE: 'exclude'
 };
 
 /**

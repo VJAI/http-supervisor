@@ -215,6 +215,13 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 /* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(23);
+
+
+/***/ }),
+/* 7 */
 /***/ (function(module, exports) {
 
 function _getPrototypeOf(o) {
@@ -229,126 +236,7 @@ module.exports = _getPrototypeOf;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(25);
-
-
-/***/ }),
 /* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var setPrototypeOf = __webpack_require__(13);
-
-function _inherits(subClass, superClass) {
-  if (typeof superClass !== "function" && superClass !== null) {
-    throw new TypeError("Super expression must either be null or a function");
-  }
-
-  subClass.prototype = Object.create(superClass && superClass.prototype, {
-    constructor: {
-      value: subClass,
-      writable: true,
-      configurable: true
-    }
-  });
-  if (superClass) setPrototypeOf(subClass, superClass);
-}
-
-module.exports = _inherits;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(5)["default"];
-
-var assertThisInitialized = __webpack_require__(2);
-
-function _possibleConstructorReturn(self, call) {
-  if (call && (_typeof(call) === "object" || typeof call === "function")) {
-    return call;
-  }
-
-  return assertThisInitialized(self);
-}
-
-module.exports = _possibleConstructorReturn;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var getPrototypeOf = __webpack_require__(6);
-
-var setPrototypeOf = __webpack_require__(13);
-
-var isNativeFunction = __webpack_require__(23);
-
-var construct = __webpack_require__(14);
-
-function _wrapNativeSuper(Class) {
-  var _cache = typeof Map === "function" ? new Map() : undefined;
-
-  module.exports = _wrapNativeSuper = function _wrapNativeSuper(Class) {
-    if (Class === null || !isNativeFunction(Class)) return Class;
-
-    if (typeof Class !== "function") {
-      throw new TypeError("Super expression must either be null or a function");
-    }
-
-    if (typeof _cache !== "undefined") {
-      if (_cache.has(Class)) return _cache.get(Class);
-
-      _cache.set(Class, Wrapper);
-    }
-
-    function Wrapper() {
-      return construct(Class, arguments, getPrototypeOf(this).constructor);
-    }
-
-    Wrapper.prototype = Object.create(Class.prototype, {
-      constructor: {
-        value: Wrapper,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    return setPrototypeOf(Wrapper, Class);
-  };
-
-  module.exports["default"] = module.exports, module.exports.__esModule = true;
-  return _wrapNativeSuper(Class);
-}
-
-module.exports = _wrapNativeSuper;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(17);
-
-var iterableToArrayLimit = __webpack_require__(18);
-
-var unsupportedIterableToArray = __webpack_require__(15);
-
-var nonIterableRest = __webpack_require__(19);
-
-function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
-}
-
-module.exports = _slicedToArray;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 12 */
 /***/ (function(module, exports) {
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
@@ -391,6 +279,118 @@ module.exports = _asyncToGenerator;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(13);
+
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function");
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) setPrototypeOf(subClass, superClass);
+}
+
+module.exports = _inherits;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(5)["default"];
+
+var assertThisInitialized = __webpack_require__(2);
+
+function _possibleConstructorReturn(self, call) {
+  if (call && (_typeof(call) === "object" || typeof call === "function")) {
+    return call;
+  }
+
+  return assertThisInitialized(self);
+}
+
+module.exports = _possibleConstructorReturn;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var getPrototypeOf = __webpack_require__(7);
+
+var setPrototypeOf = __webpack_require__(13);
+
+var isNativeFunction = __webpack_require__(24);
+
+var construct = __webpack_require__(14);
+
+function _wrapNativeSuper(Class) {
+  var _cache = typeof Map === "function" ? new Map() : undefined;
+
+  module.exports = _wrapNativeSuper = function _wrapNativeSuper(Class) {
+    if (Class === null || !isNativeFunction(Class)) return Class;
+
+    if (typeof Class !== "function") {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+
+    if (typeof _cache !== "undefined") {
+      if (_cache.has(Class)) return _cache.get(Class);
+
+      _cache.set(Class, Wrapper);
+    }
+
+    function Wrapper() {
+      return construct(Class, arguments, getPrototypeOf(this).constructor);
+    }
+
+    Wrapper.prototype = Object.create(Class.prototype, {
+      constructor: {
+        value: Wrapper,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    return setPrototypeOf(Wrapper, Class);
+  };
+
+  module.exports["default"] = module.exports, module.exports.__esModule = true;
+  return _wrapNativeSuper(Class);
+}
+
+module.exports = _wrapNativeSuper;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithHoles = __webpack_require__(17);
+
+var iterableToArrayLimit = __webpack_require__(18);
+
+var unsupportedIterableToArray = __webpack_require__(15);
+
+var nonIterableRest = __webpack_require__(19);
+
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
+}
+
+module.exports = _slicedToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
 /* 13 */
 /***/ (function(module, exports) {
 
@@ -413,7 +413,7 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 var setPrototypeOf = __webpack_require__(13);
 
-var isNativeReflectConstruct = __webpack_require__(24);
+var isNativeReflectConstruct = __webpack_require__(25);
 
 function _construct(Parent, args, Class) {
   if (isNativeReflectConstruct()) {
@@ -566,37 +566,6 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 /* 23 */
-/***/ (function(module, exports) {
-
-function _isNativeFunction(fn) {
-  return Function.toString.call(fn).indexOf("[native code]") !== -1;
-}
-
-module.exports = _isNativeFunction;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 24 */
-/***/ (function(module, exports) {
-
-function _isNativeReflectConstruct() {
-  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-  if (Reflect.construct.sham) return false;
-  if (typeof Proxy === "function") return true;
-
-  try {
-    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-module.exports = _isNativeReflectConstruct;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -1350,6 +1319,37 @@ try {
 
 
 /***/ }),
+/* 24 */
+/***/ (function(module, exports) {
+
+function _isNativeFunction(fn) {
+  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+}
+
+module.exports = _isNativeFunction;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+function _isNativeReflectConstruct() {
+  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+  if (Reflect.construct.sham) return false;
+  if (typeof Proxy === "function") return true;
+
+  try {
+    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+module.exports = _isNativeReflectConstruct;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
 /* 26 */
 /***/ (function(module, exports) {
 
@@ -1618,8 +1618,12 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.d(__webpack_exports__, "HttpSupervisor", function() { return /* reexport */ http_supervisor_HttpSupervisor; });
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
-var slicedToArray = __webpack_require__(11);
+var slicedToArray = __webpack_require__(12);
 var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/asyncToGenerator.js
+var asyncToGenerator = __webpack_require__(8);
+var asyncToGenerator_default = /*#__PURE__*/__webpack_require__.n(asyncToGenerator);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/typeof.js
 var helpers_typeof = __webpack_require__(5);
@@ -1640,6 +1644,10 @@ var createClass_default = /*#__PURE__*/__webpack_require__.n(createClass);
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/defineProperty.js
 var defineProperty = __webpack_require__(0);
 var defineProperty_default = /*#__PURE__*/__webpack_require__.n(defineProperty);
+
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/regenerator/index.js
+var regenerator = __webpack_require__(6);
+var regenerator_default = /*#__PURE__*/__webpack_require__.n(regenerator);
 
 // CONCATENATED MODULE: ./src/constants.js
 var HTTP_SUPERVISOR_EMOJI = '👮';
@@ -1665,6 +1673,7 @@ var Messages = {
   MAX_DURATION: 'Max Duration',
   TOTAL_PAYLOAD_SIZE: 'Total Payload Size',
   TOTAL_RESPONSE_SIZE: 'Total Response Size',
+  TOTAL_DURATION: 'Total Duration',
   GET: 'GET',
   POST: 'POST',
   PUT: 'PUT',
@@ -1697,7 +1706,13 @@ var Messages = {
   HAS_DUPLICATES: 'Has Duplicates?',
   DUPLICATE_REQUESTS: 'Duplicate Requests',
   CATEGORY: 'Category',
-  TAGS: 'Tags'
+  TAGS: 'Tags',
+  AVERAGE_PAYLOAD_SIZE: 'Average Payload',
+  AVERAGE_RESPONSE_SIZE: 'Average Response',
+  AVERAGE_DURATION: 'Average Duration',
+  MAX_PAYLOAD_REQUEST: 'Max Payload Request',
+  MAX_RESPONSE_REQUEST: 'Max Response Request',
+  MAX_DURATION_REQUEST: 'Max Duration Request'
 };
 /**
  * The different color codes by supervisor.
@@ -1839,7 +1854,9 @@ var SEARCH_OPERATOR = {
   MATCHES: 'matches',
   NOT_MATCHES: '!matches',
   IN: 'in',
-  NOT_IN: '!in'
+  NOT_IN: '!in',
+  INCLUDE: 'include',
+  EXCLUDE: 'exclude'
 };
 /**
  * Export file types.
@@ -1897,7 +1914,7 @@ function convertBytes(bytes) {
  */
 
 function formatTime(time) {
-  return time < 1000 ? "".concat(time, " ms") : "".concat(time / 1000, " s");
+  return time < 1000 ? "".concat(time.toFixed(2), " ms") : "".concat((time / 1000).toFixed(2), " s");
 }
 /**
  * Converts human-readable time to milliseconds.
@@ -2031,6 +2048,10 @@ function matchCriteria(criteria, object) {
       results.push(Array.isArray(value) && value.indexOf(v) > -1);
     } else if (operator === SEARCH_OPERATOR.NOT_IN) {
       results.push(Array.isArray(value) && value.indexOf(v) === -1);
+    } else if (operator === SEARCH_OPERATOR.INCLUDE) {
+      results.push(v instanceof Set && v.has(value));
+    } else if (operator === SEARCH_OPERATOR.EXCLUDE) {
+      results.push(v instanceof Set && !v.has(value));
     }
   });
   return results.filter(function (r) {
@@ -2186,6 +2207,8 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "tags", new Set());
 
+    defineProperty_default()(this, "quota", null);
+
     this.id = id;
     this.url = url;
     this.method = method;
@@ -2194,7 +2217,6 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
   /**
    * Issues AJAX request using the property values.
    * @param type
-   * @param reqOptions
    * @return {*}
    */
 
@@ -2329,19 +2351,27 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
   }, {
     key: "fire",
     value: function fire() {
+      var _this = this;
+
       var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'xhr';
-      var reqOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       if (type === 'xhr') {
-        var onReadyStateChange = reqOptions.onReadyStateChange;
-        var xhr = new XMLHttpRequest();
-        onReadyStateChange && xhr.addEventListener('readystatechange', onReadyStateChange);
-        xhr.open(this.method, this.url);
-        this.requestHeaders.forEach(function (value, header) {
-          xhr.setRequestHeader(header, value);
+        return new Promise(function (resolve) {
+          var xhr = new XMLHttpRequest();
+          xhr.addEventListener('readystatechange', function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+              resolve();
+            }
+          });
+          xhr.open(_this.method, _this.url);
+
+          _this.requestHeaders.forEach(function (value, header) {
+            xhr.setRequestHeader(header, value);
+          });
+
+          _this.method !== REQUEST_TYPE.GET && _this.payload ? xhr.send(JSON.stringify(_this.payload)) : xhr.send();
+          return xhr;
         });
-        this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
-        return xhr;
       }
 
       var requestOptions = {
@@ -2372,19 +2402,19 @@ var assertThisInitialized = __webpack_require__(2);
 var assertThisInitialized_default = /*#__PURE__*/__webpack_require__.n(assertThisInitialized);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/inherits.js
-var inherits = __webpack_require__(8);
+var inherits = __webpack_require__(9);
 var inherits_default = /*#__PURE__*/__webpack_require__.n(inherits);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js
-var possibleConstructorReturn = __webpack_require__(9);
+var possibleConstructorReturn = __webpack_require__(10);
 var possibleConstructorReturn_default = /*#__PURE__*/__webpack_require__.n(possibleConstructorReturn);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/getPrototypeOf.js
-var getPrototypeOf = __webpack_require__(6);
+var getPrototypeOf = __webpack_require__(7);
 var getPrototypeOf_default = /*#__PURE__*/__webpack_require__.n(getPrototypeOf);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/wrapNativeSuper.js
-var wrapNativeSuper = __webpack_require__(10);
+var wrapNativeSuper = __webpack_require__(11);
 var wrapNativeSuper_default = /*#__PURE__*/__webpack_require__.n(wrapNativeSuper);
 
 // CONCATENATED MODULE: ./src/collection.js
@@ -2833,6 +2863,28 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
       }));
       return (_collection$search$gr = (_collection$search = collection.search.apply(collection, toConsumableArray_default()(this._query))).groupBy.apply(_collection$search, toConsumableArray_default()(this._groupArgs))).sortBy.apply(_collection$search$gr, toConsumableArray_default()(this._sortArgs));
     }
+  }, {
+    key: "average",
+    value: function average(field) {
+      if (this.items === null) {
+        return 0;
+      }
+
+      return this.total(field) / this.count;
+    }
+  }, {
+    key: "total",
+    value: function total(field) {
+      if (this.items === null) {
+        return 0;
+      }
+
+      return this.items.map(function (i) {
+        return i[field];
+      }).reduce(function (acc, v) {
+        return acc + v;
+      }, 0);
+    }
   }]);
 
   return Collection;
@@ -2980,6 +3032,8 @@ var session_Session = /*#__PURE__*/function (_Set) {
   return Session;
 }( /*#__PURE__*/wrapNativeSuper_default()(Set));
 // CONCATENATED MODULE: ./src/http-supervisor.js
+
+
 
 
 
@@ -3729,6 +3783,19 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       return this.failed().last;
     }
     /**
+     * Returns the request that has maximum payload size.
+     * @return {HttpRequestInfo}
+     */
+
+  }, {
+    key: "maxPayloadRequest",
+    value: function maxPayloadRequest() {
+      return this.sort({
+        field: 'payloadSize',
+        dir: 'desc'
+      }).first;
+    }
+    /**
      * Returns the request that has maximum response size.
      * @returns {HttpRequestInfo}
      */
@@ -3875,9 +3942,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "totalPayload",
     value: function totalPayload() {
-      return toConsumableArray_default()(this._requests).reduce(function (a, b) {
-        return a + b.payloadSize;
-      }, 0);
+      return this.query().total('payloadSize');
     }
     /**
      * Returns the total response size summing all requests.
@@ -3887,9 +3952,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "totalSize",
     value: function totalSize() {
-      return toConsumableArray_default()(this._requests).reduce(function (a, b) {
-        return a + b.responseSize;
-      }, 0);
+      return this.query().total('responseSize');
     }
     /**
      * Returns the max payload size of the requests.
@@ -4010,10 +4073,18 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "exceededParameters",
     value: function exceededParameters(request) {
+      var _ref = request.quota || {},
+          _ref$maxPayloadSize = _ref.maxPayloadSize,
+          maxPayloadSize = _ref$maxPayloadSize === void 0 ? this._quota.maxPayloadSize : _ref$maxPayloadSize,
+          _ref$maxResponseSize = _ref.maxResponseSize,
+          maxResponseSize = _ref$maxResponseSize === void 0 ? this._quota.maxResponseSize : _ref$maxResponseSize,
+          _ref$maxDuration = _ref.maxDuration,
+          maxDuration = _ref$maxDuration === void 0 ? this._quota.maxDuration : _ref$maxDuration;
+
       return {
-        payload: request.payloadSize > this._quota.maxPayloadSize,
-        response: request.responseSize > this._quota.maxResponseSize,
-        duration: request.duration > this._quota.maxDuration
+        payload: request.payloadSize > maxPayloadSize,
+        response: request.responseSize > maxResponseSize,
+        duration: request.duration > maxDuration
       };
     }
     /**
@@ -4022,8 +4093,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "sortPrint",
-    value: function sortPrint() {
+    key: "printSort",
+    value: function printSort() {
       this.print(this.sort.apply(this, arguments));
     }
     /**
@@ -4032,8 +4103,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "groupPrint",
-    value: function groupPrint() {
+    key: "printGroup",
+    value: function printGroup() {
       this.print(this.group.apply(this, arguments));
     }
     /**
@@ -4042,8 +4113,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "queryPrint",
-    value: function queryPrint() {
+    key: "printQuery",
+    value: function printQuery() {
       this.print(this.query.apply(this, arguments));
     }
     /**
@@ -4099,20 +4170,16 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         return;
       }
 
-      this._reporter.report({
-        totalRequests: this.totalRequests,
-        getRequestsCount: this.query(REQUEST_TYPE.GET).count,
-        postRequestsCount: this.query(REQUEST_TYPE.POST).count,
-        putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
-        deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
-        failedRequests: this.failed().count,
-        requestsExceededQuota: this.exceeded().count,
-        maxPayloadSize: this.maxPayload(),
-        maxResponseSize: this.maxResponse(),
-        maxDuration: this.maxDuration(),
-        totalPayloadSize: this.totalPayload(),
-        totalResponseSize: this.totalSize()
-      }, this.query(null, this._groupBy, this._sortBy));
+      this._reporter.report(this._getStats(), this.query(null, this._groupBy, this._sortBy));
+    }
+    /**
+     * Print statistics.
+     */
+
+  }, {
+    key: "printStats",
+    value: function printStats() {
+      this._reporter.reportStats(this._getStats());
     }
     /**
      * Prints failed requests.
@@ -4149,6 +4216,15 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     key: "printLast",
     value: function printLast() {
       this._reporter.report(this.last());
+    }
+    /**
+     * Prints the request that has maximum payload.
+     */
+
+  }, {
+    key: "printPayloadSizeRequest",
+    value: function printPayloadSizeRequest() {
+      this._reporter.report(this.maxPayloadRequest());
     }
     /**
      * Prints the request that has maximum size.
@@ -4487,18 +4563,78 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     /**
      * Re-issues ajax request for the passed http request.
      * @param id
+     * @param count
+     * @param parallel
      * @param type
-     * @param reqOptions
      */
 
   }, {
     key: "fire",
-    value: function fire(id) {
-      var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : InitiatorType.XHR;
-      var reqOptions = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-      var request = this.get(id);
-      request && request.fire(type, reqOptions);
-    }
+    value: function () {
+      var _fire = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee(id) {
+        var count,
+            parallel,
+            type,
+            request,
+            i,
+            _args = arguments;
+        return regenerator_default.a.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                count = _args.length > 1 && _args[1] !== undefined ? _args[1] : 1;
+                parallel = _args.length > 2 && _args[2] !== undefined ? _args[2] : true;
+                type = _args.length > 3 && _args[3] !== undefined ? _args[3] : InitiatorType.XHR;
+                request = this.get(id);
+
+                if (request) {
+                  _context.next = 6;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 6:
+                i = 0;
+
+              case 7:
+                if (!(i < count)) {
+                  _context.next = 17;
+                  break;
+                }
+
+                if (!parallel) {
+                  _context.next = 12;
+                  break;
+                }
+
+                request.fire(type);
+                _context.next = 14;
+                break;
+
+              case 12:
+                _context.next = 14;
+                return request.fire(type);
+
+              case 14:
+                i++;
+                _context.next = 7;
+                break;
+
+              case 17:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function fire(_x) {
+        return _fire.apply(this, arguments);
+      }
+
+      return fire;
+    }()
     /**
      * Creates a new session.
      * @return {number}
@@ -4697,6 +4833,25 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._updateStorage();
     }
     /**
+     * Creates and returns new collection from the passed requests.
+     * @param requests
+     * @return {Collection}
+     */
+
+  }, {
+    key: "collection",
+    value: function collection() {
+      var _this4 = this;
+
+      for (var _len6 = arguments.length, requests = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        requests[_key6] = arguments[_key6];
+      }
+
+      return new collection_Collection(requests.map(function (r) {
+        return _this4.get(r);
+      }));
+    }
+    /**
      * Render the UI.
      * @private
      */
@@ -4760,7 +4915,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_fetch",
     value: function _fetch() {
-      var _this4 = this;
+      var _this5 = this;
 
       if (!this.busy) {
         return;
@@ -4768,10 +4923,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
       var id = this._id();
 
-      var _ref = Array.prototype.slice.call(arguments),
-          url = _ref[0],
-          _ref$ = _ref[1],
-          options = _ref$ === void 0 ? {} : _ref$,
+      var _ref2 = Array.prototype.slice.call(arguments),
+          url = _ref2[0],
+          _ref2$ = _ref2[1],
+          options = _ref2$ === void 0 ? {} : _ref2$,
           _options$method = options.method,
           method = _options$method === void 0 ? REQUEST_TYPE.GET : _options$method,
           body = options.body,
@@ -4786,12 +4941,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._addRequest(requestInfo);
 
       return new Promise(function (resolve, reject) {
-        _this4._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
+        _this5._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
 
         var response;
-        _this4._alertOnRequestStart && _this4._reporter.report(requestInfo); // Make the fetch call and capture the response info.
+        _this5._alertOnRequestStart && _this5._reporter.report(requestInfo); // Make the fetch call and capture the response info.
 
-        _this4._nativeFetch.call(window, _this4._isPerformanceSupported() ? _this4._appendRequestIdToUrl(url, id) : url, options).then(function (r) {
+        _this5._nativeFetch.call(window, _this5._isPerformanceSupported() ? _this5._appendRequestIdToUrl(url, id) : url, options).then(function (r) {
           response = r.clone();
           return isJsonResponse(r.headers.get('content-type')) ? r.json() : null;
         }).then(function (data) {
@@ -4800,14 +4955,14 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         })["catch"](function (error) {
           reject(error);
         })["finally"](function () {
-          if (_this4.status === SupervisorStatus.Retired) {
+          if (_this5.status === SupervisorStatus.Retired) {
             return;
           }
 
           requestInfo.responseStatus = response ? response.status : 500;
           requestInfo.responseHeaders = new Map(Object.entries(response.headers.entries()));
 
-          _this4._fillParametersAndFireEvents(requestInfo, response);
+          _this5._fillParametersAndFireEvents(requestInfo, response);
         });
       });
     }
@@ -4863,7 +5018,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_send",
     value: function _send() {
-      var _this5 = this,
+      var _this6 = this,
           _this$_nativeSend2;
 
       if (!this.busy) {
@@ -4894,7 +5049,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
 
       xhr.addEventListener('readystatechange', function () {
-        if (_this5.status === SupervisorStatus.Retired) {
+        if (_this6.status === SupervisorStatus.Retired) {
           return;
         }
 
@@ -4919,7 +5074,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         httpRequestInfo.responseStatus = xhr.status;
         httpRequestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
 
-        _this5._fillParametersAndFireEvents(httpRequestInfo, xhr);
+        _this6._fillParametersAndFireEvents(httpRequestInfo, xhr);
       });
       this._alertOnRequestStart && this._reporter.report(httpRequestInfo);
 
@@ -5011,10 +5166,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       var regex1 = new RegExp(/{([a-zA-Z0-9_$.]+)}/g),
           regex2 = new RegExp(/[^{}]*(?=})/g);
       var urlConfigUpdated = {};
-      Object.entries(this._urlConfig).forEach(function (_ref2) {
-        var _ref3 = slicedToArray_default()(_ref2, 2),
-            k = _ref3[0],
-            v = _ref3[1];
+      Object.entries(this._urlConfig).forEach(function (_ref3) {
+        var _ref4 = slicedToArray_default()(_ref3, 2),
+            k = _ref4[0],
+            v = _ref4[1];
 
         return Object.keys(v).forEach(function (u) {
           return urlConfigUpdated["".concat(k).concat(u)] = v[u];
@@ -5062,11 +5217,13 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
             request.label = t.label;
             request.labelPending = t.labelPending;
             request.errorLabel = t.error;
+            request.quota = t.quota;
           }
         } else {
           request.label = matchedValue.label;
           request.labelPending = matchedValue.labelPending;
           request.errorLabel = matchedValue.error;
+          request.quota = matchedValue.quota;
         }
       }
 
@@ -5085,10 +5242,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       });
 
       var replaceTokens = function replaceTokens(str) {
-        toConsumableArray_default()(str.matchAll(regex1)).forEach(function (_ref4) {
-          var _ref5 = slicedToArray_default()(_ref4, 2),
-              part1 = _ref5[0],
-              part2 = _ref5[1];
+        toConsumableArray_default()(str.matchAll(regex1)).forEach(function (_ref5) {
+          var _ref6 = slicedToArray_default()(_ref5, 2),
+              part1 = _ref6[0],
+              part2 = _ref6[1];
 
           if (part2.startsWith('$response') && request.response) {
             var val = readValue(request.response, part2.replace(/\$response./, ''));
@@ -5217,8 +5374,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     value: function _triggerEvent(eventName) {
       var _this$_eventEmitter;
 
-      for (var _len6 = arguments.length, args = new Array(_len6 > 1 ? _len6 - 1 : 0), _key6 = 1; _key6 < _len6; _key6++) {
-        args[_key6 - 1] = arguments[_key6];
+      for (var _len7 = arguments.length, args = new Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
+        args[_key7 - 1] = arguments[_key7];
       }
 
       (_this$_eventEmitter = this._eventEmitter).triggerEvent.apply(_this$_eventEmitter, [eventName, this].concat(args));
@@ -5231,7 +5388,15 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_isExceededQuota",
     value: function _isExceededQuota(request) {
-      return request.payloadSize > this._quota.maxPayloadSize || request.responseSize > this._quota.maxResponseSize || request.duration > this._quota.maxDuration;
+      var _ref7 = request.quota || {},
+          _ref7$maxPayloadSize = _ref7.maxPayloadSize,
+          maxPayloadSize = _ref7$maxPayloadSize === void 0 ? this._quota.maxPayloadSize : _ref7$maxPayloadSize,
+          _ref7$maxResponseSize = _ref7.maxResponseSize,
+          maxResponseSize = _ref7$maxResponseSize === void 0 ? this._quota.maxResponseSize : _ref7$maxResponseSize,
+          _ref7$maxDuration = _ref7.maxDuration,
+          maxDuration = _ref7$maxDuration === void 0 ? this._quota.maxDuration : _ref7$maxDuration;
+
+      return request.payloadSize > maxPayloadSize || request.responseSize > maxResponseSize || request.duration > maxDuration;
     }
     /**
      * Creates URL object.
@@ -5294,6 +5459,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           operator: SEARCH_OPERATOR.CONTAINS,
           value: str.replace(/category:/, '')
         };
+      } else if (str.startsWith('tag:')) {
+        query = {
+          field: 'tags',
+          operator: SEARCH_OPERATOR.INCLUDE,
+          value: str.replace(/tag:/, '')
+        };
       } else if (str.indexOf('*') > -1) {
         query = {
           field: 'url',
@@ -5309,6 +5480,28 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
 
       return query;
+    }
+  }, {
+    key: "_getStats",
+    value: function _getStats() {
+      return {
+        allRequests: this.query(),
+        totalRequests: this.totalRequests,
+        getRequestsCount: this.query(REQUEST_TYPE.GET).count,
+        postRequestsCount: this.query(REQUEST_TYPE.POST).count,
+        putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
+        deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
+        failedRequests: this.failed(),
+        requestsExceededQuota: this.exceeded(),
+        maxPayloadSize: this.maxPayload(),
+        maxResponseSize: this.maxResponse(),
+        maxDuration: this.maxDuration(),
+        totalPayloadSize: this.totalPayload(),
+        totalResponseSize: this.totalSize(),
+        maxPayloadRequest: this.maxPayloadRequest(),
+        maxResponseRequest: this.maxSizeRequest(),
+        maxDurationRequest: this.maxDurationRequest()
+      };
     }
   }], [{
     key: "defaultConfig",
@@ -5326,10 +5519,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
         },
         silent: false,
-        traceEachRequest: false,
+        traceEachRequest: true,
         alertOnError: true,
         alertOnExceedQuota: true,
-        alertOnRequestStart: false,
+        alertOnRequestStart: true,
         groupBy: ['pathQuery', 'method'],
         sortBy: [{
           field: 'id',
@@ -6120,14 +6313,6 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 if (!window.customElements.get('http-supervisor-widget')) {
   window.customElements.define('http-supervisor-widget', http_supervisor_widget_HtmlSupervisorWidgetElement);
 }
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/asyncToGenerator.js
-var asyncToGenerator = __webpack_require__(12);
-var asyncToGenerator_default = /*#__PURE__*/__webpack_require__.n(asyncToGenerator);
-
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/regenerator/index.js
-var regenerator = __webpack_require__(7);
-var regenerator_default = /*#__PURE__*/__webpack_require__.n(regenerator);
-
 // EXTERNAL MODULE: ./src/console-snapshot.js
 var console_snapshot = __webpack_require__(26);
 
@@ -6274,7 +6459,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             switch (_context.prev = _context.next) {
               case 0:
                 if (!(_args.length === 1)) {
-                  _context.next = 17;
+                  _context.next = 16;
                   break;
                 }
 
@@ -6305,59 +6490,54 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                 return this._reportObject(arg1.clone());
 
               case 12:
-                _context.next = 16;
+                _context.next = 15;
                 break;
 
               case 14:
-                this.printTitle(Messages.METRICS_SUMMARY);
+                this.reportStats(arg1);
 
-                this._reportStats(arg1);
-
-              case 16:
+              case 15:
                 return _context.abrupt("return");
 
-              case 17:
+              case 16:
                 if (!(_args.length === 2 && arg1 instanceof collection_Collection)) {
-                  _context.next = 25;
+                  _context.next = 24;
                   break;
                 }
 
                 if (!(!arg1.hasGroups && !arg1.hasItems)) {
-                  _context.next = 21;
+                  _context.next = 20;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
                 return _context.abrupt("return");
 
-              case 21:
+              case 20:
                 this.printTitle(Messages.REQUESTS_INFO);
-                _context.next = 24;
+                _context.next = 23;
                 return this._reportObject(arg1.clone());
 
-              case 24:
+              case 23:
                 return _context.abrupt("return");
 
-              case 25:
+              case 24:
                 if (!(!arg2.hasGroups && !arg2.hasItems)) {
-                  _context.next = 28;
+                  _context.next = 27;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
                 return _context.abrupt("return");
 
-              case 28:
-                this.printTitle(Messages.METRICS_SUMMARY);
-
-                this._reportStats(arg1);
-
+              case 27:
+                this.reportStats(arg1);
                 this["break"]();
                 this.printTitle(Messages.REQUESTS_INFO);
-                _context.next = 34;
+                _context.next = 32;
                 return this._reportObject(arg2.clone());
 
-              case 34:
+              case 32:
               case "end":
                 return _context.stop();
             }
@@ -6371,6 +6551,62 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
       return report;
     }()
+  }, {
+    key: "reportStats",
+    value: function reportStats(_ref) {
+      var _this$printKeyValueMa;
+
+      var allRequests = _ref.allRequests,
+          totalRequests = _ref.totalRequests,
+          getRequestsCount = _ref.getRequestsCount,
+          postRequestsCount = _ref.postRequestsCount,
+          putRequestsCount = _ref.putRequestsCount,
+          deleteRequestsCount = _ref.deleteRequestsCount,
+          failedRequests = _ref.failedRequests,
+          requestsExceededQuota = _ref.requestsExceededQuota,
+          maxPayloadSize = _ref.maxPayloadSize,
+          maxResponseSize = _ref.maxResponseSize,
+          maxDuration = _ref.maxDuration,
+          totalPayloadSize = _ref.totalPayloadSize,
+          totalResponseSize = _ref.totalResponseSize,
+          maxPayloadRequest = _ref.maxPayloadRequest,
+          maxResponseRequest = _ref.maxResponseRequest,
+          maxDurationRequest = _ref.maxDurationRequest;
+
+      if (allRequests.count === 0) {
+        this.printTitle(Messages.NO_REQUESTS);
+        return;
+      }
+
+      this.printTitle(Messages.METRICS_SUMMARY);
+      this.printKeyValueMany((_this$printKeyValueMa = {}, defineProperty_default()(_this$printKeyValueMa, Messages.TOTAL_REQUESTS, totalRequests), defineProperty_default()(_this$printKeyValueMa, "GET", getRequestsCount), defineProperty_default()(_this$printKeyValueMa, "POST", postRequestsCount), defineProperty_default()(_this$printKeyValueMa, "PUT", putRequestsCount), defineProperty_default()(_this$printKeyValueMa, "DELETE", deleteRequestsCount), _this$printKeyValueMa));
+      var startRequest = allRequests.sortBy({
+        field: 'timeStart',
+        dir: 'asc'
+      })[0],
+          endRequest = allRequests.sortBy({
+        field: 'timeEnd',
+        dir: 'desc'
+      })[0];
+      this.printKeyValue(Messages.FAILED_REQUESTS, "".concat(failedRequests.count, " ").concat(failedRequests.count > 0 ? '[' + failedRequests.items.map(function (r) {
+        return r.id;
+      }).join(', ') + ']' : ''));
+      this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, "".concat(requestsExceededQuota.count, " ").concat(requestsExceededQuota.count > 0 ? '[' + requestsExceededQuota.items.map(function (r) {
+        return r.id;
+      }).join(', ') + ']' : ''));
+      this.printKeyValue(Messages.MAX_PAYLOAD_SIZE, formatBytes(maxPayloadSize));
+      this.printKeyValue(Messages.MAX_RESPONSE_SIZE, formatBytes(maxResponseSize));
+      this.printKeyValue(Messages.MAX_DURATION, formatTime(maxDuration));
+      this.printKeyValue(Messages.TOTAL_PAYLOAD_SIZE, formatBytes(totalPayloadSize));
+      this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
+      this.printKeyValue(Messages.TOTAL_DURATION, formatTime(endRequest.timeEnd - startRequest.timeStart));
+      this.printKeyValue(Messages.AVERAGE_PAYLOAD_SIZE, formatBytes(allRequests.average('payloadSize')));
+      this.printKeyValue(Messages.AVERAGE_RESPONSE_SIZE, formatBytes(allRequests.average('responseSize')));
+      this.printKeyValue(Messages.AVERAGE_DURATION, formatTime(allRequests.average('duration')));
+      this.printKeyValue(Messages.MAX_PAYLOAD_REQUEST, maxPayloadRequest.id);
+      this.printKeyValue(Messages.MAX_RESPONSE_REQUEST, maxResponseRequest.id);
+      this.printKeyValue(Messages.MAX_DURATION_REQUEST, maxDurationRequest.id);
+    }
     /**
      * Compare the requests and print the results.
      * @param req1
@@ -6665,10 +6901,10 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       var titleWidth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 30;
       var msgs = [];
       var styles = [];
-      Object.entries(obj).forEach(function (_ref, index) {
-        var _ref2 = slicedToArray_default()(_ref, 2),
-            title = _ref2[0],
-            value = _ref2[1];
+      Object.entries(obj).forEach(function (_ref2, index) {
+        var _ref3 = slicedToArray_default()(_ref2, 2),
+            title = _ref3[0],
+            value = _ref3[1];
 
         msgs.push("%c".concat(index === 0 ? _this2._appendTextWithSpaces(title, titleWidth) : title, ": %c").concat(value));
         styles.push("font-weight: bold; color: inherit", "color: inherit;");
@@ -6808,32 +7044,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       var diff = size - title.toString().length,
           halfDiff = Math.round(diff / 2);
       return equal ? "".concat(Array(halfDiff).fill(' ').join('')).concat(title).concat(Array(diff - halfDiff).fill(' ').join('')) : "".concat(title).concat(Array(diff).fill(' ').join(''));
-    }
-  }, {
-    key: "_reportStats",
-    value: function _reportStats(_ref3) {
-      var _this$printKeyValueMa;
-
-      var totalRequests = _ref3.totalRequests,
-          getRequestsCount = _ref3.getRequestsCount,
-          postRequestsCount = _ref3.postRequestsCount,
-          putRequestsCount = _ref3.putRequestsCount,
-          deleteRequestsCount = _ref3.deleteRequestsCount,
-          failedRequests = _ref3.failedRequests,
-          requestsExceededQuota = _ref3.requestsExceededQuota,
-          maxPayloadSize = _ref3.maxPayloadSize,
-          maxResponseSize = _ref3.maxResponseSize,
-          maxDuration = _ref3.maxDuration,
-          totalPayloadSize = _ref3.totalPayloadSize,
-          totalResponseSize = _ref3.totalResponseSize;
-      this.printKeyValueMany((_this$printKeyValueMa = {}, defineProperty_default()(_this$printKeyValueMa, Messages.TOTAL_REQUESTS, totalRequests), defineProperty_default()(_this$printKeyValueMa, "GET", getRequestsCount), defineProperty_default()(_this$printKeyValueMa, "POST", postRequestsCount), defineProperty_default()(_this$printKeyValueMa, "PUT", putRequestsCount), defineProperty_default()(_this$printKeyValueMa, "DELETE", deleteRequestsCount), _this$printKeyValueMa));
-      this.printKeyValue(Messages.FAILED_REQUESTS, failedRequests);
-      this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, requestsExceededQuota);
-      this.printKeyValue(Messages.MAX_PAYLOAD_SIZE, formatBytes(maxPayloadSize));
-      this.printKeyValue(Messages.MAX_RESPONSE_SIZE, formatBytes(maxResponseSize));
-      this.printKeyValue(Messages.MAX_DURATION, formatTime(maxDuration));
-      this.printKeyValue(Messages.TOTAL_PAYLOAD_SIZE, formatBytes(totalPayloadSize));
-      this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
     }
   }, {
     key: "_reportObject",

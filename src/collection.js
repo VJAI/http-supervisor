@@ -317,4 +317,20 @@ export default class Collection extends Array {
     const collection = new Collection(this._originalItems.map(item => item.clone()));
     return collection.search(...this._query).groupBy(...this._groupArgs).sortBy(...this._sortArgs);
   }
+
+  average(field) {
+    if (this.items === null) {
+      return 0;
+    }
+
+    return this.total(field) / this.count;
+  }
+
+  total(field) {
+    if (this.items === null) {
+      return 0;
+    }
+
+    return this.items.map(i => i[field]).reduce((acc,v) => acc + v, 0);
+  }
 }

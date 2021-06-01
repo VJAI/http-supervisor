@@ -46,7 +46,7 @@ export function convertBytes(bytes) {
  * Formats time in seconds.
  */
 export function formatTime(time) {
-  return time < 1000 ? `${time} ms` : `${time / 1000} s`;
+  return time < 1000 ? `${time.toFixed(2)} ms` : `${(time / 1000).toFixed(2)} s`;
 }
 
 /**
@@ -177,6 +177,10 @@ export function matchCriteria(criteria, object) {
       results.push(Array.isArray(value) && value.indexOf(v) > -1);
     } else if (operator === SEARCH_OPERATOR.NOT_IN) {
       results.push(Array.isArray(value) && value.indexOf(v) === -1);
+    } else if (operator === SEARCH_OPERATOR.INCLUDE) {
+      results.push(v instanceof Set && v.has(value));
+    } else if (operator === SEARCH_OPERATOR.EXCLUDE) {
+      results.push(v instanceof Set && !v.has(value));
     }
   });
 

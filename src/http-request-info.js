@@ -228,6 +228,12 @@ export default class HttpRequestInfo {
   tags = new Set();
 
   /**
+   * Request quota.
+   * @type {object}
+   */
+  quota = null;
+
+  /**
    * Constructor.
    */
   constructor(id, url, method, payload) {
@@ -240,22 +246,24 @@ export default class HttpRequestInfo {
   /**
    * Issues AJAX request using the property values.
    * @param type
-   * @param reqOptions
    * @return {*}
    */
-  fire(type = 'xhr', reqOptions = {}) {
+  fire(type = 'xhr') {
     if (type === 'xhr') {
-      const {
-        onReadyStateChange
-      } = reqOptions;
-      const xhr = new XMLHttpRequest();
-      onReadyStateChange && xhr.addEventListener('readystatechange', onReadyStateChange);
-      xhr.open(this.method, this.url);
-      this.requestHeaders.forEach((value, header) => {
-        xhr.setRequestHeader(header, value);
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.addEventListener('readystatechange', () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            resolve();
+          }
+        });
+        xhr.open(this.method, this.url);
+        this.requestHeaders.forEach((value, header) => {
+          xhr.setRequestHeader(header, value);
+        });
+        this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
+        return xhr;
       });
-      this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
-      return xhr;
     }
 
     const requestOptions = {

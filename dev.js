@@ -93,7 +93,7 @@ http.init({
   urlConfig: {
     'https://jsonplaceholder.typicode.com': {
       '/posts': {
-        GET: 'Fetching Posts',
+        GET: { label: 'Fetching Posts' },
         POST: { labelPending: 'Creating Post', label: 'Post Created, Id: {$response.id}' },
         DELETE: 'Deleting Post',
         PUT: 'Updating Post',
@@ -123,3 +123,5 @@ http.init({
 });
 makeAjaxCalls();
 setTimeout(makeAjaxCalls, 100);
+/*window.http = http;
+http.init();*/

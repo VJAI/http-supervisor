@@ -113,8 +113,7 @@ export default class ConsoleReporter {
 
         await this._reportObject(arg1.clone());
       } else {
-        this.printTitle(Messages.METRICS_SUMMARY);
-        this._reportStats(arg1);
+        this.reportStats(arg1);
       }
 
       return;
@@ -136,11 +135,62 @@ export default class ConsoleReporter {
       return;
     }
 
-    this.printTitle(Messages.METRICS_SUMMARY);
-    this._reportStats(arg1);
+    this.reportStats(arg1);
     this.break();
     this.printTitle(Messages.REQUESTS_INFO);
     await this._reportObject(arg2.clone());
+  }
+
+  reportStats({
+                allRequests,
+                totalRequests,
+                getRequestsCount,
+                postRequestsCount,
+                putRequestsCount,
+                deleteRequestsCount,
+                failedRequests,
+                requestsExceededQuota,
+                maxPayloadSize,
+                maxResponseSize,
+                maxDuration,
+                totalPayloadSize,
+                totalResponseSize,
+                maxPayloadRequest,
+                maxResponseRequest,
+                maxDurationRequest,
+              }) {
+    if (allRequests.count === 0) {
+      this.printTitle(Messages.NO_REQUESTS);
+      return;
+    }
+
+    this.printTitle(Messages.METRICS_SUMMARY);
+
+    this.printKeyValueMany({
+      [Messages.TOTAL_REQUESTS]: totalRequests,
+      GET: getRequestsCount,
+      POST: postRequestsCount,
+      PUT: putRequestsCount,
+      DELETE: deleteRequestsCount
+    });
+
+    const startRequest = allRequests.sortBy({ field: 'timeStart', dir: 'asc' })[0],
+      endRequest = allRequests.sortBy({ field: 'timeEnd', dir: 'desc' })[0];
+
+    this.printKeyValue(Messages.FAILED_REQUESTS, `${failedRequests.count} ${failedRequests.count > 0 ? '[' + failedRequests.items.map(r => r.id).join(', ') + ']': ''}`);
+    this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, `${requestsExceededQuota.count} ${requestsExceededQuota.count > 0 ? '[' + requestsExceededQuota.items.map(r => r.id).join(', ') + ']' : ''}`);
+    this.printKeyValue(Messages.MAX_PAYLOAD_SIZE, formatBytes(maxPayloadSize));
+    this.printKeyValue(Messages.MAX_RESPONSE_SIZE, formatBytes(maxResponseSize));
+    this.printKeyValue(Messages.MAX_DURATION, formatTime(maxDuration));
+    this.printKeyValue(Messages.TOTAL_PAYLOAD_SIZE, formatBytes(totalPayloadSize));
+    this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
+    this.printKeyValue(Messages.TOTAL_DURATION, formatTime(endRequest.timeEnd - startRequest.timeStart));
+    this.printKeyValue(Messages.AVERAGE_PAYLOAD_SIZE, formatBytes(allRequests.average('payloadSize')));
+    this.printKeyValue(Messages.AVERAGE_RESPONSE_SIZE, formatBytes(allRequests.average('responseSize')));
+    this.printKeyValue(Messages.AVERAGE_DURATION, formatTime(allRequests.average('duration')));
+    this.printKeyValue(Messages.MAX_PAYLOAD_REQUEST, maxPayloadRequest.id);
+    this.printKeyValue(Messages.MAX_RESPONSE_REQUEST, maxResponseRequest.id);
+    this.printKeyValue(Messages.MAX_DURATION_REQUEST, maxDurationRequest.id);
   }
 
   /**
@@ -513,36 +563,6 @@ export default class ConsoleReporter {
     title = title || '-';
     const diff = size - title.toString().length, halfDiff = Math.round(diff / 2);
     return equal ? `${Array(halfDiff).fill(' ').join('')}${title}${Array(diff - halfDiff).fill(' ').join('')}` : `${title}${Array(diff).fill(' ').join('')}`;
-  }
-
-  _reportStats({
-                 totalRequests,
-                 getRequestsCount,
-                 postRequestsCount,
-                 putRequestsCount,
-                 deleteRequestsCount,
-                 failedRequests,
-                 requestsExceededQuota,
-                 maxPayloadSize,
-                 maxResponseSize,
-                 maxDuration,
-                 totalPayloadSize,
-                 totalResponseSize
-               }) {
-    this.printKeyValueMany({
-      [Messages.TOTAL_REQUESTS]: totalRequests,
-      GET: getRequestsCount,
-      POST: postRequestsCount,
-      PUT: putRequestsCount,
-      DELETE: deleteRequestsCount
-    });
-    this.printKeyValue(Messages.FAILED_REQUESTS, failedRequests);
-    this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, requestsExceededQuota);
-    this.printKeyValue(Messages.MAX_PAYLOAD_SIZE, formatBytes(maxPayloadSize));
-    this.printKeyValue(Messages.MAX_RESPONSE_SIZE, formatBytes(maxResponseSize));
-    this.printKeyValue(Messages.MAX_DURATION, formatTime(maxDuration));
-    this.printKeyValue(Messages.TOTAL_PAYLOAD_SIZE, formatBytes(totalPayloadSize));
-    this.printKeyValue(Messages.TOTAL_RESPONSE_SIZE, formatBytes(totalResponseSize));
   }
 
   async _reportObject(requestOrCollection) {
