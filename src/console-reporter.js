@@ -158,6 +158,7 @@ export default class ConsoleReporter {
                 maxPayloadRequest,
                 maxResponseRequest,
                 maxDurationRequest,
+                duplicates
               }) {
     if (allRequests.count === 0) {
       this.printTitle(Messages.NO_REQUESTS);
@@ -175,7 +176,8 @@ export default class ConsoleReporter {
     });
 
     const startRequest = allRequests.sortBy({ field: 'timeStart', dir: 'asc' })[0],
-      endRequest = allRequests.sortBy({ field: 'timeEnd', dir: 'desc' })[0];
+      endRequest = allRequests.sortBy({ field: 'timeEnd', dir: 'desc' })[0],
+      hasDuplicates = duplicates.count > 0;
 
     this.printKeyValue(Messages.FAILED_REQUESTS, `${failedRequests.count} ${failedRequests.count > 0 ? '[' + failedRequests.items.map(r => r.id).join(', ') + ']': ''}`);
     this.printKeyValue(Messages.REQUESTS_EXCEEDED_QUOTA, `${requestsExceededQuota.count} ${requestsExceededQuota.count > 0 ? '[' + requestsExceededQuota.items.map(r => r.id).join(', ') + ']' : ''}`);
@@ -191,6 +193,8 @@ export default class ConsoleReporter {
     this.printKeyValue(Messages.MAX_PAYLOAD_REQUEST, maxPayloadRequest.id);
     this.printKeyValue(Messages.MAX_RESPONSE_REQUEST, maxResponseRequest.id);
     this.printKeyValue(Messages.MAX_DURATION_REQUEST, maxDurationRequest.id);
+    this.printKeyValue(Messages.HAS_DUPLICATES, hasDuplicates ? 'Yes' : 'No');
+    hasDuplicates && this.printKeyValue(Messages.DUPLICATE_REQUESTS, `[${duplicates.items.map(r => r.id).join(', ')}]`);
   }
 
   /**

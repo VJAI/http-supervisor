@@ -1397,7 +1397,7 @@ export default class HttpSupervisor {
     const watchId = this._watchId();
 
     if (args.length === 1 && typeof args[0] === 'string') {
-      this._watches.set(watchId, this._prepareQuery(args[0]));
+      this._watches.set(watchId, [this._prepareQuery(args[0])]);
     } else {
       this._watches.set(watchId, args);
     }
@@ -1619,7 +1619,7 @@ export default class HttpSupervisor {
     this._loadChart = typeof loadChart === 'boolean' ? loadChart : HttpSupervisor.defaultConfig.loadChart;
     this._keyboardEvents = typeof keyboardEvents === 'boolean' ? keyboardEvents : HttpSupervisor.defaultConfig.keyboardEvents;
     this._persistConfig = persistConfig ? typeof persistConfig === 'boolean' : HttpSupervisor.defaultConfig.persistConfig;
-    this._watches = typeof watches === 'object' && watches !== null ? new Map(Object.entries(this._watches)) : new Map();
+    this._watches = typeof watches === 'object' && watches !== null ? new Map(Object.entries(watches)) : new Map();
     this._lockConsole = typeof lockConsole === 'boolean' ? lockConsole : HttpSupervisor.defaultConfig.lockConsole;
     this._urlConfig = typeof urlConfig === 'object' ? urlConfig : {};
     this._updateStorage();
@@ -1910,10 +1910,10 @@ export default class HttpSupervisor {
     const urlConfigUpdated = {};
     Object.entries(this._urlConfig).forEach(([k, v]) => Object.keys(v).forEach(u => urlConfigUpdated[`${k}${u}`] = v[u]));
 
-    const urlParts = trimEndSlash(pathDomain).toLowerCase().split('/');
+    const urlParts = trimEndSlash(pathDomain).split('/');
 
     const matchedEntry = Object.keys(urlConfigUpdated).find(u => {
-      u = trimEndSlash(u).replace(regex1, '*').toLowerCase();
+      u = trimEndSlash(u).replace(regex1, '*');
       const uParts = u.split('/');
 
       if (urlParts.length !== uParts.length) {
@@ -1923,7 +1923,7 @@ export default class HttpSupervisor {
       let isMatch = true;
 
       for (let i = 0; i < urlParts.length; i++) {
-        if (uParts[i] !== '*' && uParts[i] !== urlParts[i]) {
+        if (uParts[i] !== '*' && uParts[i].toLowerCase() !== urlParts[i].toLowerCase()) {
           isMatch = false;
           break;
         }
@@ -2152,7 +2152,8 @@ export default class HttpSupervisor {
       totalResponseSize: this.totalSize(),
       maxPayloadRequest: this.maxPayloadRequest(),
       maxResponseRequest: this.maxSizeRequest(),
-      maxDurationRequest: this.maxDurationRequest()
+      maxDurationRequest: this.maxDurationRequest(),
+      duplicates: this.duplicates()
     };
   }
 }

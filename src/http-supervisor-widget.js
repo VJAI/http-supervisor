@@ -99,6 +99,8 @@ template.innerHTML = `
     box-shadow: var(--box-shadow);
     z-index: var(--index);
     display: none;
+    max-height: calc(100vh - 78px);
+    overflow-y: scroll;
   }
 
   .popover-content .popover-close {

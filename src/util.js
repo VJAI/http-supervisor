@@ -216,15 +216,13 @@ export function safeParse(string) {
  * @param map
  */
 export function mapToJson(map) {
-  const object = {};
+  const obj = {};
 
-  map.forEach((value, key) => {
-    const keys = key.split('.'),
-      last = keys.pop();
-    keys.reduce((r, a) => r[a] = r[a] || {}, object)[last] = value;
+  map.forEach(function(value, key){
+    obj[key] = value
   });
 
-  return object;
+  return obj;
 }
 
 /**
