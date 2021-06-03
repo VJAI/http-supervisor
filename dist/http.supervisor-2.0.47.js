@@ -120,13 +120,13 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayWithoutHoles = __webpack_require__(20);
+var arrayWithoutHoles = __webpack_require__(19);
 
-var iterableToArray = __webpack_require__(21);
+var iterableToArray = __webpack_require__(20);
 
-var unsupportedIterableToArray = __webpack_require__(15);
+var unsupportedIterableToArray = __webpack_require__(14);
 
-var nonIterableSpread = __webpack_require__(22);
+var nonIterableSpread = __webpack_require__(21);
 
 function _toConsumableArray(arr) {
   return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
@@ -152,6 +152,13 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
 /* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(22);
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) {
@@ -164,7 +171,7 @@ module.exports = _classCallCheck;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports) {
 
 function _defineProperties(target, props) {
@@ -187,7 +194,7 @@ module.exports = _createClass;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports) {
 
 function _typeof(obj) {
@@ -214,29 +221,7 @@ module.exports = _typeof;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(23);
-
-
-/***/ }),
 /* 7 */
-/***/ (function(module, exports) {
-
-function _getPrototypeOf(o) {
-  module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
-    return o.__proto__ || Object.getPrototypeOf(o);
-  };
-  module.exports["default"] = module.exports, module.exports.__esModule = true;
-  return _getPrototypeOf(o);
-}
-
-module.exports = _getPrototypeOf;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 8 */
 /***/ (function(module, exports) {
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
@@ -279,7 +264,41 @@ module.exports = _asyncToGenerator;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
+/* 8 */
+/***/ (function(module, exports) {
+
+function _getPrototypeOf(o) {
+  module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+    return o.__proto__ || Object.getPrototypeOf(o);
+  };
+  module.exports["default"] = module.exports, module.exports.__esModule = true;
+  return _getPrototypeOf(o);
+}
+
+module.exports = _getPrototypeOf;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
 /* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayWithHoles = __webpack_require__(16);
+
+var iterableToArrayLimit = __webpack_require__(17);
+
+var unsupportedIterableToArray = __webpack_require__(14);
+
+var nonIterableRest = __webpack_require__(18);
+
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
+}
+
+module.exports = _slicedToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var setPrototypeOf = __webpack_require__(13);
@@ -303,10 +322,10 @@ module.exports = _inherits;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _typeof = __webpack_require__(5)["default"];
+var _typeof = __webpack_require__(6)["default"];
 
 var assertThisInitialized = __webpack_require__(2);
 
@@ -322,16 +341,16 @@ module.exports = _possibleConstructorReturn;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var getPrototypeOf = __webpack_require__(7);
+var getPrototypeOf = __webpack_require__(8);
 
 var setPrototypeOf = __webpack_require__(13);
 
-var isNativeFunction = __webpack_require__(24);
+var isNativeFunction = __webpack_require__(23);
 
-var construct = __webpack_require__(14);
+var construct = __webpack_require__(24);
 
 function _wrapNativeSuper(Class) {
   var _cache = typeof Map === "function" ? new Map() : undefined;
@@ -372,25 +391,6 @@ module.exports = _wrapNativeSuper;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(17);
-
-var iterableToArrayLimit = __webpack_require__(18);
-
-var unsupportedIterableToArray = __webpack_require__(15);
-
-var nonIterableRest = __webpack_require__(19);
-
-function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
-}
-
-module.exports = _slicedToArray;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
 /* 13 */
 /***/ (function(module, exports) {
 
@@ -411,38 +411,7 @@ module.exports["default"] = module.exports, module.exports.__esModule = true;
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var setPrototypeOf = __webpack_require__(13);
-
-var isNativeReflectConstruct = __webpack_require__(25);
-
-function _construct(Parent, args, Class) {
-  if (isNativeReflectConstruct()) {
-    module.exports = _construct = Reflect.construct;
-    module.exports["default"] = module.exports, module.exports.__esModule = true;
-  } else {
-    module.exports = _construct = function _construct(Parent, args, Class) {
-      var a = [null];
-      a.push.apply(a, args);
-      var Constructor = Function.bind.apply(Parent, a);
-      var instance = new Constructor();
-      if (Class) setPrototypeOf(instance, Class.prototype);
-      return instance;
-    };
-
-    module.exports["default"] = module.exports, module.exports.__esModule = true;
-  }
-
-  return _construct.apply(null, arguments);
-}
-
-module.exports = _construct;
-module.exports["default"] = module.exports, module.exports.__esModule = true;
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(16);
+var arrayLikeToArray = __webpack_require__(15);
 
 function _unsupportedIterableToArray(o, minLen) {
   if (!o) return;
@@ -457,7 +426,7 @@ module.exports = _unsupportedIterableToArray;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports) {
 
 function _arrayLikeToArray(arr, len) {
@@ -474,7 +443,7 @@ module.exports = _arrayLikeToArray;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports) {
 
 function _arrayWithHoles(arr) {
@@ -485,7 +454,7 @@ module.exports = _arrayWithHoles;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports) {
 
 function _iterableToArrayLimit(arr, i) {
@@ -519,7 +488,7 @@ module.exports = _iterableToArrayLimit;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports) {
 
 function _nonIterableRest() {
@@ -530,10 +499,10 @@ module.exports = _nonIterableRest;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayLikeToArray = __webpack_require__(16);
+var arrayLikeToArray = __webpack_require__(15);
 
 function _arrayWithoutHoles(arr) {
   if (Array.isArray(arr)) return arrayLikeToArray(arr);
@@ -543,7 +512,7 @@ module.exports = _arrayWithoutHoles;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports) {
 
 function _iterableToArray(iter) {
@@ -554,7 +523,7 @@ module.exports = _iterableToArray;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports) {
 
 function _nonIterableSpread() {
@@ -565,7 +534,7 @@ module.exports = _nonIterableSpread;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -1319,7 +1288,7 @@ try {
 
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports) {
 
 function _isNativeFunction(fn) {
@@ -1327,6 +1296,37 @@ function _isNativeFunction(fn) {
 }
 
 module.exports = _isNativeFunction;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(13);
+
+var isNativeReflectConstruct = __webpack_require__(25);
+
+function _construct(Parent, args, Class) {
+  if (isNativeReflectConstruct()) {
+    module.exports = _construct = Reflect.construct;
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
+  } else {
+    module.exports = _construct = function _construct(Parent, args, Class) {
+      var a = [null];
+      a.push.apply(a, args);
+      var Constructor = Function.bind.apply(Parent, a);
+      var instance = new Constructor();
+      if (Class) setPrototypeOf(instance, Class.prototype);
+      return instance;
+    };
+
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
+  }
+
+  return _construct.apply(null, arguments);
+}
+
+module.exports = _construct;
 module.exports["default"] = module.exports, module.exports.__esModule = true;
 
 /***/ }),
@@ -1618,15 +1618,15 @@ __webpack_require__.r(__webpack_exports__);
 __webpack_require__.d(__webpack_exports__, "HttpSupervisor", function() { return /* reexport */ http_supervisor_HttpSupervisor; });
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
-var slicedToArray = __webpack_require__(12);
+var slicedToArray = __webpack_require__(9);
 var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/asyncToGenerator.js
-var asyncToGenerator = __webpack_require__(8);
+var asyncToGenerator = __webpack_require__(7);
 var asyncToGenerator_default = /*#__PURE__*/__webpack_require__.n(asyncToGenerator);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/typeof.js
-var helpers_typeof = __webpack_require__(5);
+var helpers_typeof = __webpack_require__(6);
 var typeof_default = /*#__PURE__*/__webpack_require__.n(helpers_typeof);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/toConsumableArray.js
@@ -1634,11 +1634,11 @@ var toConsumableArray = __webpack_require__(1);
 var toConsumableArray_default = /*#__PURE__*/__webpack_require__.n(toConsumableArray);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/classCallCheck.js
-var classCallCheck = __webpack_require__(3);
+var classCallCheck = __webpack_require__(4);
 var classCallCheck_default = /*#__PURE__*/__webpack_require__.n(classCallCheck);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/createClass.js
-var createClass = __webpack_require__(4);
+var createClass = __webpack_require__(5);
 var createClass_default = /*#__PURE__*/__webpack_require__.n(createClass);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/defineProperty.js
@@ -1646,7 +1646,7 @@ var defineProperty = __webpack_require__(0);
 var defineProperty_default = /*#__PURE__*/__webpack_require__.n(defineProperty);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/regenerator/index.js
-var regenerator = __webpack_require__(6);
+var regenerator = __webpack_require__(3);
 var regenerator_default = /*#__PURE__*/__webpack_require__.n(regenerator);
 
 // CONCATENATED MODULE: ./src/constants.js
@@ -1962,13 +1962,13 @@ function isAbsolute(url) {
  * @param onload
  */
 
-function loadScript(src, onload, onerror, id) {
+function loadScript(src, onload, onerror, id, headEl) {
   var script = document.createElement('script');
   script.src = src;
   id && script.setAttribute('id', id);
   onload && script.addEventListener('load', onload);
   onerror && script.addEventListener('error', onerror);
-  (document.head || document.documentElement).appendChild(script);
+  (headEl || document.head || document.documentElement).appendChild(script);
 }
 /**
  * Removes the script.
@@ -2142,6 +2142,11 @@ function readValue(o, s) {
 function trimEndSlash(url) {
   return url.endsWith('/') ? url.slice(0, -1) : url;
 }
+function timeout(ms) {
+  return new Promise(function (resolve) {
+    return setTimeout(resolve, ms);
+  });
+}
 // CONCATENATED MODULE: ./src/http-request-info.js
 
 
@@ -2211,9 +2216,8 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
     this.payload = payload;
   }
   /**
-   * Issues AJAX request using the property values.
-   * @param type
-   * @return {*}
+   * Returns a cloned copy.
+   * @return {HttpRequestInfo}
    */
 
 
@@ -2345,44 +2349,6 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
      */
 
   }, {
-    key: "fire",
-    value: function fire() {
-      var _this = this;
-
-      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'xhr';
-
-      if (type === 'xhr') {
-        return new Promise(function (resolve) {
-          var xhr = new XMLHttpRequest();
-          xhr.addEventListener('readystatechange', function () {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-              resolve();
-            }
-          });
-          xhr.open(_this.method, _this.url);
-
-          _this.requestHeaders.forEach(function (value, header) {
-            xhr.setRequestHeader(header, value);
-          });
-
-          _this.method !== REQUEST_TYPE.GET && _this.payload ? xhr.send(JSON.stringify(_this.payload)) : xhr.send();
-          return xhr;
-        });
-      }
-
-      var requestOptions = {
-        method: this.method,
-        headers: mapToJson(this.requestHeaders)
-      };
-      this.method !== REQUEST_TYPE.GET && this.payload && (requestOptions.body = JSON.stringify(this.payload));
-      return window.fetch(this.url, requestOptions);
-    }
-    /**
-     * Returns a cloned copy.
-     * @return {HttpRequestInfo}
-     */
-
-  }, {
     key: "clone",
     value: function clone() {
       return Object.assign(new HttpRequestInfo(), this);
@@ -2398,19 +2364,19 @@ var assertThisInitialized = __webpack_require__(2);
 var assertThisInitialized_default = /*#__PURE__*/__webpack_require__.n(assertThisInitialized);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/inherits.js
-var inherits = __webpack_require__(9);
+var inherits = __webpack_require__(10);
 var inherits_default = /*#__PURE__*/__webpack_require__.n(inherits);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js
-var possibleConstructorReturn = __webpack_require__(10);
+var possibleConstructorReturn = __webpack_require__(11);
 var possibleConstructorReturn_default = /*#__PURE__*/__webpack_require__.n(possibleConstructorReturn);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/getPrototypeOf.js
-var getPrototypeOf = __webpack_require__(7);
+var getPrototypeOf = __webpack_require__(8);
 var getPrototypeOf_default = /*#__PURE__*/__webpack_require__.n(getPrototypeOf);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/wrapNativeSuper.js
-var wrapNativeSuper = __webpack_require__(11);
+var wrapNativeSuper = __webpack_require__(12);
 var wrapNativeSuper_default = /*#__PURE__*/__webpack_require__.n(wrapNativeSuper);
 
 // CONCATENATED MODULE: ./src/collection.js
@@ -2968,65 +2934,6 @@ var event_emitter_EventEmitter = /*#__PURE__*/function () {
 }();
 
 
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/construct.js
-var construct = __webpack_require__(14);
-var construct_default = /*#__PURE__*/__webpack_require__.n(construct);
-
-// CONCATENATED MODULE: ./src/session.js
-
-
-
-
-
-
-
-
-
-
-
-function session_createSuper(Derived) { var hasNativeReflectConstruct = session_isNativeReflectConstruct(); return function _createSuperInternal() { var Super = getPrototypeOf_default()(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = getPrototypeOf_default()(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return possibleConstructorReturn_default()(this, result); }; }
-
-function session_isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
-
-
-var session_Session = /*#__PURE__*/function (_Set) {
-  inherits_default()(Session, _Set);
-
-  var _super = session_createSuper(Session);
-
-  function Session() {
-    var _this;
-
-    classCallCheck_default()(this, Session);
-
-    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-      args[_key] = arguments[_key];
-    }
-
-    _this = _super.call.apply(_super, [this].concat(args));
-
-    defineProperty_default()(assertThisInitialized_default()(_this), "_id", null);
-
-    return _this;
-  }
-
-  createClass_default()(Session, [{
-    key: "id",
-    get: function get() {
-      return this._id;
-    },
-    set: function set(value) {
-      this._id = value;
-    }
-  }, {
-    key: "requests",
-    value: function requests() {
-      return construct_default()(collection_Collection, toConsumableArray_default()(this));
-    }
-  }]);
-
-  return Session;
-}( /*#__PURE__*/wrapNativeSuper_default()(Set));
 // CONCATENATED MODULE: ./src/http-supervisor.js
 
 
@@ -3040,7 +2947,6 @@ var session_Session = /*#__PURE__*/function (_Set) {
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { defineProperty_default()(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
 
 
 
@@ -3103,7 +3009,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_urlConfig", HttpSupervisor.defaultConfig.urlConfig);
 
-    defineProperty_default()(this, "_requests", new session_Session());
+    defineProperty_default()(this, "_requests", new Set());
 
     defineProperty_default()(this, "_sessions", new Map());
 
@@ -3750,72 +3656,91 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Returns the failed requests.
+     * @param {Collection} [collection]
      * @returns {Collection}
      */
 
   }, {
     key: "failed",
-    value: function failed() {
-      return this.query('error', SEARCH_OPERATOR.EQUALS, true);
+    value: function failed(collection) {
+      var query = {
+        field: 'error',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: true
+      };
+      return collection ? collection.search(query) : this.query(query);
     }
     /**
      * Returns the requests that exceeded the quota.
+     * @param {Collection} [collection]
      * @returns {Collection}
      */
 
   }, {
     key: "exceeded",
-    value: function exceeded() {
-      return this.query('exceedsQuota', SEARCH_OPERATOR.EQUALS, true);
+    value: function exceeded(collection) {
+      var query = {
+        field: 'exceedsQuota',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: true
+      };
+      return collection ? collection.search(query) : this.query(query);
     }
     /**
      * Returns the last failed request.
+     * @param {Collection} [collection]
      * @returns {HttpRequestInfo}
      */
 
   }, {
     key: "lastFailed",
-    value: function lastFailed() {
-      return this.failed().last;
+    value: function lastFailed(collection) {
+      return this.failed(collection).last;
     }
     /**
      * Returns the request that has maximum payload size.
+     * @param {Collection} [collection]
      * @return {HttpRequestInfo}
      */
 
   }, {
     key: "maxPayloadRequest",
-    value: function maxPayloadRequest() {
-      return this.sort({
+    value: function maxPayloadRequest(collection) {
+      var sortArg = {
         field: 'payloadSize',
         dir: 'desc'
-      }).first;
+      };
+      return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
     }
     /**
      * Returns the request that has maximum response size.
+     * @param {Collection} [collection]
      * @returns {HttpRequestInfo}
      */
 
   }, {
     key: "maxSizeRequest",
-    value: function maxSizeRequest() {
-      return this.sort({
+    value: function maxSizeRequest(collection) {
+      var sortArg = {
         field: 'responseSize',
         dir: 'desc'
-      }).first;
+      };
+      return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
     }
     /**
      * Returns the request that took maximum time to complete.
+     * @param {Collection} [collection]
      * @returns {HttpRequestInfo}
      */
 
   }, {
     key: "maxDurationRequest",
-    value: function maxDurationRequest() {
-      return this.sort({
+    value: function maxDurationRequest(collection) {
+      var sortArg = {
         field: 'duration',
         dir: 'desc'
-      }).first;
+      };
+      return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
     }
     /**
      * Groups the requests based on the passed fields.
@@ -3932,93 +3857,126 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Returns the total payload size summing all requests.
+     * @param {Collection} [collection] The collection.
      * @returns {number}
      */
 
   }, {
     key: "totalPayload",
-    value: function totalPayload() {
-      return this.query().total('payloadSize');
+    value: function totalPayload(collection) {
+      return (collection || this.query()).total('payloadSize');
     }
     /**
      * Returns the total response size summing all requests.
+     * @param {Collection} [collection] The collection.
      * @returns {number}
      */
 
   }, {
     key: "totalSize",
-    value: function totalSize() {
-      return this.query().total('responseSize');
+    value: function totalSize(collection) {
+      return (collection || this.query()).total('responseSize');
     }
     /**
      * Returns the max payload size of the requests.
+     * @param {Collection} [collection] The collection.
      * @returns {number}
      */
 
   }, {
     key: "maxPayload",
-    value: function maxPayload() {
-      return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(this._requests).map(function (r) {
+    value: function maxPayload(collection) {
+      return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(collection || this._requests).map(function (r) {
         return r.payloadSize;
       })));
     }
     /**
      * Returns the max response size of the requests.
+     * @param {Collection} [collection] The collection.
      * @returns {number}
      */
 
   }, {
     key: "maxResponse",
-    value: function maxResponse() {
-      return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(this._requests).map(function (r) {
+    value: function maxResponse(collection) {
+      return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(collection || this._requests).map(function (r) {
         return r.responseSize;
       })));
     }
     /**
      * Returns the max duration.
+     * @param {Collection} [collection] The collection.
      * @returns {number}
      */
 
   }, {
     key: "maxDuration",
-    value: function maxDuration() {
-      return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(this._requests).map(function (r) {
+    value: function maxDuration(collection) {
+      return Math.max.apply(Math, toConsumableArray_default()(toConsumableArray_default()(collection || this._requests).map(function (r) {
         return r.duration;
       })));
     }
     /**
-     * Returns duplicate requests.
+     * Returns duplicate requests. If id not passed then returns all the duplicate requests.
+     * @param {Number} [id] The request id.
+     * @param {Collection} [collection] The collection.
      * @return {Array}
      */
 
   }, {
     key: "duplicates",
-    value: function duplicates(id) {
+    value: function duplicates(id, collection) {
+      var groupArgs = ['pathQuery', 'method', 'payload'];
+
       if (!id) {
-        var duplicateRequestIds = this._callsSummary.filter(function (r) {
+        var _collection$search;
+
+        var duplicateRequestIds;
+        duplicateRequestIds = collection ? collection.groupBy.apply(collection, groupArgs).groups.filter(function (g) {
+          return g.groups[0].groups[0].items.length > 1;
+        }).reduce(function (a, c) {
+          return [].concat(toConsumableArray_default()(a), toConsumableArray_default()(c.groups[0].groups[0].items));
+        }, []).map(function (r) {
+          return r.id;
+        }) : this._callsSummary.filter(function (r) {
           return r.count > 1;
         }).reduce(function (a, c) {
           return [].concat(toConsumableArray_default()(a), toConsumableArray_default()(c.requests));
         }, []).map(function (r) {
           return r.id;
         });
-
-        return this.query([{
+        var query = {
           field: 'id',
           operator: SEARCH_OPERATOR.IN,
           value: duplicateRequestIds
-        }], ['pathQuery', 'method', 'payload']);
+        };
+        return collection ? (_collection$search = collection.search(query)).groupBy.apply(_collection$search, groupArgs) : this.query([query], groupArgs);
       }
 
-      var request = this.get(id),
-          url = request.url,
+      var request = collection ? collection.find(function (item) {
+        return item.id === id;
+      }) : this.get(id);
+
+      if (!request) {
+        return null;
+      }
+
+      var url = request.url,
           method = request.method,
           payload = request.payload;
+      var requestIds;
 
-      var reqSummary = this._callsSummary.find(function (r) {
-        return r.url === url && r.method === method && r.payload === payload;
-      }),
-          requestIds = toConsumableArray_default()(reqSummary.requests);
+      if (collection) {
+        requestIds = collection.items.filter(function (item) {
+          return item.url === url && item.method === method && item.payload === payload;
+        });
+      } else {
+        var reqSummary = this._callsSummary.find(function (r) {
+          return r.url === url && r.method === method && r.payload === payload;
+        });
+
+        requestIds = toConsumableArray_default()(reqSummary.requests);
+      }
 
       requestIds.splice(requestIds.indexOf(request), 1);
       return this.query([{
@@ -4031,34 +3989,42 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Returns true if there are duplicate requests.
+     * @param {number} [id] Request id.
+     * @param {Collection} [collection]  The collection.
      * @return {boolean}
      */
 
   }, {
     key: "hasDuplicates",
-    value: function hasDuplicates() {
-      return this.duplicates().length > 0;
+    value: function hasDuplicates(id, collection) {
+      return this.duplicates(id, collection).length > 0;
     }
     /**
      * Returns the related requests.
-     * @param id
+     * @param {Number} id The request id.
+     * @param {Collection} collection  The collection.
      * @return {Collection}
      */
 
   }, {
     key: "related",
-    value: function related(id) {
+    value: function related(id, collection) {
       var request = this.get(id);
 
       if (!request) {
         return null;
       }
 
-      return this.query([{
+      var query = [{
         field: 'url',
         operator: SEARCH_OPERATOR.EQUALS,
         value: request.url
-      }], ['url', 'method', 'payload']);
+      }, {
+        field: 'method',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: request.method
+      }];
+      return collection ? collection.search.apply(collection, query) : this.query(query);
     }
     /**
      * Returns the parameters that exceeded quota.
@@ -4115,6 +4081,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Prints the requests based on the passed arguments.
+     * @param {...*} [args] The print arguments.
      */
 
   }, {
@@ -4170,39 +4137,43 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Print statistics.
+     * @param {Collection} collection The collection.
      */
 
   }, {
     key: "printStats",
-    value: function printStats() {
-      this._reporter.reportStats(this._getStats());
+    value: function printStats(collection) {
+      this._reporter.reportStats(this._getStats(collection));
     }
     /**
      * Prints failed requests.
+     * @param {Collection} collection The collection.
      */
 
   }, {
     key: "printFailed",
-    value: function printFailed() {
-      this._reporter.report(this.failed());
+    value: function printFailed(collection) {
+      this._reporter.report(this.failed(collection));
     }
     /**
      * Prints requests exceeds quota.
+     * @param {Collection} collection The collection.
      */
 
   }, {
     key: "printExceeded",
-    value: function printExceeded() {
-      this._reporter.report(this.exceeded());
+    value: function printExceeded(collection) {
+      this._reporter.report(this.exceeded(collection));
     }
     /**
      * Prints the last failed request.
+     * @param {Collection} collection The collection.
      */
 
   }, {
     key: "printLastFailed",
-    value: function printLastFailed() {
-      this._reporter.report(this.lastFailed());
+    value: function printLastFailed(collection) {
+      this._reporter.report(this.lastFailed(collection));
     }
     /**
      * Prints the last request.
@@ -4215,45 +4186,49 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Prints the request that has maximum payload.
+     * @param {Collection} collection The collection.
      */
 
   }, {
-    key: "printPayloadSizeRequest",
-    value: function printPayloadSizeRequest() {
-      this._reporter.report(this.maxPayloadRequest());
+    key: "printMaxPayloadRequest",
+    value: function printMaxPayloadRequest(collection) {
+      this._reporter.report(this.maxPayloadRequest(collection));
     }
     /**
      * Prints the request that has maximum size.
+     * @param {Collection} collection The collection.
      */
 
   }, {
     key: "printMaxSizeRequest",
-    value: function printMaxSizeRequest() {
-      this._reporter.report(this.maxSizeRequest());
+    value: function printMaxSizeRequest(collection) {
+      this._reporter.report(this.maxSizeRequest(collection));
     }
     /**
      * Prints the request that took maximum time.
+     * @param {Collection} collection The collection.
      */
 
   }, {
     key: "printMaxDurationRequest",
-    value: function printMaxDurationRequest() {
-      this._reporter.report(this.maxDurationRequest());
+    value: function printMaxDurationRequest(collection) {
+      this._reporter.report(this.maxDurationRequest(collection));
     }
     /**
      * Prints duplicate requests.
      * @param {number} [id] Request id.
+     * @param {Collection} [collection] The collection.
      */
 
   }, {
     key: "printDuplicates",
-    value: function printDuplicates(id) {
-      this._reporter.report(this.duplicates(id));
+    value: function printDuplicates(id, collection) {
+      this._reporter.report(this.duplicates(id, collection));
     }
     /**
      * Compares two requests and print the differences.
-     * @param id1
-     * @param id2
+     * @param {Number} id1 First Request id.
+     * @param {Number} id2 Second Request id.
      */
 
   }, {
@@ -4270,13 +4245,14 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Print related requests.
-     * @param id
+     * @param {Number} id Request id.
+     * @param {Collection} [collection] The collection.
      */
 
   }, {
     key: "printRelated",
-    value: function printRelated(id) {
-      this._reporter.report(this.related(id));
+    value: function printRelated(id, collection) {
+      this._reporter.report(this.related(id, collection));
     }
     /**
      * Displays the bar chart of responsive size.
@@ -4295,6 +4271,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._reporter.visualize({
         type: 'bar',
         title: 'Response Size Of Requests',
+        dataSetTitle: 'All Requests',
         labels: labels,
         data: data,
         format: formatBytes
@@ -4514,7 +4491,19 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
       var watchId = this._watchId();
 
-      if (args.length === 1 && typeof args[0] === 'string') {
+      if (args.length === 1 && typeof args[0] === 'number' && this.get(args[0])) {
+        var req = this.get(args[0]);
+
+        this._watches.set(watchId, [{
+          field: 'url',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: req.url
+        }, {
+          field: 'method',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: req.method
+        }]);
+      } else if (args.length === 1 && typeof args[0] === 'string') {
         this._watches.set(watchId, [this._prepareQuery(args[0])]);
       } else {
         this._watches.set(watchId, args);
@@ -4558,74 +4547,99 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Re-issues ajax request for the passed http request.
-     * @param id
-     * @param count
-     * @param parallel
-     * @param type
+     * @param {Number} idOrRequest Request id/Request.
+     * @param {object} [requestOptions] Request options.
+     * @returns {Promise<HttpRequestInfo|Array<HttpRequestInfo>>}
      */
 
   }, {
     key: "fire",
     value: function () {
-      var _fire = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee(id) {
-        var count,
-            parallel,
-            type,
-            request,
-            i,
-            _args = arguments;
-        return regenerator_default.a.wrap(function _callee$(_context) {
+      var _fire = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee2(idOrRequest, requestOptions) {
+        var _this4 = this;
+
+        var request, _ref2, _ref2$count, count, _ref2$parallel, parallel, _ref2$delay, delay, ids;
+
+        return regenerator_default.a.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                count = _args.length > 1 && _args[1] !== undefined ? _args[1] : 1;
-                parallel = _args.length > 2 && _args[2] !== undefined ? _args[2] : true;
-                type = _args.length > 3 && _args[3] !== undefined ? _args[3] : InitiatorType.XHR;
-                request = this.get(id);
+                request = typeof idOrRequest === 'number' ? this.get(idOrRequest) : idOrRequest;
 
                 if (request) {
-                  _context.next = 6;
+                  _context2.next = 3;
                   break;
                 }
 
-                return _context.abrupt("return");
+                return _context2.abrupt("return", null);
 
-              case 6:
-                i = 0;
+              case 3:
+                _ref2 = requestOptions || {}, _ref2$count = _ref2.count, count = _ref2$count === void 0 ? 1 : _ref2$count, _ref2$parallel = _ref2.parallel, parallel = _ref2$parallel === void 0 ? true : _ref2$parallel, _ref2$delay = _ref2.delay, delay = _ref2$delay === void 0 ? 0 : _ref2$delay;
+                ids = Array(count).map(function () {
+                  return _this4._id();
+                });
+                setTimeout( /*#__PURE__*/asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee() {
+                  var i;
+                  return regenerator_default.a.wrap(function _callee$(_context) {
+                    while (1) {
+                      switch (_context.prev = _context.next) {
+                        case 0:
+                          i = 0;
+
+                        case 1:
+                          if (!(i < ids.length)) {
+                            _context.next = 15;
+                            break;
+                          }
+
+                          if (!parallel) {
+                            _context.next = 6;
+                            break;
+                          }
+
+                          _this4._makeAjaxCall(request, ids[i]);
+
+                          _context.next = 12;
+                          break;
+
+                        case 6:
+                          _context.next = 8;
+                          return _this4._makeAjaxCall(request, ids[i]);
+
+                        case 8:
+                          _context.t0 = delay;
+
+                          if (!_context.t0) {
+                            _context.next = 12;
+                            break;
+                          }
+
+                          _context.next = 12;
+                          return timeout(delay);
+
+                        case 12:
+                          i++;
+                          _context.next = 1;
+                          break;
+
+                        case 15:
+                        case "end":
+                          return _context.stop();
+                      }
+                    }
+                  }, _callee);
+                })), 0);
+                return _context2.abrupt("return", ids.length === 1 ? ids[0] : ids);
 
               case 7:
-                if (!(i < count)) {
-                  _context.next = 17;
-                  break;
-                }
-
-                if (!parallel) {
-                  _context.next = 12;
-                  break;
-                }
-
-                request.fire(type);
-                _context.next = 14;
-                break;
-
-              case 12:
-                _context.next = 14;
-                return request.fire(type);
-
-              case 14:
-                i++;
-                _context.next = 7;
-                break;
-
-              case 17:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
-      function fire(_x) {
+      function fire(_x, _x2) {
         return _fire.apply(this, arguments);
       }
 
@@ -4643,7 +4657,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         this.end();
       }
 
-      var session = new session_Session();
+      var session = new Session();
       session.id = this._activeSessionId = this._sessionId();
 
       this._sessions.set(session.id, session);
@@ -4837,14 +4851,16 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "collection",
     value: function collection() {
-      var _this4 = this;
+      var _this5 = this;
 
       for (var _len6 = arguments.length, requests = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
         requests[_key6] = arguments[_key6];
       }
 
       return new collection_Collection(requests.map(function (r) {
-        return _this4.get(r);
+        return typeof r === 'number' ? _this5.get(r) : r;
+      }).filter(function (r) {
+        return r !== null;
       }));
     }
     /**
@@ -4904,25 +4920,25 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       XMLHttpRequest.prototype.setRequestHeader = this._nativeSetRequestHeader;
     }
     /**
-     * Capture request information and opens network connection using fetch API.
+     * Capture request information and fire network connection using fetch API.
      * @private
      */
 
   }, {
     key: "_fetch",
     value: function _fetch() {
-      var _this5 = this;
+      var _this6 = this;
 
       if (!this.busy) {
         return;
       }
 
-      var id = this._id();
-
-      var _ref2 = Array.prototype.slice.call(arguments),
-          url = _ref2[0],
-          _ref2$ = _ref2[1],
-          options = _ref2$ === void 0 ? {} : _ref2$,
+      var _ref4 = Array.prototype.slice.call(arguments),
+          url = _ref4[0],
+          _ref4$ = _ref4[1],
+          options = _ref4$ === void 0 ? {} : _ref4$,
+          _ref4$2 = _ref4[2],
+          id = _ref4$2 === void 0 ? this._id() : _ref4$2,
           _options$method = options.method,
           method = _options$method === void 0 ? REQUEST_TYPE.GET : _options$method,
           body = options.body,
@@ -4937,12 +4953,12 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._addRequest(requestInfo);
 
       return new Promise(function (resolve, reject) {
-        _this5._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
+        _this6._triggerEvent(SupervisorEvents.REQUEST_START, null, requestInfo);
 
         var response;
-        _this5._alertOnRequestStart && _this5._reporter.report(requestInfo); // Make the fetch call and capture the response info.
+        !_this6._silent && _this6._alertOnRequestStart && _this6._reporter.report(requestInfo); // Make the fetch call and capture the response info.
 
-        _this5._nativeFetch.call(window, _this5._isPerformanceSupported() ? _this5._appendRequestIdToUrl(url, id) : url, options).then(function (r) {
+        _this6._nativeFetch.call(window, _this6._isPerformanceSupported() ? _this6._appendRequestIdToUrl(url, id) : url, options).then(function (r) {
           response = r.clone();
           return isJsonResponse(r.headers.get('content-type')) ? r.json() : null;
         }).then(function (data) {
@@ -4951,14 +4967,14 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         })["catch"](function (error) {
           reject(error);
         })["finally"](function () {
-          if (_this5.status === SupervisorStatus.Retired) {
+          if (_this6.status === SupervisorStatus.Retired) {
             return;
           }
 
           requestInfo.responseStatus = response ? response.status : 500;
           requestInfo.responseHeaders = new Map(Object.entries(response.headers.entries()));
 
-          _this5._fillParametersAndFireEvents(requestInfo, response);
+          _this6._fillParametersAndFireEvents(requestInfo, response);
         });
       });
     }
@@ -5014,7 +5030,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_send",
     value: function _send() {
-      var _this6 = this,
+      var _this7 = this,
           _this$_nativeSend2;
 
       if (!this.busy) {
@@ -5045,7 +5061,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
 
 
       xhr.addEventListener('readystatechange', function () {
-        if (_this6.status === SupervisorStatus.Retired) {
+        if (_this7.status === SupervisorStatus.Retired) {
           return;
         }
 
@@ -5070,9 +5086,9 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         httpRequestInfo.responseStatus = xhr.status;
         httpRequestInfo.response = isJsonResponse(xhr.getResponseHeader('Content-Type')) ? safeParse(xhr.response) : xhr.response;
 
-        _this6._fillParametersAndFireEvents(httpRequestInfo, xhr);
+        _this7._fillParametersAndFireEvents(httpRequestInfo, xhr);
       });
-      this._alertOnRequestStart && this._reporter.report(httpRequestInfo);
+      !this._silent && this._alertOnRequestStart && this._reporter.report(httpRequestInfo);
 
       (_this$_nativeSend2 = this._nativeSend).call.apply(_this$_nativeSend2, [xhr].concat(parameters));
 
@@ -5162,10 +5178,10 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       var regex1 = new RegExp(/{([a-zA-Z0-9_$.]+)}/g),
           regex2 = new RegExp(/[^{}]*(?=})/g);
       var urlConfigUpdated = {};
-      Object.entries(this._urlConfig).forEach(function (_ref3) {
-        var _ref4 = slicedToArray_default()(_ref3, 2),
-            k = _ref4[0],
-            v = _ref4[1];
+      Object.entries(this._urlConfig).forEach(function (_ref5) {
+        var _ref6 = slicedToArray_default()(_ref5, 2),
+            k = _ref6[0],
+            v = _ref6[1];
 
         return Object.keys(v).forEach(function (u) {
           return urlConfigUpdated["".concat(k).concat(u)] = v[u];
@@ -5238,32 +5254,35 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       });
 
       var replaceTokens = function replaceTokens(str) {
-        toConsumableArray_default()(str.matchAll(regex1)).forEach(function (_ref5) {
-          var _ref6 = slicedToArray_default()(_ref5, 2),
-              part1 = _ref6[0],
-              part2 = _ref6[1];
+        toConsumableArray_default()(str.matchAll(regex1)).forEach(function (_ref7) {
+          var _ref8 = slicedToArray_default()(_ref7, 2),
+              part1 = _ref8[0],
+              part2 = _ref8[1];
 
           if (part2.startsWith('$response') && request.response) {
             var val = readValue(request.response, part2.replace(/\$response./, ''));
-            val !== null && val !== undefined && (request.label = request.label.replaceAll(part1, val));
+            str = val !== null && val !== undefined ? str.replaceAll(part1, val) : str;
           } else if (part2.startsWith('$payload') && request.payload) {
             var _val = readValue(request.payload, part2.replace(/\$payload./, ''));
 
-            _val !== null && _val !== undefined && (request.label = request.label.replaceAll(part1, _val));
+            str = _val !== null && _val !== undefined ? str.replaceAll(part1, _val) : str;
           } else if (part2.startsWith('$query')) {
             var queryParams = new Map(new URLSearchParams(request.query));
 
             var _val2 = queryParams.get(part2.replace(/\$query./, ''));
 
-            _val2 !== null && _val2 !== undefined && (request.label = request.label.replaceAll(part1, _val2));
+            str = _val2 !== null && _val2 !== undefined ? str.replaceAll(part1, _val2) : str;
           } else {
-            tokensObj.hasOwnProperty(part2) && (request.label = request.label.replaceAll(part1, tokensObj[part2]));
+            str = tokensObj.hasOwnProperty(part2) ? str.replaceAll(part1, tokensObj[part2]) : str;
           }
         });
+
+        return str;
       };
 
-      request.label && replaceTokens(request.label);
-      request.labelPending && replaceTokens(request.labelPending);
+      request.label && (request.label = replaceTokens(request.label));
+      request.labelPending && (request.labelPending = replaceTokens(request.labelPending));
+      request.errorLabel && (request.errorLabel = replaceTokens(request.errorLabel));
     }
     /**
      * Add the request to the summary request which helps to find duplicates.
@@ -5384,13 +5403,13 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "_isExceededQuota",
     value: function _isExceededQuota(request) {
-      var _ref7 = request.quota || {},
-          _ref7$maxPayloadSize = _ref7.maxPayloadSize,
-          maxPayloadSize = _ref7$maxPayloadSize === void 0 ? this._quota.maxPayloadSize : _ref7$maxPayloadSize,
-          _ref7$maxResponseSize = _ref7.maxResponseSize,
-          maxResponseSize = _ref7$maxResponseSize === void 0 ? this._quota.maxResponseSize : _ref7$maxResponseSize,
-          _ref7$maxDuration = _ref7.maxDuration,
-          maxDuration = _ref7$maxDuration === void 0 ? this._quota.maxDuration : _ref7$maxDuration;
+      var _ref9 = request.quota || {},
+          _ref9$maxPayloadSize = _ref9.maxPayloadSize,
+          maxPayloadSize = _ref9$maxPayloadSize === void 0 ? this._quota.maxPayloadSize : _ref9$maxPayloadSize,
+          _ref9$maxResponseSize = _ref9.maxResponseSize,
+          maxResponseSize = _ref9$maxResponseSize === void 0 ? this._quota.maxResponseSize : _ref9$maxResponseSize,
+          _ref9$maxDuration = _ref9.maxDuration,
+          maxDuration = _ref9$maxDuration === void 0 ? this._quota.maxDuration : _ref9$maxDuration;
 
       return request.payloadSize > maxPayloadSize || request.responseSize > maxResponseSize || request.duration > maxDuration;
     }
@@ -5479,26 +5498,70 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
   }, {
     key: "_getStats",
-    value: function _getStats() {
+    value: function _getStats(collection) {
       return {
-        allRequests: this.query(),
-        totalRequests: this.totalRequests,
-        getRequestsCount: this.query(REQUEST_TYPE.GET).count,
-        postRequestsCount: this.query(REQUEST_TYPE.POST).count,
-        putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
-        deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
-        failedRequests: this.failed(),
-        requestsExceededQuota: this.exceeded(),
-        maxPayloadSize: this.maxPayload(),
-        maxResponseSize: this.maxResponse(),
-        maxDuration: this.maxDuration(),
-        totalPayloadSize: this.totalPayload(),
-        totalResponseSize: this.totalSize(),
-        maxPayloadRequest: this.maxPayloadRequest(),
-        maxResponseRequest: this.maxSizeRequest(),
-        maxDurationRequest: this.maxDurationRequest(),
-        duplicates: this.duplicates()
+        allRequests: collection || this.query(),
+        totalRequests: collection ? collection.count : this.totalRequests,
+        getRequestsCount: collection ? collection.search({
+          field: 'method',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: REQUEST_TYPE.GET
+        }).count : this.query(REQUEST_TYPE.GET).count,
+        postRequestsCount: collection ? collection.search({
+          field: 'method',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: REQUEST_TYPE.POST
+        }).count : this.query(REQUEST_TYPE.POST).count,
+        putRequestsCount: collection ? collection.search({
+          field: 'method',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: REQUEST_TYPE.PUT
+        }).count : this.query(REQUEST_TYPE.PUT).count,
+        deleteRequestsCount: collection ? collection.search({
+          field: 'method',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: REQUEST_TYPE.DELETE
+        }).count : this.query(REQUEST_TYPE.DELETE).count,
+        failedRequests: this.failed(collection),
+        requestsExceededQuota: this.exceeded(collection),
+        maxPayloadSize: this.maxPayload(collection),
+        maxResponseSize: this.maxResponse(collection),
+        maxDuration: this.maxDuration(collection),
+        totalPayloadSize: this.totalPayload(collection),
+        totalResponseSize: this.totalSize(collection),
+        maxPayloadRequest: this.maxPayloadRequest(collection),
+        maxResponseRequest: this.maxSizeRequest(collection),
+        maxDurationRequest: this.maxDurationRequest(collection),
+        duplicates: this.duplicates(null, collection)
       };
+    }
+  }, {
+    key: "_makeAjaxCall",
+    value: function _makeAjaxCall(request, id) {
+      if (request.initiatorType === InitiatorType.XHR) {
+        return new Promise(function (resolve) {
+          var xhr = new XMLHttpRequest();
+          xhr['__request_id__'] = id;
+          xhr.addEventListener('readystatechange', function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+              resolve();
+            }
+          });
+          xhr.open(request.method, request.url);
+          request.requestHeaders.forEach(function (value, header) {
+            xhr.setRequestHeader(header, value);
+          });
+          request.method !== REQUEST_TYPE.GET && request.payload ? xhr.send(JSON.stringify(request.payload)) : xhr.send();
+          return xhr;
+        });
+      }
+
+      var requestOptions = {
+        method: request.method,
+        headers: mapToJson(request.requestHeaders)
+      };
+      request.method !== REQUEST_TYPE.GET && request.payload && (requestOptions.body = JSON.stringify(request.payload));
+      return this._fetch(request.url, requestOptions, id);
     }
   }], [{
     key: "defaultConfig",
@@ -6417,6 +6480,8 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_writeDelay", 50);
 
+    defineProperty_default()(this, "_iframeEl", null);
+
     this._initChart = this._initChart.bind(this);
   }
   /**
@@ -6433,8 +6498,21 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           loadChart = httpSupervisor.loadChart;
       this._lockConsole = lockConsole;
       this._lockConsole && this.acquireLock();
-      loadChart && loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs');
+
+      if (!loadChart) {
+        return;
+      }
+
+      this._iframeEl = document.createElement('iframe');
+      this._iframeEl.style.display = 'none';
+      document.body.appendChild(this._iframeEl);
+      loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs', this._iframeEl.contentDocument.head);
     }
+    /**
+     * Prints supervisor status message.
+     * @param message
+     */
+
   }, {
     key: "printStatusMessage",
     value: function printStatusMessage(message) {
@@ -6665,7 +6743,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     value: function visualize(chartOptions) {
       var _this = this;
 
-      if (!window.Chart) {
+      if (!this._iframeEl || !this._iframeEl.contentWindow.Chart) {
         this.print(Messages.CHART_NOT_FOUND, Colors.ERROR, true);
         return;
       }
@@ -6674,27 +6752,58 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           title = chartOptions.title,
           labels = chartOptions.labels,
           data = chartOptions.data,
-          format = chartOptions.format;
+          format = chartOptions.format,
+          dataSetTitle = chartOptions.dataSetTitle;
 
-      var ctx = this._canvasEl.getContext('2d');
+      var chartType = this._iframeEl.contentWindow.Chart,
+          ctx = this._canvasEl.getContext('2d');
 
       var myChart;
 
       if (type === 'bar') {
-        myChart = new Chart(ctx, {
+        myChart = new chartType(ctx, {
           type: type,
           data: {
             labels: labels,
             datasets: [{
-              label: title,
               data: data,
-              backgroundColor: poolColors(data.length),
-              borderColor: poolColors(data.length),
+              label: dataSetTitle,
+              backgroundColor: dynamicColors(),
               borderWidth: 1
             }]
           },
+          plugins: [{
+            afterDraw: function afterDraw(chart) {
+              console.log(chart);
+              var lineAt = chart.config.options.lineAt;
+              var ctxPlugin = chart.ctx;
+              var xAxe = chart.scales[chart.config.options.scales.xAxes[0].id];
+              var yAxe = chart.scales[chart.config.options.scales.yAxes[0].id]; // I'm not good at maths
+              // So I couldn't find a way to make it work ...
+              // ... without having the `min` property set to 0
+
+              if (yAxe.min !== 0) {
+                return;
+              }
+
+              ctxPlugin.strokeStyle = "red";
+              ctxPlugin.beginPath();
+              lineAt = (lineAt - yAxe.min) * (100 / yAxe.max);
+              lineAt = (100 - lineAt) / 100 * yAxe.height + yAxe.top;
+              ctxPlugin.moveTo(xAxe.left, lineAt);
+              ctxPlugin.lineTo(xAxe.right, lineAt);
+              ctxPlugin.stroke();
+            }
+          }],
           options: {
+            lineAt: 600,
             responsive: false,
+            plugins: {
+              title: {
+                display: true,
+                text: title
+              }
+            },
             scales: {
               y: {
                 beginAtZero: true,
@@ -6708,7 +6817,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           }
         });
       } else if (type === 'bubble') {
-        myChart = window.myChart = new Chart(ctx, {
+        myChart = new chartType(ctx, {
           type: 'bubble',
           data: {
             datasets: [{
@@ -6726,7 +6835,6 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
             elements: {
               point: {
                 backgroundColor: this._colorize.bind(this, false),
-                borderColor: this._colorize.bind(this, true),
                 borderWidth: function borderWidth(context) {
                   return Math.min(Math.max(1, context.datasetIndex + 1), 8);
                 },
@@ -6750,7 +6858,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
           }
         });
       } else if (type === 'pie') {
-        myChart = window.myChart = new Chart(ctx, {
+        myChart = new chartType(ctx, {
           type: 'pie',
           data: {
             labels: labels,
@@ -7022,22 +7130,23 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "destroy",
     value: function destroy() {
-      this._canvasEl.remove();
+      this._iframeEl.remove();
 
-      this._canvasEl = null;
-      unloadScript('http-sup-chartjs');
+      this._iframeEl = null;
     }
   }, {
     key: "_initChart",
     value: function _initChart() {
-      window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
+      var chartType = this._iframeEl.contentWindow.Chart;
+      chartType && (chartType.defaults.font.size = this._chartFontSize);
       this._canvasEl = document.createElement('canvas');
       this._canvasEl.style.width = "".concat(this._chartWidth, "px");
       this._canvasEl.style.height = "".concat(this._chartHeight, "px");
       this._canvasEl.width = this._chartWidth;
       this._canvasEl.height = this._chartHeight;
       this._canvasEl.style.display = 'none';
-      document.body.appendChild(this._canvasEl);
+
+      this._iframeEl.contentDocument.head.appendChild(this._canvasEl);
     }
   }, {
     key: "_appendTextWithSpaces",
@@ -7078,7 +7187,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                           case 3:
                             if (!(requestOrCollection instanceof http_request_info_HttpRequestInfo)) {
-                              _context2.next = 36;
+                              _context2.next = 37;
                               break;
                             }
 
@@ -7098,6 +7207,8 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                             } else {
                               requestLabel = pending && labelPending ? labelPending : label;
                             }
+
+                            requestLabel = requestLabel && category ? "".concat(category.toUpperCase(), ": ").concat(requestLabel) : requestLabel;
 
                             if (requestLabel) {
                               displayUrl = requestLabel.length < 75 ? _this3._appendTextWithSpaces(requestLabel, 75) : "".concat(requestLabel.substring(0, 72), "...");
@@ -7165,28 +7276,28 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                             return _context2.abrupt("return");
 
-                          case 36:
+                          case 37:
                             if (!(!requestOrCollection.hasItems && !requestOrCollection.hasGroups)) {
-                              _context2.next = 38;
+                              _context2.next = 39;
                               break;
                             }
 
                             return _context2.abrupt("return");
 
-                          case 38:
+                          case 39:
                             if (!requestOrCollection.hasGroups) {
-                              _context2.next = 60;
+                              _context2.next = 61;
                               break;
                             }
 
                             _iterator = _createForOfIteratorHelper(requestOrCollection.groups);
-                            _context2.prev = 40;
+                            _context2.prev = 41;
 
                             _iterator.s();
 
-                          case 42:
+                          case 43:
                             if ((_step = _iterator.n()).done) {
-                              _context2.next = 51;
+                              _context2.next = 52;
                               break;
                             }
 
@@ -7211,79 +7322,79 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                               _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
                             }
 
-                            _context2.next = 48;
+                            _context2.next = 49;
                             return _this3._reportObject(group);
 
-                          case 48:
+                          case 49:
                             _this3.groupEnd();
 
-                          case 49:
-                            _context2.next = 42;
+                          case 50:
+                            _context2.next = 43;
                             break;
 
-                          case 51:
-                            _context2.next = 56;
+                          case 52:
+                            _context2.next = 57;
                             break;
 
-                          case 53:
-                            _context2.prev = 53;
-                            _context2.t0 = _context2["catch"](40);
+                          case 54:
+                            _context2.prev = 54;
+                            _context2.t0 = _context2["catch"](41);
 
                             _iterator.e(_context2.t0);
 
-                          case 56:
-                            _context2.prev = 56;
+                          case 57:
+                            _context2.prev = 57;
 
                             _iterator.f();
 
-                            return _context2.finish(56);
-
-                          case 59:
-                            return _context2.abrupt("return");
+                            return _context2.finish(57);
 
                           case 60:
+                            return _context2.abrupt("return");
+
+                          case 61:
                             _iterator2 = _createForOfIteratorHelper(requestOrCollection.items);
-                            _context2.prev = 61;
+                            _context2.prev = 62;
 
                             _iterator2.s();
 
-                          case 63:
+                          case 64:
                             if ((_step2 = _iterator2.n()).done) {
-                              _context2.next = 69;
+                              _context2.next = 70;
                               break;
                             }
 
                             item = _step2.value;
-                            _context2.next = 67;
+                            _context2.next = 68;
                             return _this3._reportObject(item);
 
-                          case 67:
-                            _context2.next = 63;
+                          case 68:
+                            _context2.next = 64;
                             break;
 
-                          case 69:
-                            _context2.next = 74;
+                          case 70:
+                            _context2.next = 75;
                             break;
 
-                          case 71:
-                            _context2.prev = 71;
-                            _context2.t1 = _context2["catch"](61);
+                          case 72:
+                            _context2.prev = 72;
+                            _context2.t1 = _context2["catch"](62);
 
                             _iterator2.e(_context2.t1);
 
-                          case 74:
-                            _context2.prev = 74;
+                          case 75:
+                            _context2.prev = 75;
 
                             _iterator2.f();
 
-                            return _context2.finish(74);
+                            return _context2.finish(75);
 
-                          case 77:
+                          case 78:
                           case "end":
                             return _context2.stop();
                         }
                       }
-                    }, _callee2, null, [[40, 53, 56, 59], [61, 71, 74, 77]]);
+                    }, _callee2, null, [[41, 54, 57, 60], [62, 72, 75, 78]]);
                   }));
 
                   return function code() {

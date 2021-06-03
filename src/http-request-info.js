@@ -244,39 +244,6 @@ export default class HttpRequestInfo {
   }
 
   /**
-   * Issues AJAX request using the property values.
-   * @param type
-   * @return {*}
-   */
-  fire(type = 'xhr') {
-    if (type === 'xhr') {
-      return new Promise((resolve) => {
-        const xhr = new XMLHttpRequest();
-        xhr.addEventListener('readystatechange', () => {
-          if (xhr.readyState === XMLHttpRequest.DONE) {
-            resolve();
-          }
-        });
-        xhr.open(this.method, this.url);
-        this.requestHeaders.forEach((value, header) => {
-          xhr.setRequestHeader(header, value);
-        });
-        this.method !== REQUEST_TYPE.GET && this.payload ? xhr.send(JSON.stringify(this.payload)) : xhr.send();
-        return xhr;
-      });
-    }
-
-    const requestOptions = {
-      method: this.method,
-      headers: mapToJson(this.requestHeaders)
-    };
-
-    this.method !== REQUEST_TYPE.GET && this.payload && (requestOptions.body = JSON.stringify(this.payload));
-
-    return window.fetch(this.url, requestOptions);
-  }
-
-  /**
    * Returns a cloned copy.
    * @return {HttpRequestInfo}
    */

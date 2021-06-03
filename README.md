@@ -514,7 +514,6 @@ Below are the properties of this class.
 Below are the constructor and methods of this class.
 
 - `constructor(id, url, method, payload)`
-- `fire(type = 'xhr', reqOptions = {})` - Issues AJAX request using the property values.
 - `clone()` - Returns a cloned copy.
 
 #### `first()`
@@ -610,35 +609,36 @@ const maxSizeGetRequests = http.query([{ field: 'method', operator: '=', value: 
 
 The different operators you can utilize are: "=", "!=", ">", "<", ">=", "<=", "~" (starts with), "^" (ends with), "contains", "!contains", "matches" and "!matches". 
 
-#### `totalPayload()`
+#### `totalPayload(collection?)`
 
-Returns the total payload size summing all requests.
+Returns the total payload size summing all requests. If you pass an optional collection it'll return the total payload size from that collection.
 
-#### `totalSize()`
+#### `totalSize(collection?)`
 
 Returns the total response size summing all requests.
 
-#### `maxPayload()`
+#### `maxPayload(collection?)`
 
 Returns the max payload size of the requests.
 
-#### `maxResponse()`
+#### `maxResponse(collection?)`
 
 Returns the max response size of the requests.
 
-#### `maxDuration()`
+#### `maxDuration(collection?)`
 
 Returns the max duration.
 
-#### `duplicates()`
+#### `duplicates(id?, collection?)`
 
-Returns the duplicate requests made during the session.
+Returns the duplicate requests made during the session. You can also optionally pass a request id and collection. If you pass a request 
+id then it'll return the duplicate requests similar like that one. If you pass a collection it'll figure the duplicates from it.
 
-#### `hasDuplicates`
+#### `hasDuplicates(id?, collection?)`
 
 Returns true if there are duplicate requests.
 
-#### `related(id)`
+#### `related(id, collection?)`
 
 Returns the related requests for the passed request.
 
@@ -680,15 +680,15 @@ http.print(
 );
 ```
 
-#### `printFailed()`
+#### `printFailed(collection?)`
 
 Prints failed requests.
 
-#### `printExceeded()`
+#### `printExceeded(collection?)`
 
 Prints requests exceeds quota.
 
-#### `printLastFailed()`
+#### `printLastFailed(collection?)`
 
 Prints the last failed request.
 
@@ -696,17 +696,25 @@ Prints the last failed request.
 
 Prints the last request.
 
-#### `printMaxSizeRequest()`
+#### `printMaxPayloadRequest(collection?)`
 
-Prints the request that has maximum size.
+Prints the request that has maximum payload size.
 
-#### `printMaxDurationRequest()`
+#### `printMaxSizeRequest(collection?)`
+
+Prints the request that has maximum response size.
+
+#### `printMaxDurationRequest(collection?)`
 
 Prints the request that took maximum time.
 
-#### `printDuplicates()`
+#### `printDuplicates(collection?)`
 
 Prints duplicate requests.
+
+#### `printRelated(id, collection?)`
+
+Print related requests for the passed request.
 
 #### `compare(id1, id2)`
 

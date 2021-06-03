@@ -267,3 +267,7 @@ export function readValue(o, s) {
 export function trimEndSlash(url) {
   return url.endsWith('/') ? url.slice(0, -1) : url;
 }
+
+export function timeout(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

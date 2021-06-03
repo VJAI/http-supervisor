@@ -28,7 +28,7 @@ import {
   safeParse,
   matchesGlob,
   copyText,
-  mapToJson, readValue, trimEndSlash
+  mapToJson, readValue, trimEndSlash, timeout
 } from './util';
 
 /**
@@ -1053,11 +1053,12 @@ export default class HttpSupervisor {
 
   /**
    * Returns true if there are duplicate requests.
+   * @param {number} [id] Request id.
    * @param {Collection} [collection]  The collection.
    * @return {boolean}
    */
-  hasDuplicates(collection) {
-    return this.duplicates(null, collection).length > 0;
+  hasDuplicates(id, collection) {
+    return this.duplicates(id, collection).length > 0;
   }
 
   /**
@@ -1203,7 +1204,7 @@ export default class HttpSupervisor {
    * Prints the request that has maximum payload.
    * @param {Collection} collection The collection.
    */
-  printPayloadSizeRequest(collection) {
+  printMaxPayloadRequest(collection) {
     this._reporter.report(this.maxPayloadRequest(collection));
   }
 
@@ -1448,7 +1449,13 @@ export default class HttpSupervisor {
 
     const watchId = this._watchId();
 
-    if (args.length === 1 && typeof args[0] === 'string') {
+    if (args.length === 1 && typeof args[0] === 'number' && this.get(args[0])) {
+      const req = this.get(args[0]);
+      this._watches.set(watchId, [
+        { field: 'url', operator: SEARCH_OPERATOR.EQUALS, value: req.url },
+        { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: req.method }
+      ]);
+    } else if (args.length === 1 && typeof args[0] === 'string') {
       this._watches.set(watchId, [this._prepareQuery(args[0])]);
     } else {
       this._watches.set(watchId, args);
@@ -1484,25 +1491,37 @@ export default class HttpSupervisor {
 
   /**
    * Re-issues ajax request for the passed http request.
-   * @param id
-   * @param count
-   * @param parallel
-   * @param type
+   * @param {Number} idOrRequest Request id/Request.
+   * @param {object} [requestOptions] Request options.
+   * @returns {Promise<HttpRequestInfo|Array<HttpRequestInfo>>}
    */
-  async fire(id, count = 1, parallel = true, type = InitiatorType.XHR) {
-    const request = this.get(id);
+  async fire(idOrRequest, requestOptions) {
+    const request = typeof idOrRequest === 'number' ? this.get(idOrRequest) : idOrRequest;
 
     if (!request) {
-      return;
+      return null;
     }
 
-    for (let i = 0; i < count; i++) {
-      if (parallel) {
-        request.fire(type);
-      } else {
-       await request.fire(type);
+    const {
+      count = 1,
+      parallel = true,
+      delay = 0
+    } = requestOptions || {};
+
+    const ids = Array(count).map(() => this._id());
+
+    setTimeout(async () => {
+      for (let i = 0; i < ids.length; i++) {
+        if (parallel) {
+          this._makeAjaxCall(request, ids[i]);
+        } else {
+          await this._makeAjaxCall(request, ids[i]);
+          delay && await timeout(delay);
+        }
       }
-    }
+    }, 0);
+
+    return ids.length === 1 ? ids[0] : ids;
   }
 
   /**
@@ -1683,7 +1702,7 @@ export default class HttpSupervisor {
    * @return {Collection}
    */
   collection(...requests) {
-    return new Collection(requests.map(r => this.get(r)));
+    return new Collection(requests.map(r => typeof r === 'number' ? this.get(r) : r).filter(r => r !== null));
   }
 
   /**
@@ -1736,7 +1755,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Capture request information and opens network connection using fetch API.
+   * Capture request information and fire network connection using fetch API.
    * @private
    */
   _fetch() {
@@ -1744,9 +1763,7 @@ export default class HttpSupervisor {
       return;
     }
 
-    const id = this._id();
-
-    let [url, options = {}] = [...arguments],
+    let [url, options = {}, id = this._id()] = [...arguments],
       { method = REQUEST_TYPE.GET, body, headers } = options;
 
     const payload = safeParse(body);
@@ -2210,5 +2227,34 @@ export default class HttpSupervisor {
       maxDurationRequest: this.maxDurationRequest(collection),
       duplicates: this.duplicates(null, collection)
     };
+  }
+
+  _makeAjaxCall(request, id) {
+    if (request.initiatorType === InitiatorType.XHR) {
+      return new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr['__request_id__'] = id;
+        xhr.addEventListener('readystatechange', () => {
+          if (xhr.readyState === XMLHttpRequest.DONE) {
+            resolve();
+          }
+        });
+        xhr.open(request.method, request.url);
+        request.requestHeaders.forEach((value, header) => {
+          xhr.setRequestHeader(header, value);
+        });
+        request.method !== REQUEST_TYPE.GET && request.payload ? xhr.send(JSON.stringify(request.payload)) : xhr.send();
+        return xhr;
+      });
+    }
+
+    const requestOptions = {
+      method: request.method,
+      headers: mapToJson(request.requestHeaders)
+    };
+
+    request.method !== REQUEST_TYPE.GET && request.payload && (requestOptions.body = JSON.stringify(request.payload));
+
+    return this._fetch(request.url, requestOptions, id);
   }
 }
