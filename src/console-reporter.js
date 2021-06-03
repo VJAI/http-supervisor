@@ -1,7 +1,7 @@
-import HttpRequestInfo                                                         from './http-request-info';
-import Collection                                                              from './collection';
-import { formatBytes, formatTime, loadScript, poolColors, unloadScript }       from './util';
-import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES, CHARTJS_LIB_PATH } from './constants';
+import HttpRequestInfo                                                                  from './http-request-info';
+import Collection                                                                       from './collection';
+import { dynamicColors, formatBytes, formatTime, loadScript, poolColors, unloadScript } from './util';
+import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES, CHARTJS_LIB_PATH }          from './constants';
 import './console-snapshot';
 
 /**
@@ -72,6 +72,8 @@ export default class ConsoleReporter {
    */
   _writeDelay = 50;
 
+  _iframeEl = null;
+
   /**
    * Ctor.
    */
@@ -88,9 +90,21 @@ export default class ConsoleReporter {
     const { lockConsole, loadChart } = httpSupervisor;
     this._lockConsole = lockConsole;
     this._lockConsole && this.acquireLock();
-    loadChart && loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs');
+
+    if (!loadChart) {
+      return;
+    }
+
+    this._iframeEl = document.createElement('iframe');
+    this._iframeEl.style.display = 'none';
+    document.body.appendChild(this._iframeEl);
+    loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs', this._iframeEl.contentDocument.head);
   }
 
+  /**
+   * Prints supervisor status message.
+   * @param message
+   */
   printStatusMessage(message) {
     this.print(message, Colors.BRAND, true);
   }
@@ -251,7 +265,7 @@ export default class ConsoleReporter {
    * @param chartOptions
    */
   visualize(chartOptions) {
-    if (!window.Chart) {
+    if (!this._iframeEl || !this._iframeEl.contentWindow.Chart) {
       this.print(Messages.CHART_NOT_FOUND, Colors.ERROR, true);
       return;
     }
@@ -261,27 +275,61 @@ export default class ConsoleReporter {
       title,
       labels,
       data,
-      format
+      format,
+      dataSetTitle
     } = chartOptions;
 
-    const ctx = this._canvasEl.getContext('2d');
+    const chartType = this._iframeEl.contentWindow.Chart,
+      ctx = this._canvasEl.getContext('2d');
     let myChart;
 
     if (type === 'bar') {
-      myChart = new Chart(ctx, {
+      myChart = new chartType(ctx, {
         type: type,
         data: {
           labels: labels,
           datasets: [{
-            label: title,
             data: data,
-            backgroundColor: poolColors(data.length),
-            borderColor: poolColors(data.length),
+            label: dataSetTitle,
+            backgroundColor: dynamicColors(),
             borderWidth: 1
           }]
         },
+        plugins: [
+          {
+            afterDraw: function(chart) {
+              console.log(chart);
+              let lineAt = chart.config.options.lineAt;
+              let ctxPlugin = chart.ctx;
+              let xAxe = chart.scales[chart.config.options.scales.xAxes[0].id];
+              let yAxe = chart.scales[chart.config.options.scales.yAxes[0].id];
+
+              // I'm not good at maths
+              // So I couldn't find a way to make it work ...
+              // ... without having the `min` property set to 0
+              if(yAxe.min !== 0) {
+                return;
+              }
+
+              ctxPlugin.strokeStyle = "red";
+              ctxPlugin.beginPath();
+              lineAt = (lineAt - yAxe.min) * (100 / yAxe.max);
+              lineAt = (100 - lineAt) / 100 * (yAxe.height) + yAxe.top;
+              ctxPlugin.moveTo(xAxe.left, lineAt);
+              ctxPlugin.lineTo(xAxe.right, lineAt);
+              ctxPlugin.stroke();
+            }
+          }
+        ],
         options: {
+          lineAt: 600,
           responsive: false,
+          plugins: {
+            title: {
+              display: true,
+              text: title
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,
@@ -295,7 +343,7 @@ export default class ConsoleReporter {
         }
       });
     } else if (type === 'bubble') {
-      myChart = window.myChart = new Chart(ctx, {
+      myChart = new chartType(ctx, {
         type: 'bubble',
         data: {
           datasets: [{
@@ -313,7 +361,6 @@ export default class ConsoleReporter {
           elements: {
             point: {
               backgroundColor: this._colorize.bind(this, false),
-              borderColor: this._colorize.bind(this, true),
               borderWidth: function (context) {
                 return Math.min(Math.max(1, context.datasetIndex + 1), 8);
               },
@@ -337,7 +384,7 @@ export default class ConsoleReporter {
         }
       });
     } else if (type === 'pie') {
-      myChart = window.myChart = new Chart(ctx, {
+      myChart = new chartType(ctx, {
         type: 'pie',
         data: {
           labels: labels,
@@ -545,13 +592,13 @@ export default class ConsoleReporter {
   }
 
   destroy() {
-    this._canvasEl.remove();
-    this._canvasEl = null;
-    unloadScript('http-sup-chartjs');
+    this._iframeEl.remove();
+    this._iframeEl = null;
   }
 
   _initChart() {
-    window.Chart && (window.Chart.defaults.font.size = this._chartFontSize);
+    const chartType = this._iframeEl.contentWindow.Chart;
+    chartType && (chartType.defaults.font.size = this._chartFontSize);
 
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;
@@ -560,7 +607,7 @@ export default class ConsoleReporter {
     this._canvasEl.height = this._chartHeight;
     this._canvasEl.style.display = 'none';
 
-    document.body.appendChild(this._canvasEl);
+    this._iframeEl.contentDocument.head.appendChild(this._canvasEl);
   }
 
   _appendTextWithSpaces(title, size, equal = false) {
@@ -618,6 +665,8 @@ export default class ConsoleReporter {
         } else {
           requestLabel = pending && labelPending ? labelPending : label;
         }
+
+        requestLabel = requestLabel && category ? `${category.toUpperCase()}: ${requestLabel}` : requestLabel;
 
         let displayUrl;
         if (requestLabel) {

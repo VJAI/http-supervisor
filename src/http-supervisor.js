@@ -9,7 +9,6 @@ import {
   FAKE,
   XHR_METADATA_KEY,
   InitiatorType,
-  CHARTJS_LIB_PATH,
   STORAGE_KEY,
   REQUEST_TYPE,
   SEARCH_OPERATOR,
@@ -31,7 +30,6 @@ import {
   copyText,
   mapToJson, readValue, trimEndSlash
 } from './util';
-import { Session }     from './session';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify duplicate requests. Also helps to query, group,
@@ -218,7 +216,7 @@ export default class HttpSupervisor {
    * @type {Set}
    * @private
    */
-  _requests = new Session();
+  _requests = new Set();
 
   /**
    * Collection of recorded sessions.
@@ -832,50 +830,61 @@ export default class HttpSupervisor {
 
   /**
    * Returns the failed requests.
+   * @param {Collection} [collection]
    * @returns {Collection}
    */
-  failed() {
-    return this.query('error', SEARCH_OPERATOR.EQUALS, true);
+  failed(collection) {
+    const query = { field: 'error', operator: SEARCH_OPERATOR.EQUALS, value: true };
+    return collection ? collection.search(query) : this.query(query);
   }
 
   /**
    * Returns the requests that exceeded the quota.
+   * @param {Collection} [collection]
    * @returns {Collection}
    */
-  exceeded() {
-    return this.query('exceedsQuota', SEARCH_OPERATOR.EQUALS, true);
+  exceeded(collection) {
+    const query = { field: 'exceedsQuota', operator: SEARCH_OPERATOR.EQUALS, value: true };
+    return collection ? collection.search(query) : this.query(query);
   }
 
   /**
    * Returns the last failed request.
+   * @param {Collection} [collection]
    * @returns {HttpRequestInfo}
    */
-  lastFailed() {
-    return this.failed().last;
+  lastFailed(collection) {
+    return this.failed(collection).last;
   }
 
   /**
    * Returns the request that has maximum payload size.
+   * @param {Collection} [collection]
    * @return {HttpRequestInfo}
    */
-  maxPayloadRequest() {
-    return this.sort({ field: 'payloadSize', dir: 'desc' }).first;
+  maxPayloadRequest(collection) {
+    const sortArg = { field: 'payloadSize', dir: 'desc' };
+    return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
   }
 
   /**
    * Returns the request that has maximum response size.
+   * @param {Collection} [collection]
    * @returns {HttpRequestInfo}
    */
-  maxSizeRequest() {
-    return this.sort({ field: 'responseSize', dir: 'desc' }).first;
+  maxSizeRequest(collection) {
+    const sortArg = { field: 'responseSize', dir: 'desc' };
+    return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
   }
 
   /**
    * Returns the request that took maximum time to complete.
+   * @param {Collection} [collection]
    * @returns {HttpRequestInfo}
    */
-  maxDurationRequest() {
-    return this.sort({ field: 'duration', dir: 'desc' }).first;
+  maxDurationRequest(collection) {
+    const sortArg = { field: 'duration', dir: 'desc' };
+    return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
   }
 
   /**
@@ -954,62 +963,89 @@ export default class HttpSupervisor {
 
   /**
    * Returns the total payload size summing all requests.
+   * @param {Collection} [collection] The collection.
    * @returns {number}
    */
-  totalPayload() {
-    return this.query().total('payloadSize');
+  totalPayload(collection) {
+    return (collection || this.query()).total('payloadSize');
   }
 
   /**
    * Returns the total response size summing all requests.
+   * @param {Collection} [collection] The collection.
    * @returns {number}
    */
-  totalSize() {
-    return this.query().total('responseSize');
+  totalSize(collection) {
+    return (collection || this.query()).total('responseSize');
   }
 
   /**
    * Returns the max payload size of the requests.
+   * @param {Collection} [collection] The collection.
    * @returns {number}
    */
-  maxPayload() {
-    return Math.max(...[...this._requests].map(r => r.payloadSize));
+  maxPayload(collection) {
+    return Math.max(...[...(collection || this._requests)].map(r => r.payloadSize));
   }
 
   /**
    * Returns the max response size of the requests.
+   * @param {Collection} [collection] The collection.
    * @returns {number}
    */
-  maxResponse() {
-    return Math.max(...[...this._requests].map(r => r.responseSize));
+  maxResponse(collection) {
+    return Math.max(...[...(collection || this._requests)].map(r => r.responseSize));
   }
 
   /**
    * Returns the max duration.
+   * @param {Collection} [collection] The collection.
    * @returns {number}
    */
-  maxDuration() {
-    return Math.max(...[...this._requests].map(r => r.duration));
+  maxDuration(collection) {
+    return Math.max(...[...(collection || this._requests)].map(r => r.duration));
   }
 
   /**
-   * Returns duplicate requests.
+   * Returns duplicate requests. If id not passed then returns all the duplicate requests.
+   * @param {Number} [id] The request id.
+   * @param {Collection} [collection] The collection.
    * @return {Array}
    */
-  duplicates(id) {
-    if (!id) {
-      const duplicateRequestIds = this._callsSummary.filter(r => r.count > 1)
-        .reduce((a, c) => [...a, ...c.requests], [])
-        .map(r => r.id);
+  duplicates(id, collection) {
+    const groupArgs = ['pathQuery', 'method', 'payload'];
 
-      return this.query([{ field: 'id', operator: SEARCH_OPERATOR.IN, value: duplicateRequestIds }], ['pathQuery', 'method', 'payload']);
+    if (!id) {
+      let duplicateRequestIds;
+      duplicateRequestIds = collection
+        ? collection.groupBy(...groupArgs).groups
+          .filter(g => g.groups[0].groups[0].items.length > 1)
+          .reduce((a, c) => [...a, ...c.groups[0].groups[0].items], [])
+          .map(r => r.id)
+        : this._callsSummary.filter(r => r.count > 1)
+            .reduce((a, c) => [...a, ...c.requests], [])
+            .map(r => r.id);
+
+      const query = { field: 'id', operator: SEARCH_OPERATOR.IN, value: duplicateRequestIds };
+      return collection ? collection.search(query).groupBy(...groupArgs) : this.query([query], groupArgs);
     }
 
-    const request = this.get(id),
-      { url, method, payload } = request;
+    const request = collection ? collection.find(item => item.id === id) : this.get(id);
 
-    const reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && r.payload === payload),
+    if (!request) {
+      return null;
+    }
+
+    const { url, method, payload } = request;
+
+    let requestIds;
+    if (collection) {
+      requestIds = collection.items.filter(item => item.url === url && item.method === method && item.payload === payload)
+    } else {
+      const reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && r.payload === payload);
       requestIds = [...reqSummary.requests];
+    }
+
     requestIds.splice(requestIds.indexOf(request), 1);
 
     return this.query([{ field: 'id', operator: SEARCH_OPERATOR.IN, value: requestIds.map(r => r.id) }]);
@@ -1017,27 +1053,32 @@ export default class HttpSupervisor {
 
   /**
    * Returns true if there are duplicate requests.
+   * @param {Collection} [collection]  The collection.
    * @return {boolean}
    */
-  hasDuplicates() {
-    return this.duplicates().length > 0;
+  hasDuplicates(collection) {
+    return this.duplicates(null, collection).length > 0;
   }
 
   /**
    * Returns the related requests.
-   * @param id
+   * @param {Number} id The request id.
+   * @param {Collection} collection  The collection.
    * @return {Collection}
    */
-  related(id) {
+  related(id, collection) {
     const request = this.get(id);
 
     if (!request) {
       return null;
     }
 
-    return this.query([
-      { field: 'url', operator: SEARCH_OPERATOR.EQUALS, value: request.url }
-    ], ['url', 'method', 'payload']);
+    const query = [
+        { field: 'url', operator: SEARCH_OPERATOR.EQUALS, value: request.url },
+        { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: request.method }
+      ];
+
+    return collection ? collection.search(...query) : this.query(query);
   }
 
   /**
@@ -1085,6 +1126,7 @@ export default class HttpSupervisor {
 
   /**
    * Prints the requests based on the passed arguments.
+   * @param {...*} [args] The print arguments.
    */
   print(...args) {
     const [firstArg, secondArg, thirdArg] = args;
@@ -1120,30 +1162,34 @@ export default class HttpSupervisor {
 
   /**
    * Print statistics.
+   * @param {Collection} collection The collection.
    */
-  printStats() {
-    this._reporter.reportStats(this._getStats());
+  printStats(collection) {
+    this._reporter.reportStats(this._getStats(collection));
   }
 
   /**
    * Prints failed requests.
+   * @param {Collection} collection The collection.
    */
-  printFailed() {
-    this._reporter.report(this.failed());
+  printFailed(collection) {
+    this._reporter.report(this.failed(collection));
   }
 
   /**
    * Prints requests exceeds quota.
+   * @param {Collection} collection The collection.
    */
-  printExceeded() {
-    this._reporter.report(this.exceeded());
+  printExceeded(collection) {
+    this._reporter.report(this.exceeded(collection));
   }
 
   /**
    * Prints the last failed request.
+   * @param {Collection} collection The collection.
    */
-  printLastFailed() {
-    this._reporter.report(this.lastFailed());
+  printLastFailed(collection) {
+    this._reporter.report(this.lastFailed(collection));
   }
 
   /**
@@ -1155,37 +1201,41 @@ export default class HttpSupervisor {
 
   /**
    * Prints the request that has maximum payload.
+   * @param {Collection} collection The collection.
    */
-  printPayloadSizeRequest() {
-    this._reporter.report(this.maxPayloadRequest());
+  printPayloadSizeRequest(collection) {
+    this._reporter.report(this.maxPayloadRequest(collection));
   }
 
   /**
    * Prints the request that has maximum size.
+   * @param {Collection} collection The collection.
    */
-  printMaxSizeRequest() {
-    this._reporter.report(this.maxSizeRequest());
+  printMaxSizeRequest(collection) {
+    this._reporter.report(this.maxSizeRequest(collection));
   }
 
   /**
    * Prints the request that took maximum time.
+   * @param {Collection} collection The collection.
    */
-  printMaxDurationRequest() {
-    this._reporter.report(this.maxDurationRequest());
+  printMaxDurationRequest(collection) {
+    this._reporter.report(this.maxDurationRequest(collection));
   }
 
   /**
    * Prints duplicate requests.
    * @param {number} [id] Request id.
+   * @param {Collection} [collection] The collection.
    */
-  printDuplicates(id) {
-    this._reporter.report(this.duplicates(id));
+  printDuplicates(id, collection) {
+    this._reporter.report(this.duplicates(id, collection));
   }
 
   /**
    * Compares two requests and print the differences.
-   * @param id1
-   * @param id2
+   * @param {Number} id1 First Request id.
+   * @param {Number} id2 Second Request id.
    */
   compare(id1, id2) {
     const request1 = this.get(id1),
@@ -1200,10 +1250,11 @@ export default class HttpSupervisor {
 
   /**
    * Print related requests.
-   * @param id
+   * @param {Number} id Request id.
+   * @param {Collection} [collection] The collection.
    */
-  printRelated(id) {
-    this._reporter.report(this.related(id));
+  printRelated(id, collection) {
+    this._reporter.report(this.related(id, collection));
   }
 
   /**
@@ -1216,6 +1267,7 @@ export default class HttpSupervisor {
     this._reporter.visualize({
       type: 'bar',
       title: 'Response Size Of Requests',
+      dataSetTitle: 'All Requests',
       labels,
       data,
       format: formatBytes
@@ -1709,7 +1761,7 @@ export default class HttpSupervisor {
 
       let response;
 
-      this._alertOnRequestStart && this._reporter.report(requestInfo);
+      !this._silent && this._alertOnRequestStart && this._reporter.report(requestInfo);
 
       // Make the fetch call and capture the response info.
       this._nativeFetch.call(window, this._isPerformanceSupported() ? this._appendRequestIdToUrl(url, id) : url, options)
@@ -1831,7 +1883,7 @@ export default class HttpSupervisor {
       this._fillParametersAndFireEvents(httpRequestInfo, xhr);
     });
 
-    this._alertOnRequestStart && this._reporter.report(httpRequestInfo);
+    !this._silent && this._alertOnRequestStart && this._reporter.report(httpRequestInfo);
     this._nativeSend.call(xhr, ...parameters);
     this._triggerEvent(SupervisorEvents.REQUEST_START, httpRequestInfo, xhr);
   }
@@ -1977,22 +2029,25 @@ export default class HttpSupervisor {
       [...str.matchAll(regex1)].forEach(([part1, part2]) => {
         if (part2.startsWith('$response') && request.response) {
           const val = readValue(request.response, part2.replace(/\$response./, ''));
-          (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
+          str = (val !== null && val !== undefined) ? str.replaceAll(part1, val) : str;
         } else if (part2.startsWith('$payload') && request.payload) {
           const val = readValue(request.payload, part2.replace(/\$payload./, ''));
-          (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
+          str = (val !== null && val !== undefined) ? str.replaceAll(part1, val) : str;
         } else if (part2.startsWith('$query')) {
           const queryParams = new Map(new URLSearchParams(request.query));
           const val = queryParams.get(part2.replace(/\$query./, ''));
-          (val !== null && val !== undefined) && (request.label = request.label.replaceAll(part1, val));
+          str = (val !== null && val !== undefined) ? str.replaceAll(part1, val) : str;
         } else {
-          tokensObj.hasOwnProperty(part2) && (request.label = request.label.replaceAll(part1, tokensObj[part2]));
+          str = tokensObj.hasOwnProperty(part2) ? str.replaceAll(part1, tokensObj[part2]) : str;
         }
       });
+
+      return str;
     };
 
-    request.label && replaceTokens(request.label);
-    request.labelPending && replaceTokens(request.labelPending);
+    request.label && (request.label = replaceTokens(request.label));
+    request.labelPending && (request.labelPending = replaceTokens(request.labelPending));
+    request.errorLabel && (request.errorLabel = replaceTokens(request.errorLabel));
   }
 
   /**
@@ -2135,25 +2190,25 @@ export default class HttpSupervisor {
     return query;
   }
 
-  _getStats() {
+  _getStats(collection) {
     return {
-      allRequests: this.query(),
-      totalRequests: this.totalRequests,
-      getRequestsCount: this.query(REQUEST_TYPE.GET).count,
-      postRequestsCount: this.query(REQUEST_TYPE.POST).count,
-      putRequestsCount: this.query(REQUEST_TYPE.PUT).count,
-      deleteRequestsCount: this.query(REQUEST_TYPE.DELETE).count,
-      failedRequests: this.failed(),
-      requestsExceededQuota: this.exceeded(),
-      maxPayloadSize: this.maxPayload(),
-      maxResponseSize: this.maxResponse(),
-      maxDuration: this.maxDuration(),
-      totalPayloadSize: this.totalPayload(),
-      totalResponseSize: this.totalSize(),
-      maxPayloadRequest: this.maxPayloadRequest(),
-      maxResponseRequest: this.maxSizeRequest(),
-      maxDurationRequest: this.maxDurationRequest(),
-      duplicates: this.duplicates()
+      allRequests: collection || this.query(),
+      totalRequests: collection ? collection.count : this.totalRequests,
+      getRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.GET }).count : this.query(REQUEST_TYPE.GET).count,
+      postRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.POST }).count : this.query(REQUEST_TYPE.POST).count,
+      putRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.PUT }).count : this.query(REQUEST_TYPE.PUT).count,
+      deleteRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.DELETE }).count : this.query(REQUEST_TYPE.DELETE).count,
+      failedRequests: this.failed(collection),
+      requestsExceededQuota: this.exceeded(collection),
+      maxPayloadSize: this.maxPayload(collection),
+      maxResponseSize: this.maxResponse(collection),
+      maxDuration: this.maxDuration(collection),
+      totalPayloadSize: this.totalPayload(collection),
+      totalResponseSize: this.totalSize(collection),
+      maxPayloadRequest: this.maxPayloadRequest(collection),
+      maxResponseRequest: this.maxSizeRequest(collection),
+      maxDurationRequest: this.maxDurationRequest(collection),
+      duplicates: this.duplicates(null, collection)
     };
   }
 }

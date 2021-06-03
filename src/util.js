@@ -93,13 +93,13 @@ export function isAbsolute(url) {
  * @param src
  * @param onload
  */
-export function loadScript(src, onload, onerror, id) {
+export function loadScript(src, onload, onerror, id, headEl) {
   const script = document.createElement('script');
   script.src = src;
   id && script.setAttribute('id', id);
   onload && script.addEventListener('load', onload);
   onerror && script.addEventListener('error', onerror);
-  (document.head || document.documentElement).appendChild(script);
+  (headEl || document.head || document.documentElement).appendChild(script);
 }
 
 /**
