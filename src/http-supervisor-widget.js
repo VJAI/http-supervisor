@@ -39,7 +39,7 @@ template.innerHTML = `
     box-shadow: var(--box-shadow);
   }
 
-   button, button:active, button:focus, button:hover, span, .stop-watch .timer-controls label {
+   button, button:active, button:focus, button:hover, span {
     width: 30px;
     height: 26px;
     display: flex;
@@ -65,7 +65,7 @@ template.innerHTML = `
     color: var(--disabled-color);
   }
 
-  button:not(:disabled):hover svg, .stop-watch .timer-controls label:hover svg {
+  button:not(:disabled):hover svg {
     color: var(--hover-color);
   }
 
@@ -240,23 +240,16 @@ template.innerHTML = `
     justify-content: center;
   }
   
-  .stop-watch .timer-controls label {
-    cursor: pointer;
+  .watch-running .timer .numbers {
+    animation-play-state: running;
   }
   
-  #supervisor-toggle-watch ~ .timer .numbers {
-    -webkit-animation-play-state: paused;
-            animation-play-state: paused;
+  .watch-paused .timer .numbers {
+    animation-play-state: paused;
   }
   
-  #supervisor-toggle-watch:checked ~ .timer .numbers {
-    -webkit-animation-play-state: running;
-            animation-play-state: running;
-  }
-  
-  #supervisor-reset-watch:checked ~ .timer .numbers {
-    -webkit-animation: none;
-            animation: none;
+  .watch-stopped .timer .numbers {
+    animation: none;
   }
   
   @keyframes moveten {
@@ -346,21 +339,19 @@ template.innerHTML = `
       </svg>
   </button>
     <div class="stop-watch" style="display: none">
-      <input id="supervisor-toggle-watch" name="controls" type="checkbox">
-      <input id="supervisor-reset-watch" name="controls" type="checkbox">
       <div class="timer-controls">
-        <label for="supervisor-toggle-watch" class="supervisor-action">
+        <button>
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-stopwatch" viewBox="0 0 16 16">
             <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z"/>
             <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z"/>
           </svg>
-        </label>
-        <label for="supervisor-reset-watch" class="supervisor-action">
+        </button>
+        <button>
            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
             <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
             <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
           </svg>
-        </label>
+        </button>
       </div>
       <div class="timer">
         <div class="cell">
@@ -787,7 +778,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   _exportButton = null;
   _moreButton = null;
   _callsCountLabel = null;
-  _startWatchButton = null;
+  _toggleWatchButton = null;
   _resetWatchButton = null;
 
   // Popover Controls
@@ -825,6 +816,8 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
 
   _config = null;
 
+  _watchState = 'stopped';
+
   get config() {
     return this._config;
   }
@@ -845,7 +838,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       this._printButton,
       this._clearButton,
       this._exportButton,
-      this._startWatchButton,
+      this._toggleWatchButton,
       this._resetWatchButton,
       this._callsCountLabel,
       this._moreButton,
@@ -884,8 +877,6 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
       clear: this._clearButton,
       print: this._printButton,
       export: this._exportButton,
-      toggleWatch: this._startWatchButton,
-      resetWatch: this._resetWatchButton,
       traceEachRequestChange: this._traceEachRequestCheckbox,
       alertOnErrorChange: this._alertOnErrorCheckbox,
       alertOnExceedQuotaChange: this._alertOnQuotaExceedCheckbox,
@@ -963,6 +954,30 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
     });
 
     this._stopWatchCheckbox.addEventListener('change', () => this._handleStopWatchChange());
+
+    this._toggleWatchButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (this._watchState !== 'running') {
+        this._stopWatchContainer.classList.remove('watch-paused', 'watch-stopped');
+        this._stopWatchContainer.classList.add('watch-running');
+        this._watchState = 'running';
+      } else {
+        this._stopWatchContainer.classList.remove('watch-running', 'watch-stopped');
+        this._stopWatchContainer.classList.add('watch-paused');
+        this._watchState = 'paused';
+      }
+    });
+
+    this._resetWatchButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      this._stopWatchContainer.classList.remove('watch-paused', 'watch-running');
+      this._stopWatchContainer.classList.add('watch-stopped');
+      this._watchState = 'stopped';
+    });
   }
 
   setState({
@@ -1109,7 +1124,7 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
 
   _handleStopWatchChange(ctrl) {
     this._stopWatchContainer.style.display = this._stopWatchCheckbox.checked ? 'flex' : 'none';
-    this._container.style.right = `calc(50% - ${this._stopWatchCheckbox.checked ? 150 : 100}px);`;
+    this._container.style.right = `calc(50% - ${this._stopWatchCheckbox.checked ? 150 : 100}px)`;
   }
 }
 

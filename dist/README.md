@@ -204,13 +204,14 @@ You can also pass glob patterns.
 http.print('https://api.domain.com/v3/*');
 ```
 
-### Printing requests matching a label or category
+### Printing requests matching a label, category or tag
 
-You can print all the requests matching label as below,
+You can print all the requests matching label, category or tag as below,
 
 ```js
-http.print('label:Add to cart');
-http.print('category:Carts');
+http.print('%Add to cart');
+http.print('$Carts');
+http.print('#add-cart');
 ```
 
 ### Search, group, sort and then print requests
