@@ -12,15 +12,14 @@ import {
   STORAGE_KEY,
   REQUEST_TYPE,
   SEARCH_OPERATOR,
-  FILE_TYPE
-} from './constants';
+  FILE_TYPE, Colors
+}                      from './constants';
 import {
   idGenerator,
   convertBytes,
   convertTime,
   byteSize,
   isAbsolute,
-  loadScript,
   formatBytes,
   formatTime,
   matchCriteria,
@@ -28,8 +27,8 @@ import {
   safeParse,
   matchesGlob,
   copyText,
-  mapToJson, readValue, trimEndSlash, timeout
-} from './util';
+  mapToJson, readValue, trimEndSlash, timeout, poolColors
+}                      from './util';
 
 /**
  * Supervises HTTP Network Traffic. Helps to identify duplicate requests. Also helps to query, group,
@@ -60,7 +59,8 @@ export default class HttpSupervisor {
       keyboardEvents: true,
       persistConfig: true,
       lockConsole: false,
-      urlConfig: {}
+      urlConfig: {},
+      stopWatch: false
     }
   }
 
@@ -210,6 +210,13 @@ export default class HttpSupervisor {
    * @private
    */
   _urlConfig = HttpSupervisor.defaultConfig.urlConfig;
+
+  /**
+   * True to display stop watch in the widget.
+   * @type {boolean}
+   * @private
+   */
+  _stopWatch = HttpSupervisor.defaultConfig.stopWatch;
 
   /**
    * Collection of captured requests.
@@ -575,6 +582,7 @@ export default class HttpSupervisor {
    */
   set keyboardEvents(value) {
     this._keyboardEvents = value;
+    this._updateStorage();
   }
 
   /**
@@ -621,6 +629,23 @@ export default class HttpSupervisor {
     if (value === false && this._reporter.releaseLock) {
       this._reporter.releaseLock();
     }
+  }
+
+  /**
+   * Returns the current status of stop watch.
+   * @returns {boolean}
+   */
+  get stopWatch() {
+    return this._stopWatch;
+  }
+
+  /**
+   * Sets the status of stop watch.
+   * @param {boolean} value
+   */
+  set stopWatch(value) {
+    this._stopWatch = value;
+    this._updateStorage();
   }
 
   /**
@@ -680,7 +705,7 @@ export default class HttpSupervisor {
     this.setConfig({ ...config, ...storedConfig });
 
     // Listen to the `request-end` event to display request details based on the properties.
-    this.on(SupervisorEvents.REQUEST_END, (supervisor, request) => {
+    this.on(SupervisorEvents.REQUEST_END, (request) => {
       if (this._silent) {
         return;
       }
@@ -829,6 +854,14 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns the last completed request.
+   * @returns {HttpRequestInfo}
+   */
+  lastCompleted() {
+    return this.sort({ field: 'timeEnd', order: 'desc' }).first;
+  }
+
+  /**
    * Returns the failed requests.
    * @param {Collection} [collection]
    * @returns {Collection}
@@ -888,6 +921,22 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Returns the pending requests.
+   * @returns {Collection}
+   */
+  pending() {
+    return this.query('pending', SEARCH_OPERATOR.EQUALS, true);
+  }
+
+  /**
+   * Returns the completed requests.
+   * @returns {Collection}
+   */
+  completed() {
+    return this.query('pending', SEARCH_OPERATOR.EQUALS, false);
+  }
+
+  /**
    * Groups the requests based on the passed fields.
    * @param {...string} groupArgs The group fields.
    * @returns {Collection}
@@ -905,7 +954,7 @@ export default class HttpSupervisor {
     let args = [...sortArgs];
 
     if (typeof sortArgs[0] === 'string') {
-      args = [{ field: sortArgs[0] , dir: sortArgs[1] }];
+      args = [{ field: sortArgs[0], dir: sortArgs[1] }];
     }
 
 
@@ -924,18 +973,18 @@ export default class HttpSupervisor {
 
     if (args.length === 1 && ['number', 'string'].has(typeof args[0])) {
       const [arg] = args,
-        query = typeof arg === 'string' ? this._prepareQuery(arg) : { field: 'responseStatus', operator: SEARCH_OPERATOR.EQUALS, value: arg };
+        query = typeof arg === 'string' ? this._prepareQuery(arg) : {
+          field: 'responseStatus',
+          operator: SEARCH_OPERATOR.EQUALS,
+          value: arg
+        };
       return this.query(query);
     }
 
     if (Array.isArray(args[0] || args[1] || args[2])) {
       const [query, groupArgs, sortArgs] = args;
-      return this.query().search(...(query || [])).groupBy(...(groupArgs || [])).sortBy(...(sortArgs || []));
-    }
-
-    if (typeof args[0] === 'object') {
       const q = [];
-      args.forEach(x => {
+      query && query.forEach(x => {
         let { field, value, operator } = x;
 
         if (typeof value !== 'string') {
@@ -953,8 +1002,11 @@ export default class HttpSupervisor {
 
         q.push({ field, value, operator });
       });
+      return this.query().search(...(q || [])).groupBy(...(groupArgs || [])).sortBy(...(sortArgs || []));
+    }
 
-      return this.query(q);
+    if (typeof args[0] === 'object') {
+      return this.query([...args]);
     }
 
     const [field, operator, value] = args;
@@ -1023,8 +1075,8 @@ export default class HttpSupervisor {
           .reduce((a, c) => [...a, ...c.groups[0].groups[0].items], [])
           .map(r => r.id)
         : this._callsSummary.filter(r => r.count > 1)
-            .reduce((a, c) => [...a, ...c.requests], [])
-            .map(r => r.id);
+          .reduce((a, c) => [...a, ...c.requests], [])
+          .map(r => r.id);
 
       const query = { field: 'id', operator: SEARCH_OPERATOR.IN, value: duplicateRequestIds };
       return collection ? collection.search(query).groupBy(...groupArgs) : this.query([query], groupArgs);
@@ -1075,9 +1127,9 @@ export default class HttpSupervisor {
     }
 
     const query = [
-        { field: 'url', operator: SEARCH_OPERATOR.EQUALS, value: request.url },
-        { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: request.method }
-      ];
+      { field: 'url', operator: SEARCH_OPERATOR.EQUALS, value: request.url },
+      { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: request.method }
+    ];
 
     return collection ? collection.search(...query) : this.query(query);
   }
@@ -1106,7 +1158,7 @@ export default class HttpSupervisor {
    * @param {...*} sortArgs The sort parameters.
    */
   printSort(...sortArgs) {
-    this.print(this.sort(...sortArgs));
+    this.print(null, null, sortArgs);
   }
 
   /**
@@ -1114,7 +1166,7 @@ export default class HttpSupervisor {
    * @param {...string} groupArgs The group fields.
    */
   printGroup(...groupArgs) {
-    this.print(this.group(...groupArgs));
+    this.print(null, groupArgs);
   }
 
   /**
@@ -1122,7 +1174,7 @@ export default class HttpSupervisor {
    * @param {...*} searchArgs The search arguments.
    */
   printQuery(...searchArgs) {
-    this.print(this.query(...searchArgs));
+    this.print(searchArgs);
   }
 
   /**
@@ -1201,6 +1253,13 @@ export default class HttpSupervisor {
   }
 
   /**
+   * Prints the last completed request.
+   */
+  printLastCompleted() {
+    this._reporter.report(this.lastCompleted());
+  }
+
+  /**
    * Prints the request that has maximum payload.
    * @param {Collection} collection The collection.
    */
@@ -1222,6 +1281,20 @@ export default class HttpSupervisor {
    */
   printMaxDurationRequest(collection) {
     this._reporter.report(this.maxDurationRequest(collection));
+  }
+
+  /**
+   * Prints the pending requests.
+   */
+  printPending() {
+    this._reporter.report(this.pending());
+  }
+
+  /**
+   * Prints the completed requests.
+   */
+  printCompleted() {
+    this._reporter.report(this.completed());
   }
 
   /**
@@ -1260,68 +1333,189 @@ export default class HttpSupervisor {
 
   /**
    * Displays the bar chart of responsive size.
+   * @param {...Collection} [collections].
    */
-  sizeChart() {
-    const labels = [...this._requests].map(r => r.id),
-      data = [...this._requests].map(r => r.responseSize);
+  sizeChart(...collections) {
+    const datasets = [];
+    let labels;
+
+    if (collections.length) {
+      collections.forEach((col, index) => {
+        datasets.push({
+          data: [...col.items].map(r => r.responseSize),
+          title: `Collection ${index++}`,
+          barColor: Colors[`CHART_COLOR_${index++}`]
+        });
+      });
+
+      labels = Array.from({ length: collections[0].count }, (_, i) => i + 1);
+    } else {
+      labels = [...this._requests].map(r => r.id);
+      datasets.push({
+        data: [...this._requests].map(r => r.responseSize),
+        title: 'All Requests',
+        barColor: Colors.CHART_COLOR_1
+      });
+    }
 
     this._reporter.visualize({
       type: 'bar',
       title: 'Response Size Of Requests',
-      dataSetTitle: 'All Requests',
       labels,
-      data,
-      format: formatBytes
+      datasets,
+      formatHor: formatBytes,
+      lineAt: this._quota.maxResponseSize
     });
   }
 
   /**
    * Displays the bar chart of responsive size.
+   * @param {...Collection} [collections].
    */
-  timeChart() {
-    const labels = [...this._requests].map(r => r.id),
-      data = [...this._requests].map(r => r.duration);
+  timeChart(...collections) {
+    const datasets = [];
+    let labels;
+
+    if (collections.length) {
+      collections.forEach((col, index) => {
+        datasets.push({
+          data: [...col.items].map(r => r.duration),
+          title: `Collection ${index++}`,
+          barColor: Colors[`CHART_COLOR_${index++}`]
+        });
+      });
+
+      labels = Array.from({ length: collections[0].count }, (_, i) => i + 1);
+    } else {
+      labels = [...this._requests].map(r => r.id);
+      datasets.push({
+        data: [...this._requests].map(r => r.duration),
+        title: 'All Requests',
+        barColor: Colors.CHART_COLOR_1
+      });
+    }
 
     this._reporter.visualize({
       type: 'bar',
       title: 'Response Time Of Requests',
       labels,
-      data,
-      format: formatTime
+      datasets,
+      formatHor: formatTime,
+      lineAt: this._quota.maxDuration
     });
   }
 
   /**
    * Displays bubble chart for response size and time.
+   * @param {...Collection} collections
    */
-  sizeTimeChart() {
-    const data = [...this._requests].map(r => ({
-      x: r.id,
-      y: r.responseSize,
-      v: r.duration
-    }));
+  sizeTimeChart(...collections) {
+    const datasets = [];
+    let labels;
+
+    const getData = (col) => [...col.items].map(r => ({ x: r.duration, y: r.responseSize || 0 }));
+
+    if (collections.length) {
+      labels = Array.from({ length: collections[0].count }, (_, i) => i + 1);
+      collections.forEach((col, index) => {
+        datasets.push({
+          data: getData(col),
+          title: `Collection ${index++}`,
+          bgColor: Colors[`CHART_COLOR_${index++}`]
+        });
+      });
+    } else {
+      labels = [...this._requests].map(r => r.id);
+      datasets.push({
+        data: getData(this.query()),
+        title: 'All Requests',
+        bgColor: Colors.CHART_COLOR_1
+      });
+    }
 
     this._reporter.visualize({
-      type: 'bubble',
+      type: 'scatter',
       title: 'Response Size And Time Of Requests',
-      data,
-      format: formatBytes
+      labels,
+      datasets,
+      formatHor: formatTime,
+      formatVer: formatBytes,
     });
   }
 
   /**
    * Displays the response size distribution.
+   * @param {string} distributeBy The field name.
+   * @param {...Collection} [collections] The collection.
    */
-  sizeDistributionChart() {
-    const labels = [...this._requests].map(r => r.path),
-      data = [...this._requests].map(r => r.responseSize);
+  distributionChart(distributeBy, ...collections) {
+    const datasets = [];
+    let labels;
+
+    const groupBy = col => {
+      if (distributeBy === 'responseSize' || distributeBy === 'payloadSize') {
+        const c = { groups: [] };
+        c.groups.push({
+          name: '<= 1 kb',
+          items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 1024 })
+        });
+        c.groups.push({
+          name: '> 1 kb AND <= 10 kb',
+          items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 1024 }, { field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 10240 })
+        });
+        c.groups.push({
+          name: '> 10 kb AND <= 1 mb',
+          items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 10240 }, { field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 1024 * 1024 })
+        });
+        c.groups.push({
+          name: '> 1 mb AND <= 10 mb',
+          items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 1024 * 1024 }, { field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 1024 * 1024 * 10 })
+        });
+        c.groups.push({
+          name: '> 10 mb',
+          items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 1024 * 1024 * 10 })
+        });
+        return c;
+      } else if (distributeBy === 'duration') {
+        const c = { groups: [] };
+        c.groups.push({ name: '<= 1 s', items: col.clone().search({ field: distributeBy, operator:SEARCH_OPERATOR.LESS_EQUAL, value: 1000 }) });
+        c.groups.push({ name: '> 1 s AND <= 10 s', items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 1000 }, { field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 10000 }) });
+        c.groups.push({ name: '< 10 s AND <= 1 min', items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 10000 }, { field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 60000 }) });
+        c.groups.push({ name: '> 1 min AND <= 10 min', items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 60000 }, { field: distributeBy, operator: SEARCH_OPERATOR.LESS_EQUAL, value: 600000 }) });
+        c.groups.push({ name: '> 10 min', items: col.clone().search({ field: distributeBy, operator: SEARCH_OPERATOR.GREATER, value: 600000 }) });
+        return c;
+      }
+
+      return col.groupBy(distributeBy);
+    },
+    getLabels = groupedCol => groupedCol.groups.map(g => g.name && g.name !== '-' ? g.name : 'Other'),
+    getData = groupedCol => groupedCol.groups.map(g => g.items ? g.items.length : 0);
+
+    if (collections.length) {
+      collections.forEach((col, index) => {
+        const grouped = groupBy(col);
+        labels = getLabels(grouped);
+        datasets.push({
+          data: getData(grouped),
+          title: `Collection ${index++}`,
+          bgColor: poolColors(labels.length)
+        });
+      });
+    } else {
+      const grouped = groupBy(this.query());
+      labels = getLabels(grouped);
+      datasets.push({
+        data: getData(grouped),
+        title: 'All Requests',
+        bgColor: poolColors(labels.length)
+      });
+    }
 
     this._reporter.visualize({
-      type: 'pie',
-      title: 'Response Size Distribution',
+      type: 'doughnut',
+      title: `Requests Share by "${distributeBy}"`,
       labels,
-      data,
-      format: formatBytes
+      datasets
     });
   }
 
@@ -1643,7 +1837,8 @@ export default class HttpSupervisor {
       usePerformance: this._usePerformance,
       quota: this._quota,
       watches: mapToJson(this._watches),
-      urlConfig: this._urlConfig
+      urlConfig: this._urlConfig,
+      stopWatch: this._stopWatch
     };
   }
 
@@ -1671,7 +1866,8 @@ export default class HttpSupervisor {
       watches,
       persistConfig,
       lockConsole,
-      urlConfig
+      urlConfig,
+      stopWatch
     } = config;
 
     this._include = Array.isArray(include) ? new Set(include) : HttpSupervisor.defaultConfig.include;
@@ -1693,6 +1889,7 @@ export default class HttpSupervisor {
     this._watches = typeof watches === 'object' && watches !== null ? new Map(Object.entries(watches)) : new Map();
     this._lockConsole = typeof lockConsole === 'boolean' ? lockConsole : HttpSupervisor.defaultConfig.lockConsole;
     this._urlConfig = typeof urlConfig === 'object' ? urlConfig : {};
+    this._stopWatch = typeof stopWatch === 'boolean' ? stopWatch : HttpSupervisor.defaultConfig.stopWatch;
     this._updateStorage();
   }
 
@@ -1703,6 +1900,16 @@ export default class HttpSupervisor {
    */
   collection(...requests) {
     return new Collection(requests.map(r => typeof r === 'number' ? this.get(r) : r).filter(r => r !== null));
+  }
+
+  /**
+   * Merge multiple collections into one.
+   * @param {...Collection} collections Collections.
+   * @returns {Collection}
+   */
+  merge(...collections) {
+    const requests = collections.reduce((a, c) => [...a, ...c.items], []).filter((x, i, a) => a.indexOf(a.find(y => y.id === x.id)) === i);
+    return new Collection(requests);
   }
 
   /**
@@ -2140,7 +2347,7 @@ export default class HttpSupervisor {
    * @private
    */
   _triggerEvent(eventName, ...args) {
-    this._eventEmitter.triggerEvent(eventName, this, ...args);
+    this._eventEmitter.triggerEvent(eventName, ...args, this);
   }
 
   /**
@@ -2192,12 +2399,12 @@ export default class HttpSupervisor {
 
     if (REQUEST_TYPE.hasOwnProperty(str)) {
       query = { field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: str };
-    } else if (str.toLowerCase().startsWith('label:')) {
-      query = { field: 'label', operator: SEARCH_OPERATOR.CONTAINS, value: str.replace(/label:/, '') };
-    } else if (str.startsWith('category:')) {
-      query = { field: 'category', operator: SEARCH_OPERATOR.CONTAINS, value: str.replace(/category:/, '') };
-    } else if (str.startsWith('tag:')) {
-      query = { field: 'tags', operator: SEARCH_OPERATOR.INCLUDE, value: str.replace(/tag:/, '') };
+    } else if (str.startsWith('%')) {
+      query = { field: 'label', operator: SEARCH_OPERATOR.CONTAINS, value: str.substring(1) };
+    } else if (str.startsWith('$')) {
+      query = { field: 'category', operator: SEARCH_OPERATOR.CONTAINS, value: str.substring(1) };
+    } else if (str.startsWith('#')) {
+      query = { field: 'tags', operator: SEARCH_OPERATOR.INCLUDE, value: str.substring(1) };
     } else if (str.indexOf('*') > -1) {
       query = { field: 'url', operator: SEARCH_OPERATOR.MATCHES, value: str };
     } else {
@@ -2211,10 +2418,26 @@ export default class HttpSupervisor {
     return {
       allRequests: collection || this.query(),
       totalRequests: collection ? collection.count : this.totalRequests,
-      getRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.GET }).count : this.query(REQUEST_TYPE.GET).count,
-      postRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.POST }).count : this.query(REQUEST_TYPE.POST).count,
-      putRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.PUT }).count : this.query(REQUEST_TYPE.PUT).count,
-      deleteRequestsCount: collection ? collection.search({ field: 'method', operator: SEARCH_OPERATOR.EQUALS, value: REQUEST_TYPE.DELETE }).count : this.query(REQUEST_TYPE.DELETE).count,
+      getRequestsCount: collection ? collection.search({
+        field: 'method',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: REQUEST_TYPE.GET
+      }).count : this.query(REQUEST_TYPE.GET).count,
+      postRequestsCount: collection ? collection.search({
+        field: 'method',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: REQUEST_TYPE.POST
+      }).count : this.query(REQUEST_TYPE.POST).count,
+      putRequestsCount: collection ? collection.search({
+        field: 'method',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: REQUEST_TYPE.PUT
+      }).count : this.query(REQUEST_TYPE.PUT).count,
+      deleteRequestsCount: collection ? collection.search({
+        field: 'method',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: REQUEST_TYPE.DELETE
+      }).count : this.query(REQUEST_TYPE.DELETE).count,
       failedRequests: this.failed(collection),
       requestsExceededQuota: this.exceeded(collection),
       maxPayloadSize: this.maxPayload(collection),

@@ -1734,7 +1734,16 @@ var Colors = {
   WARN_DARK: '#bd8f15',
   YELLOW: '#f5e340',
   LIGHT_BLUE: '#b3d0f2',
-  DARK_BLUE: '#082f5e'
+  DARK_BLUE: '#082f5e',
+  CHART_COLOR_1: '#558be0',
+  CHART_COLOR_2: '#5cd44a',
+  CHART_COLOR_3: '#f5f05b',
+  CHART_COLOR_4: '#c876f5',
+  CHART_COLOR_5: '#ed544c',
+  CHART_BG_COLOR_1: '#fff1c9',
+  CHART_BG_COLOR_2: '#f7d6d0',
+  CHART_BG_COLOR_3: '#eaffd1',
+  CHART_BG_COLOR_4: '#cff6ff'
 };
 /**
  * The different statuses of supervisor.
@@ -1790,13 +1799,10 @@ var SUPERVISOR_QUERY_KEY = 'hs_rid';
 var InitiatorType = {
   XHR: 'xhr',
   FETCH: 'fetch'
-};
-/**
- * Chartjs cdn lib path.
- * @type {string}
- */
+}; // Chartjs and plugin cdn paths.
 
 var CHARTJS_LIB_PATH = 'https://cdn.jsdelivr.net/npm/chart.js';
+var CHARTJS_ANNOTATION_PLUGIN_PATH = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2/dist/chartjs-plugin-annotation.min.js';
 /**
  * Storage key for storing supervisor configuration.
  * @type {string}
@@ -1849,14 +1855,14 @@ var SEARCH_OPERATOR = {
   GREATER_EQUAL: '>=',
   STARTS_WITH: '~',
   ENDS_WITH: '^',
-  CONTAINS: 'contains',
-  NOT_CONTAINS: '!contains',
-  MATCHES: 'matches',
-  NOT_MATCHES: '!matches',
+  CONTAINS: '%',
+  NOT_CONTAINS: '!%',
+  MATCHES: '*',
+  NOT_MATCHES: '!*',
   IN: 'in',
-  NOT_IN: '!in',
-  INCLUDE: 'include',
-  EXCLUDE: 'exclude'
+  OUT: 'out',
+  INCLUDE: '[]',
+  EXCLUDE: ']['
 };
 /**
  * Export file types.
@@ -1959,16 +1965,17 @@ function isAbsolute(url) {
 /**
  * Load script dynamically in a web page.
  * @param src
- * @param onload
+ * @param headEl
  */
 
-function loadScript(src, onload, onerror, id, headEl) {
-  var script = document.createElement('script');
-  script.src = src;
-  id && script.setAttribute('id', id);
-  onload && script.addEventListener('load', onload);
-  onerror && script.addEventListener('error', onerror);
-  (headEl || document.head || document.documentElement).appendChild(script);
+function loadScript(src, headEl) {
+  return new Promise(function (res, rej) {
+    var script = document.createElement('script');
+    script.src = src;
+    script.addEventListener('load', res);
+    script.addEventListener('error', rej);
+    (headEl || document.head || document.documentElement).appendChild(script);
+  });
 }
 /**
  * Removes the script.
@@ -2000,7 +2007,7 @@ function poolColors(a) {
   var pool = [];
 
   for (var i = 0; i < a; i++) {
-    pool.push(dynamicColors());
+    pool.push(Colors["CHART_COLOR_".concat(i + 1)] || dynamicColors());
   }
 
   return pool;
@@ -2046,7 +2053,7 @@ function matchCriteria(criteria, object) {
       results.push(typeof v === 'string' && !matchesGlob(value, v));
     } else if (operator === SEARCH_OPERATOR.IN) {
       results.push(Array.isArray(value) && value.indexOf(v) > -1);
-    } else if (operator === SEARCH_OPERATOR.NOT_IN) {
+    } else if (operator === SEARCH_OPERATOR.OUT) {
       results.push(Array.isArray(value) && value.indexOf(v) === -1);
     } else if (operator === SEARCH_OPERATOR.INCLUDE) {
       results.push(v instanceof Set && v.has(value));
@@ -2412,10 +2419,14 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
   /**
    * Constructor.
    */
-  function Collection(items, name, groupedBy) {
+  function Collection() {
     var _this2;
 
     var _this;
+
+    var items = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+    var name = arguments.length > 1 ? arguments[1] : undefined;
+    var groupedBy = arguments.length > 2 ? arguments[2] : undefined;
 
     classCallCheck_default()(this, Collection);
 
@@ -2903,7 +2914,6 @@ var event_emitter_EventEmitter = /*#__PURE__*/function () {
     }
     /**
      * Invokes the handlers registered for the event.
-     * @private
      */
 
   }, {
@@ -3008,6 +3018,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     defineProperty_default()(this, "_lockConsole", HttpSupervisor.defaultConfig.lockConsole);
 
     defineProperty_default()(this, "_urlConfig", HttpSupervisor.defaultConfig.urlConfig);
+
+    defineProperty_default()(this, "_stopWatch", HttpSupervisor.defaultConfig.stopWatch);
 
     defineProperty_default()(this, "_requests", new Set());
 
@@ -3387,6 +3399,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     ,
     set: function set(value) {
       this._keyboardEvents = value;
+
+      this._updateStorage();
     }
     /**
      * Returns the value of persist config.
@@ -3440,6 +3454,26 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }
     }
     /**
+     * Returns the current status of stop watch.
+     * @returns {boolean}
+     */
+
+  }, {
+    key: "stopWatch",
+    get: function get() {
+      return this._stopWatch;
+    }
+    /**
+     * Sets the status of stop watch.
+     * @param {boolean} value
+     */
+    ,
+    set: function set(value) {
+      this._stopWatch = value;
+
+      this._updateStorage();
+    }
+    /**
      * Returns the current on-going calls count.
      * @returns {number}
      */
@@ -3464,7 +3498,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       var storedConfig = loadConfigFromStore && localStorage.getItem(STORAGE_KEY) ? JSON.parse(localStorage.getItem(STORAGE_KEY)) : {};
       this.setConfig(_objectSpread(_objectSpread({}, config), storedConfig)); // Listen to the `request-end` event to display request details based on the properties.
 
-      this.on(SupervisorEvents.REQUEST_END, function (supervisor, request) {
+      this.on(SupervisorEvents.REQUEST_END, function (request) {
         if (_this._silent) {
           return;
         }
@@ -3655,6 +3689,19 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       return this.query().last;
     }
     /**
+     * Returns the last completed request.
+     * @returns {HttpRequestInfo}
+     */
+
+  }, {
+    key: "lastCompleted",
+    value: function lastCompleted() {
+      return this.sort({
+        field: 'timeEnd',
+        order: 'desc'
+      }).first;
+    }
+    /**
      * Returns the failed requests.
      * @param {Collection} [collection]
      * @returns {Collection}
@@ -3743,6 +3790,26 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       return (collection ? collection.sortBy(sortArg) : this.sort(sortArg)).first;
     }
     /**
+     * Returns the pending requests.
+     * @returns {Collection}
+     */
+
+  }, {
+    key: "pending",
+    value: function pending() {
+      return this.query('pending', SEARCH_OPERATOR.EQUALS, true);
+    }
+    /**
+     * Returns the completed requests.
+     * @returns {Collection}
+     */
+
+  }, {
+    key: "completed",
+    value: function completed() {
+      return this.query('pending', SEARCH_OPERATOR.EQUALS, false);
+    }
+    /**
      * Groups the requests based on the passed fields.
      * @param {...string} groupArgs The group fields.
      * @returns {Collection}
@@ -3814,12 +3881,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         var _query = args[0],
             groupArgs = args[1],
             sortArgs = args[2];
-        return (_this$query$search$gr = (_this$query$search = (_this$query = this.query()).search.apply(_this$query, toConsumableArray_default()(_query || []))).groupBy.apply(_this$query$search, toConsumableArray_default()(groupArgs || []))).sortBy.apply(_this$query$search$gr, toConsumableArray_default()(sortArgs || []));
-      }
-
-      if (typeof_default()(args[0]) === 'object') {
         var q = [];
-        args.forEach(function (x) {
+        _query && _query.forEach(function (x) {
           var field = x.field,
               value = x.value,
               operator = x.operator;
@@ -3843,7 +3906,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
             operator: operator
           });
         });
-        return this.query(q);
+        return (_this$query$search$gr = (_this$query$search = (_this$query = this.query()).search.apply(_this$query, toConsumableArray_default()(q || []))).groupBy.apply(_this$query$search, toConsumableArray_default()(groupArgs || []))).sortBy.apply(_this$query$search$gr, toConsumableArray_default()(sortArgs || []));
+      }
+
+      if (typeof_default()(args[0]) === 'object') {
+        return this.query([].concat(args));
       }
 
       var field = args[0],
@@ -4057,7 +4124,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printSort",
     value: function printSort() {
-      this.print(this.sort.apply(this, arguments));
+      for (var _len4 = arguments.length, sortArgs = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+        sortArgs[_key4] = arguments[_key4];
+      }
+
+      this.print(null, null, sortArgs);
     }
     /**
      * Groups the requests based on the passed fields and print them.
@@ -4067,7 +4138,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printGroup",
     value: function printGroup() {
-      this.print(this.group.apply(this, arguments));
+      for (var _len5 = arguments.length, groupArgs = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        groupArgs[_key5] = arguments[_key5];
+      }
+
+      this.print(null, groupArgs);
     }
     /**
      * Search requests based on the passed arguments. Also, sorts and groups.
@@ -4077,7 +4152,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "printQuery",
     value: function printQuery() {
-      this.print(this.query.apply(this, arguments));
+      for (var _len6 = arguments.length, searchArgs = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        searchArgs[_key6] = arguments[_key6];
+      }
+
+      this.print(searchArgs);
     }
     /**
      * Prints the requests based on the passed arguments.
@@ -4089,8 +4168,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     value: function print() {
       var _this2 = this;
 
-      for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-        args[_key4] = arguments[_key4];
+      for (var _len7 = arguments.length, args = new Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+        args[_key7] = arguments[_key7];
       }
 
       var firstArg = args[0],
@@ -4185,6 +4264,15 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._reporter.report(this.last());
     }
     /**
+     * Prints the last completed request.
+     */
+
+  }, {
+    key: "printLastCompleted",
+    value: function printLastCompleted() {
+      this._reporter.report(this.lastCompleted());
+    }
+    /**
      * Prints the request that has maximum payload.
      * @param {Collection} collection The collection.
      */
@@ -4213,6 +4301,24 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     key: "printMaxDurationRequest",
     value: function printMaxDurationRequest(collection) {
       this._reporter.report(this.maxDurationRequest(collection));
+    }
+    /**
+     * Prints the pending requests.
+     */
+
+  }, {
+    key: "printPending",
+    value: function printPending() {
+      this._reporter.report(this.pending());
+    }
+    /**
+     * Prints the completed requests.
+     */
+
+  }, {
+    key: "printCompleted",
+    value: function printCompleted() {
+      this._reporter.report(this.completed());
     }
     /**
      * Prints duplicate requests.
@@ -4256,91 +4362,342 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Displays the bar chart of responsive size.
+     * @param {...Collection} [collections].
      */
 
   }, {
     key: "sizeChart",
     value: function sizeChart() {
-      var labels = toConsumableArray_default()(this._requests).map(function (r) {
-        return r.id;
-      }),
-          data = toConsumableArray_default()(this._requests).map(function (r) {
-        return r.responseSize;
-      });
+      var datasets = [];
+      var labels;
+
+      for (var _len8 = arguments.length, collections = new Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+        collections[_key8] = arguments[_key8];
+      }
+
+      if (collections.length) {
+        collections.forEach(function (col, index) {
+          datasets.push({
+            data: toConsumableArray_default()(col.items).map(function (r) {
+              return r.responseSize;
+            }),
+            title: "Collection ".concat(index++),
+            barColor: Colors["CHART_COLOR_".concat(index++)]
+          });
+        });
+        labels = Array.from({
+          length: collections[0].count
+        }, function (_, i) {
+          return i + 1;
+        });
+      } else {
+        labels = toConsumableArray_default()(this._requests).map(function (r) {
+          return r.id;
+        });
+        datasets.push({
+          data: toConsumableArray_default()(this._requests).map(function (r) {
+            return r.responseSize;
+          }),
+          title: 'All Requests',
+          barColor: Colors.CHART_COLOR_1
+        });
+      }
 
       this._reporter.visualize({
         type: 'bar',
         title: 'Response Size Of Requests',
-        dataSetTitle: 'All Requests',
         labels: labels,
-        data: data,
-        format: formatBytes
+        datasets: datasets,
+        formatHor: formatBytes,
+        lineAt: this._quota.maxResponseSize
       });
     }
     /**
      * Displays the bar chart of responsive size.
+     * @param {...Collection} [collections].
      */
 
   }, {
     key: "timeChart",
     value: function timeChart() {
-      var labels = toConsumableArray_default()(this._requests).map(function (r) {
-        return r.id;
-      }),
-          data = toConsumableArray_default()(this._requests).map(function (r) {
-        return r.duration;
-      });
+      var datasets = [];
+      var labels;
+
+      for (var _len9 = arguments.length, collections = new Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+        collections[_key9] = arguments[_key9];
+      }
+
+      if (collections.length) {
+        collections.forEach(function (col, index) {
+          datasets.push({
+            data: toConsumableArray_default()(col.items).map(function (r) {
+              return r.duration;
+            }),
+            title: "Collection ".concat(index++),
+            barColor: Colors["CHART_COLOR_".concat(index++)]
+          });
+        });
+        labels = Array.from({
+          length: collections[0].count
+        }, function (_, i) {
+          return i + 1;
+        });
+      } else {
+        labels = toConsumableArray_default()(this._requests).map(function (r) {
+          return r.id;
+        });
+        datasets.push({
+          data: toConsumableArray_default()(this._requests).map(function (r) {
+            return r.duration;
+          }),
+          title: 'All Requests',
+          barColor: Colors.CHART_COLOR_1
+        });
+      }
 
       this._reporter.visualize({
         type: 'bar',
         title: 'Response Time Of Requests',
         labels: labels,
-        data: data,
-        format: formatTime
+        datasets: datasets,
+        formatHor: formatTime,
+        lineAt: this._quota.maxDuration
       });
     }
     /**
      * Displays bubble chart for response size and time.
+     * @param {...Collection} collections
      */
 
   }, {
     key: "sizeTimeChart",
     value: function sizeTimeChart() {
-      var data = toConsumableArray_default()(this._requests).map(function (r) {
-        return {
-          x: r.id,
-          y: r.responseSize,
-          v: r.duration
-        };
-      });
+      var datasets = [];
+      var labels;
+
+      var getData = function getData(col) {
+        return toConsumableArray_default()(col.items).map(function (r) {
+          return {
+            x: r.duration,
+            y: r.responseSize || 0
+          };
+        });
+      };
+
+      for (var _len10 = arguments.length, collections = new Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+        collections[_key10] = arguments[_key10];
+      }
+
+      if (collections.length) {
+        labels = Array.from({
+          length: collections[0].count
+        }, function (_, i) {
+          return i + 1;
+        });
+        collections.forEach(function (col, index) {
+          datasets.push({
+            data: getData(col),
+            title: "Collection ".concat(index++),
+            bgColor: Colors["CHART_COLOR_".concat(index++)]
+          });
+        });
+      } else {
+        labels = toConsumableArray_default()(this._requests).map(function (r) {
+          return r.id;
+        });
+        datasets.push({
+          data: getData(this.query()),
+          title: 'All Requests',
+          bgColor: Colors.CHART_COLOR_1
+        });
+      }
 
       this._reporter.visualize({
-        type: 'bubble',
+        type: 'scatter',
         title: 'Response Size And Time Of Requests',
-        data: data,
-        format: formatBytes
+        labels: labels,
+        datasets: datasets,
+        formatHor: formatTime,
+        formatVer: formatBytes
       });
     }
     /**
      * Displays the response size distribution.
+     * @param {string} distributeBy The field name.
+     * @param {...Collection} [collections] The collection.
      */
 
   }, {
-    key: "sizeDistributionChart",
-    value: function sizeDistributionChart() {
-      var labels = toConsumableArray_default()(this._requests).map(function (r) {
-        return r.path;
-      }),
-          data = toConsumableArray_default()(this._requests).map(function (r) {
-        return r.responseSize;
-      });
+    key: "distributionChart",
+    value: function distributionChart(distributeBy) {
+      var datasets = [];
+      var labels;
+
+      var groupBy = function groupBy(col) {
+        if (distributeBy === 'responseSize' || distributeBy === 'payloadSize') {
+          var c = {
+            groups: []
+          };
+          c.groups.push({
+            name: '<= 1 kb',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 1024
+            })
+          });
+          c.groups.push({
+            name: '> 1 kb AND <= 10 kb',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 1024
+            }, {
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 10240
+            })
+          });
+          c.groups.push({
+            name: '> 10 kb AND <= 1 mb',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 10240
+            }, {
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 1024 * 1024
+            })
+          });
+          c.groups.push({
+            name: '> 1 mb AND <= 10 mb',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 1024 * 1024
+            }, {
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 1024 * 1024 * 10
+            })
+          });
+          c.groups.push({
+            name: '> 10 mb',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 1024 * 1024 * 10
+            })
+          });
+          return c;
+        } else if (distributeBy === 'duration') {
+          var _c = {
+            groups: []
+          };
+
+          _c.groups.push({
+            name: '<= 1 s',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 1000
+            })
+          });
+
+          _c.groups.push({
+            name: '> 1 s AND <= 10 s',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 1000
+            }, {
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 10000
+            })
+          });
+
+          _c.groups.push({
+            name: '< 10 s AND <= 1 min',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 10000
+            }, {
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 60000
+            })
+          });
+
+          _c.groups.push({
+            name: '> 1 min AND <= 10 min',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 60000
+            }, {
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.LESS_EQUAL,
+              value: 600000
+            })
+          });
+
+          _c.groups.push({
+            name: '> 10 min',
+            items: col.clone().search({
+              field: distributeBy,
+              operator: SEARCH_OPERATOR.GREATER,
+              value: 600000
+            })
+          });
+
+          return _c;
+        }
+
+        return col.groupBy(distributeBy);
+      },
+          getLabels = function getLabels(groupedCol) {
+        return groupedCol.groups.map(function (g) {
+          return g.name && g.name !== '-' ? g.name : 'Other';
+        });
+      },
+          getData = function getData(groupedCol) {
+        return groupedCol.groups.map(function (g) {
+          return g.items ? g.items.length : 0;
+        });
+      };
+
+      for (var _len11 = arguments.length, collections = new Array(_len11 > 1 ? _len11 - 1 : 0), _key11 = 1; _key11 < _len11; _key11++) {
+        collections[_key11 - 1] = arguments[_key11];
+      }
+
+      if (collections.length) {
+        collections.forEach(function (col, index) {
+          var grouped = groupBy(col);
+          labels = getLabels(grouped);
+          datasets.push({
+            data: getData(grouped),
+            title: "Collection ".concat(index++),
+            bgColor: poolColors(labels.length)
+          });
+        });
+      } else {
+        var grouped = groupBy(this.query());
+        labels = getLabels(grouped);
+        datasets.push({
+          data: getData(grouped),
+          title: 'All Requests',
+          bgColor: poolColors(labels.length)
+        });
+      }
 
       this._reporter.visualize({
-        type: 'pie',
-        title: 'Response Size Distribution',
+        type: 'doughnut',
+        title: "Requests Share by \"".concat(distributeBy, "\""),
         labels: labels,
-        data: data,
-        format: formatBytes
+        datasets: datasets
       });
     }
     /**
@@ -4481,8 +4838,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
   }, {
     key: "watch",
     value: function watch() {
-      for (var _len5 = arguments.length, args = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        args[_key5] = arguments[_key5];
+      for (var _len12 = arguments.length, args = new Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+        args[_key12] = arguments[_key12];
       }
 
       if (args.length === 0) {
@@ -4790,7 +5147,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         usePerformance: this._usePerformance,
         quota: this._quota,
         watches: mapToJson(this._watches),
-        urlConfig: this._urlConfig
+        urlConfig: this._urlConfig,
+        stopWatch: this._stopWatch
       };
     }
     /**
@@ -4819,7 +5177,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           watches = config.watches,
           persistConfig = config.persistConfig,
           lockConsole = config.lockConsole,
-          urlConfig = config.urlConfig;
+          urlConfig = config.urlConfig,
+          stopWatch = config.stopWatch;
       this._include = Array.isArray(include) ? new Set(include) : HttpSupervisor.defaultConfig.include;
       this._exclude = Array.isArray(exclude) ? new Set(exclude) : HttpSupervisor.defaultConfig.exclude;
       this._renderUI = typeof renderUI === 'boolean' ? renderUI : HttpSupervisor.defaultConfig.renderUI;
@@ -4839,6 +5198,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       this._watches = typeof_default()(watches) === 'object' && watches !== null ? new Map(Object.entries(watches)) : new Map();
       this._lockConsole = typeof lockConsole === 'boolean' ? lockConsole : HttpSupervisor.defaultConfig.lockConsole;
       this._urlConfig = typeof_default()(urlConfig) === 'object' ? urlConfig : {};
+      this._stopWatch = typeof stopWatch === 'boolean' ? stopWatch : HttpSupervisor.defaultConfig.stopWatch;
 
       this._updateStorage();
     }
@@ -4853,8 +5213,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     value: function collection() {
       var _this5 = this;
 
-      for (var _len6 = arguments.length, requests = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        requests[_key6] = arguments[_key6];
+      for (var _len13 = arguments.length, requests = new Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+        requests[_key13] = arguments[_key13];
       }
 
       return new collection_Collection(requests.map(function (r) {
@@ -4862,6 +5222,28 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       }).filter(function (r) {
         return r !== null;
       }));
+    }
+    /**
+     * Merge multiple collections into one.
+     * @param {...Collection} collections Collections.
+     * @returns {Collection}
+     */
+
+  }, {
+    key: "merge",
+    value: function merge() {
+      for (var _len14 = arguments.length, collections = new Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+        collections[_key14] = arguments[_key14];
+      }
+
+      var requests = collections.reduce(function (a, c) {
+        return [].concat(toConsumableArray_default()(a), toConsumableArray_default()(c.items));
+      }, []).filter(function (x, i, a) {
+        return a.indexOf(a.find(function (y) {
+          return y.id === x.id;
+        })) === i;
+      });
+      return new collection_Collection(requests);
     }
     /**
      * Render the UI.
@@ -5389,11 +5771,11 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     value: function _triggerEvent(eventName) {
       var _this$_eventEmitter;
 
-      for (var _len7 = arguments.length, args = new Array(_len7 > 1 ? _len7 - 1 : 0), _key7 = 1; _key7 < _len7; _key7++) {
-        args[_key7 - 1] = arguments[_key7];
+      for (var _len15 = arguments.length, args = new Array(_len15 > 1 ? _len15 - 1 : 0), _key15 = 1; _key15 < _len15; _key15++) {
+        args[_key15 - 1] = arguments[_key15];
       }
 
-      (_this$_eventEmitter = this._eventEmitter).triggerEvent.apply(_this$_eventEmitter, [eventName, this].concat(args));
+      (_this$_eventEmitter = this._eventEmitter).triggerEvent.apply(_this$_eventEmitter, [eventName].concat(args, [this]));
     }
     /**
      * Returns true if the passed request exceeds the quota.
@@ -5462,23 +5844,23 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
           operator: SEARCH_OPERATOR.EQUALS,
           value: str
         };
-      } else if (str.toLowerCase().startsWith('label:')) {
+      } else if (str.startsWith('%')) {
         query = {
           field: 'label',
           operator: SEARCH_OPERATOR.CONTAINS,
-          value: str.replace(/label:/, '')
+          value: str.substring(1)
         };
-      } else if (str.startsWith('category:')) {
+      } else if (str.startsWith('$')) {
         query = {
           field: 'category',
           operator: SEARCH_OPERATOR.CONTAINS,
-          value: str.replace(/category:/, '')
+          value: str.substring(1)
         };
-      } else if (str.startsWith('tag:')) {
+      } else if (str.startsWith('#')) {
         query = {
           field: 'tags',
           operator: SEARCH_OPERATOR.INCLUDE,
-          value: str.replace(/tag:/, '')
+          value: str.substring(1)
         };
       } else if (str.indexOf('*') > -1) {
         query = {
@@ -5594,7 +5976,8 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         keyboardEvents: true,
         persistConfig: true,
         lockConsole: false,
-        urlConfig: {}
+        urlConfig: {},
+        stopWatch: false
       };
     }
     /**
@@ -5630,7 +6013,7 @@ function http_supervisor_widget_isNativeReflectConstruct() { if (typeof Reflect 
  */
 
 var template = document.createElement('template');
-template.innerHTML = "\n<style>\n  :host {\n    --color: #eee;\n    --bg-color: #333;\n    --hover-color: #5ab7fa;\n    --disabled-color: #ccc;\n    --border-color: #666;\n    --font-size: 12px;\n    --index: 20000;\n    --popover-width: 350px;\n    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);\n    color: var(--color);\n    font-family: Arial, \"Helvetica Neue\", Helvetica, sans-serif;\n  }\n\n  .http-supervisor-container {\n    position: fixed;\n    top: 0;\n    right: calc(50% - 91px);\n    z-index: var(--index);\n    display: flex;\n    justify-content: center;\n    align-items:center;\n    background-color: var(--bg-color);\n    border: solid 1px var(--border-color);\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n    font-size: var(--font-size);\n    box-sizing: border-box;\n    color: var(--font-color);\n    box-shadow: var(--box-shadow);\n  }\n\n   button, button:active, button:focus, button:hover, span {\n    width: 30px;\n    height: 26px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    border: none;\n    box-sizing: border-box;\n    background: none;\n    box-shadow: none;\n    outline: none;\n  }\n\n  button:not(:disabled) {\n    cursor:pointer;\n  }\n\n  button svg {\n    color: var(--color);\n  }\n\n  button:disabled svg {\n    color: var(--disabled-color);\n  }\n\n  button:not(:disabled):hover svg {\n    color: var(--hover-color);\n  }\n\n  button, span, button:hover {\n    border-right: solid 1px var(--border-color);\n  }\n\n  .counts-label {\n    width: auto;\n    padding: 0 8px;\n  }\n\n  .popover-overlay {\n    position: fixed;\n    top: 0;\n    left: 0;\n    bottom: 0;\n    right: 0;\n    content: ' ';\n    display: none;\n  }\n\n  .popover-content {\n    position: fixed;\n    top: 38px;\n    width: var(--popover-width);\n    background-color: var(--bg-color);\n    right: calc(50% - 216px);\n    border-radius: 6px;\n    padding: 20px;\n    font-size: var(--font-size);\n    box-shadow: var(--box-shadow);\n    z-index: var(--index);\n    display: none;\n    max-height: calc(100vh - 78px);\n    overflow-y: scroll;\n  }\n\n  .popover-content .popover-close {\n    position: absolute;\n    right: 8px;\n    top: 8px;\n  }\n\n  .active {\n    display: block;\n  }\n\n  .popover-content:before {\n    position: absolute;\n    z-index: -1;\n    content: \"\";\n    right: calc(50% - 65px);\n    top: -10px;\n    border-style: solid;\n    border-width: 0 10px 10px 10px;\n    border-color: transparent transparent var(--bg-color) transparent;\n  }\n\n  .popover-content input[type=\"number\"], .popover-content input[type=\"text\"] {\n    background-color: transparent;\n    color: var(--color);\n    outline: none;\n    border: none;\n    border-bottom: solid 1px var(--border-color);\n    font-size: var(--font-size);\n    width: 60px;\n  }\n\n  .popover-content form {\n    margin-bottom: 0;\n  }\n\n  .popover-content form div {\n    display: flex;\n    align-items: center;\n  }\n\n  .popover-content h4 {\n    margin: 0;\n    margin-bottom: 8px;\n    color: var(--disabled-color);\n    text-transform: uppercase;\n    font-size: 8px;\n    letter-spacing: 1px;\n  }\n\n  .popover-content fieldset {\n    display: grid;\n    grid-template-columns: 50% 50%;\n    grid-column-gap: 5px;\n    grid-row-gap: 4px;\n    border: dashed 1px var(--border-color);\n    margin-bottom: 15px;\n    padding: 6px 12px;\n  }\n\n  .popover-content .first div label {\n    width: 140px;\n  }\n\n  .popover-content .second div label {\n    width: 80px;\n  }\n\n  .popover-content .third {\n    display: flex;\n    border: none;\n    padding: 0;\n  }\n\n  .popover-content button {\n    border: solid 1px var(--border-color);\n  }\n\n  .popover-content .fourth {\n    margin-bottom: 0;\n    display: none;\n  }\n\n  .popover-content .fourth.active {\n    display: grid;\n  }\n  \n  .fourth .span2 {\n    grid-column: 1 / span 2;\n  }\n\n  .advanced-container {\n    display: flex;\n    align-items: center;\n  }\n\n  .advanced-container svg {\n    width: 10px;\n    height: 10px;\n    position: relative;\n    top: -5px;\n    margin-left: 5px;\n  }\n</style>\n<div class=\"http-supervisor-container\">\n   <button>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"currentColor\" class=\"bi bi-play\" viewBox=\"0 0 16 16\">\n       <path d=\"M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z\"/>\n    </svg>\n   </button>\n   <button style=\"display: none;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stop-circle\" viewBox=\"0 0 16 16\">\n        <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"/>\n        <path d=\"M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z\"/>\n      </svg>\n   </button>\n   <button disabled>\n    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-eye\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z\"/>\n      <path d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>\n    </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">\n        <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>\n        <path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>\n      </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n        <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n        <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n      </svg>\n  </button>\n   <span class=\"counts-label\">\n     0 / 0\n   </span>\n   <button style=\"border:none;\">\n     <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-three-dots-vertical\" viewBox=\"0 0 16 16\">\n     <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n   </svg>\n   </button>\n</div>\n<div class=\"popover\">\n  <div class=\"popover-overlay\"></div>\n  <div class=\"popover-content\">\n    <a href=\"#\" class=\"popover-close\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"#ccc\" class=\"bi bi-x-circle-fill\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z\"/>\n    </svg>\n    </a>\n    <form>\n      <h4>Options</h4>\n      <fieldset class=\"first\">\n        <div>\n          <label>Silent:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Trace Request:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Error:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Quota Exceed:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Request Start:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Lock Console:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n\n      <h4>Quota</h4>\n      <fieldset class=\"second\">\n        <div>\n          <label>Payload:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Response:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Duration:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n      </fieldset>\n\n      <h4>Visualization</h4>\n      <fieldset class=\"third\">\n        <button title=\"Response Size Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size And Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size Distribution\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pie-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z\"/>\n            </svg>\n        </button>\n      </fieldset>\n\n      <div class=\"advanced-container\">\n        <h4>Advanced</h4>\n        <svg style=\"cursor:pointer\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-down expand\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n          <path fill-rule=\"evenodd\" d=\"M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n        </svg>\n        <svg style=\"cursor:pointer; display: none\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-up collapse\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z\"/>\n          <path fill-rule=\"evenodd\" d=\"M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z\"/>\n        </svg>\n      </div>\n\n      <fieldset class=\"fourth\">\n        <div class=\"span2\">\n          <label>Include:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div class=\"span2\">\n          <label>Exclude:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div>\n          <label>Keyboard Events:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Persist Config:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Use Performance:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div style=\"grid-column: span 2;\">\n          <button title=\"Import Configuration\" style=\"margin-right: 5px;\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-down\" viewBox=\"0 0 16 16\">\n              <path fill-rule=\"evenodd\" d=\"M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z\"/>\n              <path fill-rule=\"evenodd\" d=\"M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z\"/>\n            </svg>\n          </button>\n          <button title=\"Export Configuration\" style=\"margin-right: 5px;\">\n             <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n              <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n              <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n            </svg>\n          </button>\n          <button title=\"Apply Changes\" style=\"margin-right: 5px;\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-check2\" viewBox=\"0 0 16 16\">\n              <path d=\"M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z\"/>\n            </svg>\n          </button>\n          <button title=\"Reset Changes\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-x\" viewBox=\"0 0 16 16\">\n              <path d=\"M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z\"/>\n            </svg>\n          </button>\n        </div>\n        <div style=\"grid-column: span 2;\">\n          <textarea rows=\"10\" style=\"width: 100%;resize: vertical; font-size: 0.7rem;border-radius: 5px;\"></textarea>\n        </div>\n      </fieldset>\n    </form>\n  </div>\n</div>\n";
+template.innerHTML = "\n<style>\n  :host {\n    --color: #eee;\n    --bg-color: #333;\n    --hover-color: #5ab7fa;\n    --disabled-color: #ccc;\n    --border-color: #666;\n    --font-size: 12px;\n    --index: 20000;\n    --popover-width: 350px;\n    --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);\n    color: var(--color);\n    font-family: Arial, \"Helvetica Neue\", Helvetica, sans-serif;\n  }\n\n  .http-supervisor-container {\n    position: fixed;\n    top: 0;\n    right: calc(50% - 100px);\n    z-index: var(--index);\n    display: flex;\n    justify-content: center;\n    align-items:center;\n    background-color: var(--bg-color);\n    border: solid 1px var(--border-color);\n    border-bottom-left-radius: 5px;\n    border-bottom-right-radius: 5px;\n    font-size: var(--font-size);\n    box-sizing: border-box;\n    color: var(--font-color);\n    box-shadow: var(--box-shadow);\n  }\n\n   button, button:active, button:focus, button:hover, span, .stop-watch .timer-controls label {\n    width: 30px;\n    height: 26px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-sizing: border-box;\n    background: none;\n    box-shadow: none;\n    outline: none;\n    border: none;\n    border-right: solid 1px var(--border-color);\n  }\n\n  button:not(:disabled) {\n    cursor:pointer;\n  }\n\n  button svg {\n    color: var(--color);\n  }\n\n  button:disabled svg {\n    color: var(--disabled-color);\n  }\n\n  button:not(:disabled):hover svg, .stop-watch .timer-controls label:hover svg {\n    color: var(--hover-color);\n  }\n\n  .counts-label {\n    width: auto;\n    padding: 0 8px;\n  }\n\n  .popover-overlay {\n    position: fixed;\n    top: 0;\n    left: 0;\n    bottom: 0;\n    right: 0;\n    content: ' ';\n    display: none;\n  }\n\n  .popover-content {\n    position: fixed;\n    top: 38px;\n    width: var(--popover-width);\n    background-color: var(--bg-color);\n    right: calc(50% - 216px);\n    border-radius: 6px;\n    padding: 20px;\n    font-size: var(--font-size);\n    box-shadow: var(--box-shadow);\n    z-index: var(--index);\n    display: none;\n    max-height: calc(100vh - 78px);\n    overflow-y: scroll;\n  }\n\n  .popover-content .popover-close {\n    position: absolute;\n    right: 8px;\n    top: 8px;\n  }\n\n  .active {\n    display: block;\n  }\n\n  .popover-content:before {\n    position: absolute;\n    z-index: -1;\n    content: \"\";\n    right: calc(50% - 65px);\n    top: -10px;\n    border-style: solid;\n    border-width: 0 10px 10px 10px;\n    border-color: transparent transparent var(--bg-color) transparent;\n  }\n\n  .popover-content input[type=\"number\"], .popover-content input[type=\"text\"] {\n    background-color: transparent;\n    color: var(--color);\n    outline: none;\n    border: none;\n    border-bottom: solid 1px var(--border-color);\n    font-size: var(--font-size);\n    width: 60px;\n  }\n\n  .popover-content form {\n    margin-bottom: 0;\n  }\n\n  .popover-content form div {\n    display: flex;\n    align-items: center;\n  }\n\n  .popover-content h4 {\n    margin: 0;\n    margin-bottom: 8px;\n    color: var(--disabled-color);\n    text-transform: uppercase;\n    font-size: 8px;\n    letter-spacing: 1px;\n  }\n\n  .popover-content fieldset {\n    display: grid;\n    grid-template-columns: 50% 50%;\n    grid-column-gap: 5px;\n    grid-row-gap: 4px;\n    border: dashed 1px var(--border-color);\n    margin-bottom: 15px;\n    padding: 6px 12px;\n  }\n\n  .popover-content .first div label {\n    width: 140px;\n  }\n\n  .popover-content .second div label {\n    width: 80px;\n  }\n\n  .popover-content .third {\n    display: flex;\n    border: none;\n    padding: 0;\n  }\n\n  .popover-content button {\n    border: solid 1px var(--border-color);\n  }\n\n  .popover-content .fourth {\n    margin-bottom: 0;\n    display: none;\n  }\n\n  .popover-content .fourth.active {\n    display: grid;\n  }\n  \n  .fourth .span2 {\n    grid-column: 1 / span 2;\n  }\n\n  .advanced-container {\n    display: flex;\n    align-items: center;\n  }\n\n  .advanced-container svg {\n    width: 10px;\n    height: 10px;\n    position: relative;\n    top: -5px;\n    margin-left: 5px;\n  }\n  \n  .stop-watch {\n    display: flex;\n  }\n  \n  .stop-watch input {\n    display: none;\n  }\n  \n  .stop-watch .timer {\n    display: inline-block;\n    border-right: solid 1px var(--border-color);\n    padding: 0 8px;\n  }\n  \n  .stop-watch .timer .cell {\n    width: 0.6em;\n    height: 26px;\n    overflow: hidden;\n    position: relative;\n    float: left;\n  }\n  \n  .stop-watch .timer .cell .numbers {\n    width: 0.6em;\n    line-height: 26px;\n    text-align: center;\n    position: absolute;\n    top: 0;\n    left: 0;\n  }\n  \n  .stop-watch .timer-controls {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n  }\n  \n  .stop-watch .timer-controls label {\n    cursor: pointer;\n  }\n  \n  #supervisor-toggle-watch ~ .timer .numbers {\n    -webkit-animation-play-state: paused;\n            animation-play-state: paused;\n  }\n  \n  #supervisor-toggle-watch:checked ~ .timer .numbers {\n    -webkit-animation-play-state: running;\n            animation-play-state: running;\n  }\n  \n  #supervisor-reset-watch:checked ~ .timer .numbers {\n    -webkit-animation: none;\n            animation: none;\n  }\n  \n  @keyframes moveten {\n    0% {\n      top: 0;\n    }\n    100% {\n      top: -260px;\n    }\n  }\n  \n  @keyframes movesix {\n    0% {\n      top: 0;\n    }\n    100% {\n      top: -156px;\n    }\n  }\n  \n  .moveten {\n    animation: moveten 1s steps(10, end) infinite;\n    animation-play-state: paused;\n  }\n  \n  .movesix {\n    animation: movesix 1s steps(6, end) infinite;\n    animation-play-state: paused;\n  }\n  \n  .tenminute {\n    animation-duration: 3600s;\n  }\n  \n  .minute {\n    animation-duration: 600s;\n  }\n  \n  .tensecond {\n    animation-duration: 60s;\n  }\n  \n  .second {\n    animation-duration: 10s;\n  }\n  \n  .millisecond {\n    animation-duration: 1s;\n  }\n  \n  .tenmillisecond {\n    animation-duration: 0.1s;\n  }\n  \n  .hundredmillisecond {\n    animation-duration: 0.01s;\n  }\n</style>\n<div class=\"http-supervisor-container\">\n   <button>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"currentColor\" class=\"bi bi-play\" viewBox=\"0 0 16 16\">\n       <path d=\"M10.804 8 5 4.633v6.734L10.804 8zm.792-.696a.802.802 0 0 1 0 1.392l-6.363 3.692C4.713 12.69 4 12.345 4 11.692V4.308c0-.653.713-.998 1.233-.696l6.363 3.692z\"/>\n    </svg>\n   </button>\n   <button style=\"display: none;\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stop-circle\" viewBox=\"0 0 16 16\">\n        <path d=\"M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z\"/>\n        <path d=\"M5 6.5A1.5 1.5 0 0 1 6.5 5h3A1.5 1.5 0 0 1 11 6.5v3A1.5 1.5 0 0 1 9.5 11h-3A1.5 1.5 0 0 1 5 9.5v-3z\"/>\n      </svg>\n   </button>\n   <button disabled>\n    <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-eye\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z\"/>\n      <path d=\"M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z\"/>\n    </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-trash\" viewBox=\"0 0 16 16\">\n        <path d=\"M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z\"/>\n        <path fill-rule=\"evenodd\" d=\"M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z\"/>\n      </svg>\n   </button>\n   <button disabled>\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n        <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n        <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n      </svg>\n  </button>\n    <div class=\"stop-watch\" style=\"display: none\">\n      <input id=\"supervisor-toggle-watch\" name=\"controls\" type=\"checkbox\">\n      <input id=\"supervisor-reset-watch\" name=\"controls\" type=\"checkbox\">\n      <div class=\"timer-controls\">\n        <label for=\"supervisor-toggle-watch\" class=\"supervisor-action\">\n          <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-stopwatch\" viewBox=\"0 0 16 16\">\n            <path d=\"M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z\"/>\n            <path d=\"M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z\"/>\n          </svg>\n        </label>\n        <label for=\"supervisor-reset-watch\" class=\"supervisor-action\">\n           <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" fill=\"currentColor\" class=\"bi bi-arrow-clockwise\" viewBox=\"0 0 16 16\">\n            <path fill-rule=\"evenodd\" d=\"M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z\"/>\n            <path d=\"M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z\"/>\n          </svg>\n        </label>\n      </div>\n      <div class=\"timer\">\n        <div class=\"cell\">\n          <div class=\"numbers tenminute movesix\">0 1 2 3 4 5 6</div>\n        </div>\n        <div class=\"cell\">\n          <div class=\"numbers minute moveten\">0 1 2 3 4 5 6 7 8 9</div>\n        </div>\n        <div class=\"cell divider\">\n          <div class=\"numbers\">:</div>\n        </div>\n        <div class=\"cell\">\n          <div class=\"numbers tensecond movesix\">0 1 2 3 4 5 6</div>\n        </div>\n        <div class=\"cell\">\n          <div class=\"numbers second moveten\">0 1 2 3 4 5 6 7 8 9</div>\n        </div>\n        <div class=\"cell divider\">\n          <div class=\"numbers\">:</div>\n        </div>\n        <div class=\"cell\">\n          <div class=\"numbers millisecond moveten\">0 1 2 3 4 5 6 7 8 9</div>\n        </div>\n        <div class=\"cell\">\n          <div class=\"numbers tenmillisecond moveten\">0 1 2 3 4 5 6 7 8 9</div>\n        </div>\n        <div class=\"cell\">\n          <div class=\"numbers hundredmillisecond moveten\">0 1 2 3 4 5 6 7 8 9</div>\n        </div>\n      </div>\n    </div>\n   <span class=\"counts-label\">\n     0 / 0\n   </span>\n   <button style=\"border:none;\">\n     <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-three-dots-vertical\" viewBox=\"0 0 16 16\">\n     <path d=\"M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z\"/>\n   </svg>\n   </button>\n</div>\n<div class=\"popover\">\n  <div class=\"popover-overlay\"></div>\n  <div class=\"popover-content\">\n    <a href=\"#\" class=\"popover-close\">\n      <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"#ccc\" class=\"bi bi-x-circle-fill\" viewBox=\"0 0 16 16\">\n      <path d=\"M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z\"/>\n    </svg>\n    </a>\n    <form>\n      <h4>Options</h4>\n      <fieldset class=\"first\">\n        <div>\n          <label>Silent:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Trace Request:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Error:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Quota Exceed:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Alert Request Start:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Lock Console:</label>\n          <input type=\"checkbox\" />\n        </div>\n      </fieldset>\n\n      <h4>Quota</h4>\n      <fieldset class=\"second\">\n        <div>\n          <label>Payload:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Response:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n        <div>\n          <label>Duration:</label>\n          <input type=\"number\" min=\"1\" />\n        </div>\n      </fieldset>\n\n      <h4>Visualization</h4>\n      <fieldset class=\"third\">\n        <button title=\"Response Size Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size And Duration Chart\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-bar-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z\"/>\n            </svg>\n        </button>\n        <button title=\"Response Size Distribution\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-pie-chart-fill\" viewBox=\"0 0 16 16\">\n              <path d=\"M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z\"/>\n            </svg>\n        </button>\n      </fieldset>\n\n      <div class=\"advanced-container\">\n        <h4>Advanced</h4>\n        <svg style=\"cursor:pointer\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-down expand\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n          <path fill-rule=\"evenodd\" d=\"M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/>\n        </svg>\n        <svg style=\"cursor:pointer; display: none\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-chevron-double-up collapse\" viewBox=\"0 0 16 16\">\n          <path fill-rule=\"evenodd\" d=\"M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z\"/>\n          <path fill-rule=\"evenodd\" d=\"M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z\"/>\n        </svg>\n      </div>\n\n      <fieldset class=\"fourth\">\n        <div class=\"span2\">\n          <label>Include:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div class=\"span2\">\n          <label>Exclude:</label>\n          <input type=\"text\" style=\"flex-grow: 1\" />\n        </div>\n        <div>\n          <label>Keyboard Events:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Persist Config:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>Use Performance:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div>\n          <label>StopWatch:</label>\n          <input type=\"checkbox\" />\n        </div>\n        <div style=\"grid-column: span 2;\">\n          <button title=\"Import Configuration\" style=\"margin-right: 5px;\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-down\" viewBox=\"0 0 16 16\">\n              <path fill-rule=\"evenodd\" d=\"M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z\"/>\n              <path fill-rule=\"evenodd\" d=\"M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z\"/>\n            </svg>\n          </button>\n          <button title=\"Export Configuration\" style=\"margin-right: 5px;\">\n             <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" fill=\"currentColor\" class=\"bi bi-box-arrow-up\" viewBox=\"0 0 16 16\">\n              <path fill-rule=\"evenodd\" d=\"M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z\"/>\n              <path fill-rule=\"evenodd\" d=\"M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z\"/>\n            </svg>\n          </button>\n          <button title=\"Apply Changes\" style=\"margin-right: 5px;\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-check2\" viewBox=\"0 0 16 16\">\n              <path d=\"M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z\"/>\n            </svg>\n          </button>\n          <button title=\"Reset Changes\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"currentColor\" class=\"bi bi-x\" viewBox=\"0 0 16 16\">\n              <path d=\"M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z\"/>\n            </svg>\n          </button>\n        </div>\n        <div style=\"grid-column: span 2;\">\n          <textarea rows=\"10\" style=\"width: 100%;resize: vertical; font-size: 0.7rem;border-radius: 5px;\"></textarea>\n        </div>\n      </fieldset>\n    </form>\n  </div>\n</div>\n";
 /**
  * The wrapper class that controls the supervisor web component.
  */
@@ -5843,7 +6226,7 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
       });
 
       this._el.subscribe('responseSizeDistributionChart', function () {
-        return _this._httpSupervisor.sizeDistributionChart();
+        return _this._httpSupervisor.distributionChart('responseSize');
       });
 
       this._el.subscribe('includeChange', function (ctrl) {
@@ -5890,6 +6273,10 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
         return _this._httpSupervisor.setConfig(_this._el.config);
       });
 
+      this._el.subscribe('stopWatchChange', function (ctrl) {
+        return _this._httpSupervisor.stopWatch = ctrl.checked;
+      });
+
       if (status === SupervisorStatus.Busy) {
         this._onStart();
       } else {
@@ -5917,7 +6304,8 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
           silent = _this$_httpSupervisor.silent,
           alertOnRequestStart = _this$_httpSupervisor.alertOnRequestStart,
           onGoingCallsCount = _this$_httpSupervisor.onGoingCallsCount,
-          status = _this$_httpSupervisor.status;
+          status = _this$_httpSupervisor.status,
+          stopWatch = _this$_httpSupervisor.stopWatch;
 
       this._el.setState({
         include: include,
@@ -5932,6 +6320,7 @@ var http_supervisor_widget_HttpSupervisorWidget = /*#__PURE__*/function () {
         lockConsole: lockConsole,
         silent: silent,
         alertOnRequestStart: alertOnRequestStart,
+        stopWatch: stopWatch,
         config: this._httpSupervisor.getConfig()
       });
     }
@@ -6002,6 +6391,8 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
     _this2 = _super.call(this);
 
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_container", null);
+
     defineProperty_default()(assertThisInitialized_default()(_this2), "_startButton", null);
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_stopButton", null);
@@ -6016,6 +6407,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_callsCountLabel", null);
 
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_startWatchButton", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_resetWatchButton", null);
+
     defineProperty_default()(assertThisInitialized_default()(_this2), "_popover", null);
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_popoverClose", null);
@@ -6029,6 +6424,8 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
     defineProperty_default()(assertThisInitialized_default()(_this2), "_alertOnQuotaExceedCheckbox", null);
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_usePerformanceAPICheckbox", null);
+
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_stopWatchCheckbox", null);
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_maxPayloadSizeTextbox", null);
 
@@ -6072,6 +6469,8 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
 
     defineProperty_default()(assertThisInitialized_default()(_this2), "_configTextArea", null);
 
+    defineProperty_default()(assertThisInitialized_default()(_this2), "_stopWatchContainer", null);
+
     defineProperty_default()(assertThisInitialized_default()(_this2), "_config", null);
 
     _this2._handleKeyPress = _this2._handleKeyPress.bind(assertThisInitialized_default()(_this2));
@@ -6081,46 +6480,52 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
     });
 
     shadowRoot.appendChild(template.content.cloneNode(true));
+    _this2._container = shadowRoot.querySelector('.http-supervisor-container');
     _this2._popover = shadowRoot.querySelector('.popover-content');
 
-    var _ref = [].concat(toConsumableArray_default()(Array.from(shadowRoot.querySelector('.http-supervisor-container').children)), toConsumableArray_default()(Array.from(_this2._popover.querySelectorAll('input,button,textarea'))));
+    var _ref = [].concat(toConsumableArray_default()(Array.from(_this2._container.querySelectorAll('button,span,.supervisor-action'))), toConsumableArray_default()(Array.from(_this2._popover.querySelectorAll('input,button,textarea'))));
 
     _this2._startButton = _ref[0];
     _this2._stopButton = _ref[1];
     _this2._printButton = _ref[2];
     _this2._clearButton = _ref[3];
     _this2._exportButton = _ref[4];
-    _this2._callsCountLabel = _ref[5];
-    _this2._moreButton = _ref[6];
-    _this2._silentCheckbox = _ref[7];
-    _this2._traceEachRequestCheckbox = _ref[8];
-    _this2._alertOnErrorCheckbox = _ref[9];
-    _this2._alertOnQuotaExceedCheckbox = _ref[10];
-    _this2._alertRequestStartCheckbox = _ref[11];
-    _this2._lockConsoleCheckbox = _ref[12];
-    _this2._maxPayloadSizeTextbox = _ref[13];
-    _this2._maxResponseSizeTextbox = _ref[14];
-    _this2._maxDurationTextbox = _ref[15];
-    _this2._responseSizeChartButton = _ref[16];
-    _this2._responseTimeChartButton = _ref[17];
-    _this2._responseSizeTimeChartButton = _ref[18];
-    _this2._responseSizeDistributionChartButton = _ref[19];
-    _this2._includeTextbox = _ref[20];
-    _this2._excludeTextbox = _ref[21];
-    _this2._keyboardEventsCheckbox = _ref[22];
-    _this2._persistConfigCheckbox = _ref[23];
-    _this2._usePerformanceAPICheckbox = _ref[24];
-    _this2._importConfigButton = _ref[25];
-    _this2._exportConfigButton = _ref[26];
-    _this2._applyConfigButton = _ref[27];
-    _this2._resetConfigButton = _ref[28];
-    _this2._configTextArea = _ref[29];
+    _this2._startWatchButton = _ref[5];
+    _this2._resetWatchButton = _ref[6];
+    _this2._callsCountLabel = _ref[7];
+    _this2._moreButton = _ref[8];
+    _this2._silentCheckbox = _ref[9];
+    _this2._traceEachRequestCheckbox = _ref[10];
+    _this2._alertOnErrorCheckbox = _ref[11];
+    _this2._alertOnQuotaExceedCheckbox = _ref[12];
+    _this2._alertRequestStartCheckbox = _ref[13];
+    _this2._lockConsoleCheckbox = _ref[14];
+    _this2._maxPayloadSizeTextbox = _ref[15];
+    _this2._maxResponseSizeTextbox = _ref[16];
+    _this2._maxDurationTextbox = _ref[17];
+    _this2._responseSizeChartButton = _ref[18];
+    _this2._responseTimeChartButton = _ref[19];
+    _this2._responseSizeTimeChartButton = _ref[20];
+    _this2._responseSizeDistributionChartButton = _ref[21];
+    _this2._includeTextbox = _ref[22];
+    _this2._excludeTextbox = _ref[23];
+    _this2._keyboardEventsCheckbox = _ref[24];
+    _this2._persistConfigCheckbox = _ref[25];
+    _this2._usePerformanceAPICheckbox = _ref[26];
+    _this2._stopWatchCheckbox = _ref[27];
+    _this2._importConfigButton = _ref[28];
+    _this2._exportConfigButton = _ref[29];
+    _this2._applyConfigButton = _ref[30];
+    _this2._resetConfigButton = _ref[31];
+    _this2._configTextArea = _ref[32];
     _this2._eventsAndControls = {
       start: _this2._startButton,
       stop: _this2._stopButton,
       clear: _this2._clearButton,
       print: _this2._printButton,
       "export": _this2._exportButton,
+      toggleWatch: _this2._startWatchButton,
+      resetWatch: _this2._resetWatchButton,
       traceEachRequestChange: _this2._traceEachRequestCheckbox,
       alertOnErrorChange: _this2._alertOnErrorCheckbox,
       alertOnExceedQuotaChange: _this2._alertOnQuotaExceedCheckbox,
@@ -6141,13 +6546,15 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       alertRequestStartChange: _this2._alertRequestStartCheckbox,
       importConfig: _this2._importConfigButton,
       exportConfig: _this2._exportConfigButton,
-      applyConfig: _this2._applyConfigButton
+      applyConfig: _this2._applyConfigButton,
+      stopWatchChange: _this2._stopWatchCheckbox
     };
     _this2._expandButton = shadowRoot.querySelector('.expand');
     _this2._collapseButton = shadowRoot.querySelector('.collapse');
     _this2._collapisbleFieldSet = shadowRoot.querySelector('.fourth');
     _this2._popoverClose = shadowRoot.querySelector('.popover-close');
     _this2._overlay = shadowRoot.querySelector('.popover-overlay');
+    _this2._stopWatchContainer = shadowRoot.querySelector('.stop-watch');
 
     _this2._silentCheckbox.addEventListener('change', function () {
       var checked = _this2._silentCheckbox.checked;
@@ -6199,6 +6606,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       _this2._configTextArea.value = _this2._config;
     });
 
+    _this2._stopWatchCheckbox.addEventListener('change', function () {
+      return _this2._handleStopWatchChange();
+    });
+
     return _this2;
   }
 
@@ -6224,6 +6635,7 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
           lockConsole = _ref2.lockConsole,
           silent = _ref2.silent,
           alertOnRequestStart = _ref2.alertOnRequestStart,
+          stopWatch = _ref2.stopWatch,
           config = _ref2.config;
       Array.isArray(include) && (this._includeTextbox.value = include.join(','));
       Array.isArray(exclude) && (this._excludeTextbox.value = exclude.join(','));
@@ -6243,7 +6655,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       [this._traceEachRequestCheckbox, this._alertOnErrorCheckbox, this._alertOnQuotaExceedCheckbox, this._alertRequestStartCheckbox].forEach(function (c) {
         return c.disabled = silent;
       });
+      this._stopWatchCheckbox.checked = stopWatch;
       this._configTextArea.value = this._config = JSON.stringify(config, null, 2);
+
+      this._handleStopWatchChange();
     }
   }, {
     key: "subscribe",
@@ -6253,8 +6668,10 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
       var ctrl = this._eventsAndControls[evt],
           evtName = ctrl instanceof HTMLButtonElement ? 'click' : 'change';
       ctrl.addEventListener(evtName, function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+        if (ctrl instanceof HTMLButtonElement) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
 
         if (evt === 'applyConfig') {
           _this3._config = JSON.parse(_this3._configTextArea.value);
@@ -6361,9 +6778,15 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
         return;
       }
 
-      if (event.key.toUpperCase() === 'ESCAPE' || event.key.toUpperCase() === 'ESC') {
+      if (event.key && (event.key.toUpperCase() === 'ESCAPE' || event.key.toUpperCase() === 'ESC')) {
         this._hidePopover();
       }
+    }
+  }, {
+    key: "_handleStopWatchChange",
+    value: function _handleStopWatchChange(ctrl) {
+      this._stopWatchContainer.style.display = this._stopWatchCheckbox.checked ? 'flex' : 'none';
+      this._container.style.right = "calc(50% - ".concat(this._stopWatchCheckbox.checked ? 150 : 100, "px);");
     }
   }]);
 
@@ -6470,9 +6893,9 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "_chartFontSize", 9);
 
-    defineProperty_default()(this, "_chartHeight", 300);
+    defineProperty_default()(this, "_chartHeight", 480);
 
-    defineProperty_default()(this, "_chartWidth", 500);
+    defineProperty_default()(this, "_chartWidth", 800);
 
     defineProperty_default()(this, "_originalConsole", window.console);
 
@@ -6492,22 +6915,57 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
   createClass_default()(ConsoleReporter, [{
     key: "init",
-    value: function init(httpSupervisor) {
-      this._supervisor = httpSupervisor;
-      var lockConsole = httpSupervisor.lockConsole,
-          loadChart = httpSupervisor.loadChart;
-      this._lockConsole = lockConsole;
-      this._lockConsole && this.acquireLock();
+    value: function () {
+      var _init = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee(httpSupervisor) {
+        var lockConsole, loadChart;
+        return regenerator_default.a.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                this._supervisor = httpSupervisor;
+                lockConsole = httpSupervisor.lockConsole, loadChart = httpSupervisor.loadChart;
+                this._lockConsole = lockConsole;
+                this._lockConsole && this.acquireLock();
 
-      if (!loadChart) {
-        return;
+                if (loadChart) {
+                  _context.next = 6;
+                  break;
+                }
+
+                return _context.abrupt("return");
+
+              case 6:
+                this._iframeEl = document.createElement('iframe');
+                this._iframeEl.style.width = "".concat(this._chartWidth, "px");
+                this._iframeEl.style.height = "".concat(this._chartHeight, "px");
+
+                this._hideIframe();
+
+                document.body.appendChild(this._iframeEl);
+                _context.next = 13;
+                return loadScript(CHARTJS_LIB_PATH, this._iframeEl.contentDocument.head);
+
+              case 13:
+                _context.next = 15;
+                return loadScript(CHARTJS_ANNOTATION_PLUGIN_PATH, this._iframeEl.contentDocument.head);
+
+              case 15:
+                this._initChart();
+
+              case 16:
+              case "end":
+                return _context.stop();
+            }
+          }
+        }, _callee, this);
+      }));
+
+      function init(_x) {
+        return _init.apply(this, arguments);
       }
 
-      this._iframeEl = document.createElement('iframe');
-      this._iframeEl.style.display = 'none';
-      document.body.appendChild(this._iframeEl);
-      loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs', this._iframeEl.contentDocument.head);
-    }
+      return init;
+    }()
     /**
      * Prints supervisor status message.
      * @param message
@@ -6527,100 +6985,100 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "report",
     value: function () {
-      var _report = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee(arg1, arg2) {
-        var _args = arguments;
-        return regenerator_default.a.wrap(function _callee$(_context) {
+      var _report = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee2(arg1, arg2) {
+        var _args2 = arguments;
+        return regenerator_default.a.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
-                if (!(_args.length === 1)) {
-                  _context.next = 16;
+                if (!(_args2.length === 1)) {
+                  _context2.next = 16;
                   break;
                 }
 
                 if (arg1) {
-                  _context.next = 6;
+                  _context2.next = 6;
                   break;
                 }
 
                 this.print(Messages.NO_REQUEST, 'inherit', true);
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 6:
                 if (!(arg1 instanceof http_request_info_HttpRequestInfo || arg1 instanceof collection_Collection)) {
-                  _context.next = 14;
+                  _context2.next = 14;
                   break;
                 }
 
                 if (!(arg1 instanceof collection_Collection && !arg1.hasGroups && !arg1.hasItems)) {
-                  _context.next = 10;
+                  _context2.next = 10;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 10:
-                _context.next = 12;
+                _context2.next = 12;
                 return this._reportObject(arg1.clone());
 
               case 12:
-                _context.next = 15;
+                _context2.next = 15;
                 break;
 
               case 14:
                 this.reportStats(arg1);
 
               case 15:
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 16:
-                if (!(_args.length === 2 && arg1 instanceof collection_Collection)) {
-                  _context.next = 24;
+                if (!(_args2.length === 2 && arg1 instanceof collection_Collection)) {
+                  _context2.next = 24;
                   break;
                 }
 
                 if (!(!arg1.hasGroups && !arg1.hasItems)) {
-                  _context.next = 20;
+                  _context2.next = 20;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 20:
                 this.printTitle(Messages.REQUESTS_INFO);
-                _context.next = 23;
+                _context2.next = 23;
                 return this._reportObject(arg1.clone());
 
               case 23:
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 24:
                 if (!(!arg2.hasGroups && !arg2.hasItems)) {
-                  _context.next = 27;
+                  _context2.next = 27;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 27:
                 this.reportStats(arg1);
                 this["break"]();
                 this.printTitle(Messages.REQUESTS_INFO);
-                _context.next = 32;
+                _context2.next = 32;
                 return this._reportObject(arg2.clone());
 
               case 32:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
-      function report(_x, _x2) {
+      function report(_x2, _x3) {
         return _report.apply(this, arguments);
       }
 
@@ -6751,97 +7209,53 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       var type = chartOptions.type,
           title = chartOptions.title,
           labels = chartOptions.labels,
-          data = chartOptions.data,
-          format = chartOptions.format,
-          dataSetTitle = chartOptions.dataSetTitle;
+          datasets = chartOptions.datasets,
+          formatHor = chartOptions.formatHor,
+          formatVer = chartOptions.formatVer,
+          lineAt = chartOptions.lineAt;
 
-      var chartType = this._iframeEl.contentWindow.Chart,
+      var chartCls = this._iframeEl.contentWindow.Chart,
           ctx = this._canvasEl.getContext('2d');
 
       var myChart;
 
+      this._showIframe();
+
       if (type === 'bar') {
-        myChart = new chartType(ctx, {
+        myChart = new chartCls(ctx, {
           type: type,
           data: {
             labels: labels,
-            datasets: [{
-              data: data,
-              label: dataSetTitle,
-              backgroundColor: dynamicColors(),
-              borderWidth: 1
-            }]
+            datasets: datasets.map(function (set) {
+              return {
+                data: set.data,
+                label: set.title,
+                backgroundColor: set.barColor,
+                borderRadius: 2
+              };
+            })
           },
-          plugins: [{
-            afterDraw: function afterDraw(chart) {
-              console.log(chart);
-              var lineAt = chart.config.options.lineAt;
-              var ctxPlugin = chart.ctx;
-              var xAxe = chart.scales[chart.config.options.scales.xAxes[0].id];
-              var yAxe = chart.scales[chart.config.options.scales.yAxes[0].id]; // I'm not good at maths
-              // So I couldn't find a way to make it work ...
-              // ... without having the `min` property set to 0
-
-              if (yAxe.min !== 0) {
-                return;
-              }
-
-              ctxPlugin.strokeStyle = "red";
-              ctxPlugin.beginPath();
-              lineAt = (lineAt - yAxe.min) * (100 / yAxe.max);
-              lineAt = (100 - lineAt) / 100 * yAxe.height + yAxe.top;
-              ctxPlugin.moveTo(xAxe.left, lineAt);
-              ctxPlugin.lineTo(xAxe.right, lineAt);
-              ctxPlugin.stroke();
-            }
-          }],
           options: {
-            lineAt: 600,
             responsive: false,
             plugins: {
               title: {
                 display: true,
                 text: title
-              }
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function callback(value) {
-                    return format ? format(value) : value;
+              },
+              autocolors: false,
+              annotation: {
+                annotations: {
+                  line1: {
+                    type: 'line',
+                    yMin: lineAt,
+                    yMax: lineAt,
+                    borderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1,
+                    label: {
+                      content: formatBytes(lineAt),
+                      color: 'rgb(255, 99, 132)'
+                    }
                   }
-                }
-              }
-            }
-          }
-        });
-      } else if (type === 'bubble') {
-        myChart = new chartType(ctx, {
-          type: 'bubble',
-          data: {
-            datasets: [{
-              label: title,
-              data: data
-            }]
-          },
-          options: {
-            responsive: false,
-            aspectRatio: 1,
-            plugins: {
-              legend: false,
-              tooltip: false
-            },
-            elements: {
-              point: {
-                backgroundColor: this._colorize.bind(this, false),
-                borderWidth: function borderWidth(context) {
-                  return Math.min(Math.max(1, context.datasetIndex + 1), 8);
-                },
-                radius: function radius(context) {
-                  var size = context.chart.width;
-                  var base = Math.abs(context.raw.v) / 1000;
-                  return size / 24 * base;
                 }
               }
             },
@@ -6850,23 +7264,101 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                 beginAtZero: true,
                 ticks: {
                   callback: function callback(value) {
-                    return format ? format(value) : value;
+                    return formatHor ? formatHor(value) : value;
                   }
                 }
               }
             }
           }
         });
-      } else if (type === 'pie') {
-        myChart = new chartType(ctx, {
-          type: 'pie',
+      } else if (type === 'scatter') {
+        myChart = new chartCls(ctx, {
+          type: type,
           data: {
             labels: labels,
-            datasets: [{
-              label: 'Dataset 1',
-              data: data,
-              backgroundColor: poolColors(data.length)
-            }]
+            datasets: datasets.map(function (set) {
+              return {
+                data: set.data,
+                label: set.title,
+                backgroundColor: set.bgColor
+              };
+            })
+          },
+          plugins: [{
+            id: 'quadrants',
+            beforeDraw: function beforeDraw(chart, args, options) {
+              var ctx = chart.ctx,
+                  _chart$chartArea = chart.chartArea,
+                  left = _chart$chartArea.left,
+                  top = _chart$chartArea.top,
+                  right = _chart$chartArea.right,
+                  bottom = _chart$chartArea.bottom,
+                  _chart$scales = chart.scales,
+                  x = _chart$scales.x,
+                  y = _chart$scales.y;
+              var width = (right - left) / 2,
+                  height = (bottom - top) / 2,
+                  midX = left + (right - left) / 2,
+                  midY = top + (bottom - top) / 2;
+              ctx.save();
+              ctx.fillStyle = options.topLeft;
+              ctx.fillRect(left, top, width, height);
+              ctx.fillStyle = options.topRight;
+              ctx.fillRect(midX, top, width, height);
+              ctx.fillStyle = options.bottomRight;
+              ctx.fillRect(left, midY, width, height);
+              ctx.fillStyle = options.bottomLeft;
+              ctx.fillRect(midX, midY, width, height);
+              ctx.restore();
+            }
+          }],
+          options: {
+            responsive: false,
+            plugins: {
+              title: {
+                display: true,
+                text: title
+              },
+              autocolors: false,
+              quadrants: {
+                topLeft: Colors.CHART_BG_COLOR_1,
+                topRight: Colors.CHART_BG_COLOR_2,
+                bottomRight: Colors.CHART_BG_COLOR_3,
+                bottomLeft: Colors.CHART_BG_COLOR_4
+              }
+            },
+            scales: {
+              y: {
+                ticks: {
+                  callback: function callback(value) {
+                    return formatVer ? formatVer(value) : value;
+                  }
+                }
+              },
+              x: {
+                type: 'linear',
+                position: 'bottom',
+                ticks: {
+                  callback: function callback(value) {
+                    return formatHor ? formatHor(value) : value;
+                  }
+                }
+              }
+            }
+          }
+        });
+      } else if (type === 'doughnut') {
+        myChart = new chartCls(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: datasets.map(function (set) {
+              return {
+                data: set.data,
+                label: set.title,
+                backgroundColor: set.bgColor
+              };
+            })
           },
           options: {
             responsive: false,
@@ -6888,10 +7380,12 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       }
 
       setTimeout(function () {
-        _this._invokeConsole('screenshot', _this._canvasEl, 500, 300);
+        _this._invokeConsole('screenshot', _this._canvasEl, _this._chartWidth, _this._chartHeight);
 
         myChart.destroy();
         myChart = null;
+
+        _this._hideIframe();
       }, 500);
     }
     /**
@@ -7137,8 +7631,13 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "_initChart",
     value: function _initChart() {
-      var chartType = this._iframeEl.contentWindow.Chart;
-      chartType && (chartType.defaults.font.size = this._chartFontSize);
+      var chartCls = this._iframeEl.contentWindow.Chart;
+
+      if (chartCls) {
+        chartCls.defaults.font.size = this._chartFontSize;
+        chartCls.defaults.animation.duration = 0;
+      }
+
       this._canvasEl = document.createElement('canvas');
       this._canvasEl.style.width = "".concat(this._chartWidth, "px");
       this._canvasEl.style.height = "".concat(this._chartHeight, "px");
@@ -7146,7 +7645,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       this._canvasEl.height = this._chartHeight;
       this._canvasEl.style.display = 'none';
 
-      this._iframeEl.contentDocument.head.appendChild(this._canvasEl);
+      this._iframeEl.contentDocument.body.appendChild(this._canvasEl);
     }
   }, {
     key: "_appendTextWithSpaces",
@@ -7160,34 +7659,34 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "_reportObject",
     value: function () {
-      var _reportObject2 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee4(requestOrCollection) {
+      var _reportObject2 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee5(requestOrCollection) {
         var _this3 = this;
 
         var code;
-        return regenerator_default.a.wrap(function _callee4$(_context4) {
+        return regenerator_default.a.wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
                 code = /*#__PURE__*/function () {
-                  var _ref4 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee2() {
+                  var _ref4 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee3() {
                     var id, pending, error, url, label, labelPending, errorLabel, category, tags, path, query, pathQuery, method, payload, payloadSize, duration, response, responseSize, responseStatus, errorDescription, initiatorType, payloadByPerformance, exceedsQuota, borderColor, requestLabel, displayUrl, duplicates, duplicatesCount, exceededParameters, statusTextColor, payloadColor, responseColor, durationColor, _iterator, _step, group, name, groupedBy, count, groupName, _iterator2, _step2, item;
 
-                    return regenerator_default.a.wrap(function _callee2$(_context2) {
+                    return regenerator_default.a.wrap(function _callee3$(_context3) {
                       while (1) {
-                        switch (_context2.prev = _context2.next) {
+                        switch (_context3.prev = _context3.next) {
                           case 0:
                             if (!(requestOrCollection === null)) {
-                              _context2.next = 3;
+                              _context3.next = 3;
                               break;
                             }
 
                             _this3.print(Messages.NO_REQUEST, 'inherit', true);
 
-                            return _context2.abrupt("return");
+                            return _context3.abrupt("return");
 
                           case 3:
                             if (!(requestOrCollection instanceof http_request_info_HttpRequestInfo)) {
-                              _context2.next = 37;
+                              _context3.next = 37;
                               break;
                             }
 
@@ -7266,7 +7765,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                             _this3.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
 
-                            _this3.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1);
+                            _this3.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1 ? 'Yes' : 'No');
 
                             duplicatesCount > 1 && _this3.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(function (r) {
                               return r.id;
@@ -7274,30 +7773,30 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                             _this3._invokeConsole('groupEnd');
 
-                            return _context2.abrupt("return");
+                            return _context3.abrupt("return");
 
                           case 37:
                             if (!(!requestOrCollection.hasItems && !requestOrCollection.hasGroups)) {
-                              _context2.next = 39;
+                              _context3.next = 39;
                               break;
                             }
 
-                            return _context2.abrupt("return");
+                            return _context3.abrupt("return");
 
                           case 39:
                             if (!requestOrCollection.hasGroups) {
-                              _context2.next = 61;
+                              _context3.next = 61;
                               break;
                             }
 
                             _iterator = _createForOfIteratorHelper(requestOrCollection.groups);
-                            _context2.prev = 41;
+                            _context3.prev = 41;
 
                             _iterator.s();
 
                           case 43:
                             if ((_step = _iterator.n()).done) {
-                              _context2.next = 52;
+                              _context3.next = 52;
                               break;
                             }
 
@@ -7322,79 +7821,79 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                               _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
                             }
 
-                            _context2.next = 49;
+                            _context3.next = 49;
                             return _this3._reportObject(group);
 
                           case 49:
                             _this3.groupEnd();
 
                           case 50:
-                            _context2.next = 43;
+                            _context3.next = 43;
                             break;
 
                           case 52:
-                            _context2.next = 57;
+                            _context3.next = 57;
                             break;
 
                           case 54:
-                            _context2.prev = 54;
-                            _context2.t0 = _context2["catch"](41);
+                            _context3.prev = 54;
+                            _context3.t0 = _context3["catch"](41);
 
-                            _iterator.e(_context2.t0);
+                            _iterator.e(_context3.t0);
 
                           case 57:
-                            _context2.prev = 57;
+                            _context3.prev = 57;
 
                             _iterator.f();
 
-                            return _context2.finish(57);
+                            return _context3.finish(57);
 
                           case 60:
-                            return _context2.abrupt("return");
+                            return _context3.abrupt("return");
 
                           case 61:
                             _iterator2 = _createForOfIteratorHelper(requestOrCollection.items);
-                            _context2.prev = 62;
+                            _context3.prev = 62;
 
                             _iterator2.s();
 
                           case 64:
                             if ((_step2 = _iterator2.n()).done) {
-                              _context2.next = 70;
+                              _context3.next = 70;
                               break;
                             }
 
                             item = _step2.value;
-                            _context2.next = 68;
+                            _context3.next = 68;
                             return _this3._reportObject(item);
 
                           case 68:
-                            _context2.next = 64;
+                            _context3.next = 64;
                             break;
 
                           case 70:
-                            _context2.next = 75;
+                            _context3.next = 75;
                             break;
 
                           case 72:
-                            _context2.prev = 72;
-                            _context2.t1 = _context2["catch"](62);
+                            _context3.prev = 72;
+                            _context3.t1 = _context3["catch"](62);
 
-                            _iterator2.e(_context2.t1);
+                            _iterator2.e(_context3.t1);
 
                           case 75:
-                            _context2.prev = 75;
+                            _context3.prev = 75;
 
                             _iterator2.f();
 
-                            return _context2.finish(75);
+                            return _context3.finish(75);
 
                           case 78:
                           case "end":
-                            return _context2.stop();
+                            return _context3.stop();
                         }
                       }
-                    }, _callee2, null, [[41, 54, 57, 60], [62, 72, 75, 78]]);
+                    }, _callee3, null, [[41, 54, 57, 60], [62, 72, 75, 78]]);
                   }));
 
                   return function code() {
@@ -7403,20 +7902,20 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                 }();
 
                 if (this._delayWrite) {
-                  _context4.next = 3;
+                  _context5.next = 3;
                   break;
                 }
 
-                return _context4.abrupt("return", code());
+                return _context5.abrupt("return", code());
 
               case 3:
-                return _context4.abrupt("return", new Promise(function (res) {
-                  setTimeout( /*#__PURE__*/asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee3() {
-                    return regenerator_default.a.wrap(function _callee3$(_context3) {
+                return _context5.abrupt("return", new Promise(function (res) {
+                  setTimeout( /*#__PURE__*/asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee4() {
+                    return regenerator_default.a.wrap(function _callee4$(_context4) {
                       while (1) {
-                        switch (_context3.prev = _context3.next) {
+                        switch (_context4.prev = _context4.next) {
                           case 0:
-                            _context3.next = 2;
+                            _context4.next = 2;
                             return code();
 
                           case 2:
@@ -7424,22 +7923,22 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                           case 3:
                           case "end":
-                            return _context3.stop();
+                            return _context4.stop();
                         }
                       }
-                    }, _callee3);
+                    }, _callee4);
                   })), _this3._writeDelay);
                 }));
 
               case 4:
               case "end":
-                return _context4.stop();
+                return _context5.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee5, this);
       }));
 
-      function _reportObject(_x3) {
+      function _reportObject(_x4) {
         return _reportObject2.apply(this, arguments);
       }
 
@@ -7480,6 +7979,16 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       }
 
       (_console$method = console[method]).call.apply(_console$method, [console].concat(args));
+    }
+  }, {
+    key: "_showIframe",
+    value: function _showIframe() {
+      this._iframeEl.style.display = 'block';
+    }
+  }, {
+    key: "_hideIframe",
+    value: function _hideIframe() {
+      this._iframeEl.style.display = 'none';
     }
   }]);
 

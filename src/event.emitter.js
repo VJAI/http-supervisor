@@ -39,7 +39,6 @@ export default class EventEmitter {
 
   /**
    * Invokes the handlers registered for the event.
-   * @private
    */
   triggerEvent(eventName, ...args) {
     const handlers = this._eventsHandlersMap.get(eventName);

@@ -82,7 +82,16 @@ export const Colors = {
   WARN_DARK: '#bd8f15',
   YELLOW: '#f5e340',
   LIGHT_BLUE: '#b3d0f2',
-  DARK_BLUE: '#082f5e'
+  DARK_BLUE: '#082f5e',
+  CHART_COLOR_1: '#558be0',
+  CHART_COLOR_2: '#5cd44a',
+  CHART_COLOR_3: '#f5f05b',
+  CHART_COLOR_4: '#c876f5',
+  CHART_COLOR_5: '#ed544c',
+  CHART_BG_COLOR_1: '#fff1c9',
+  CHART_BG_COLOR_2: '#f7d6d0',
+  CHART_BG_COLOR_3: '#eaffd1',
+  CHART_BG_COLOR_4: '#cff6ff'
 };
 
 /**
@@ -136,11 +145,9 @@ export const InitiatorType = {
   FETCH: 'fetch'
 };
 
-/**
- * Chartjs cdn lib path.
- * @type {string}
- */
+// Chartjs and plugin cdn paths.
 export const CHARTJS_LIB_PATH = 'https://cdn.jsdelivr.net/npm/chart.js';
+export const CHARTJS_ANNOTATION_PLUGIN_PATH = 'https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.0.2/dist/chartjs-plugin-annotation.min.js';
 
 /**
  * Storage key for storing supervisor configuration.
@@ -193,14 +200,14 @@ export const SEARCH_OPERATOR = {
   GREATER_EQUAL: '>=',
   STARTS_WITH: '~',
   ENDS_WITH: '^',
-  CONTAINS: 'contains',
-  NOT_CONTAINS: '!contains',
-  MATCHES: 'matches',
-  NOT_MATCHES: '!matches',
+  CONTAINS: '%',
+  NOT_CONTAINS: '!%',
+  MATCHES: '*',
+  NOT_MATCHES: '!*',
   IN: 'in',
-  NOT_IN: '!in',
-  INCLUDE: 'include',
-  EXCLUDE: 'exclude'
+  OUT: 'out',
+  INCLUDE: '[]',
+  EXCLUDE: ']['
 };
 
 /**

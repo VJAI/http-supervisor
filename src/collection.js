@@ -152,7 +152,7 @@ export default class Collection extends Array {
   /**
    * Constructor.
    */
-  constructor(items, name, groupedBy) {
+  constructor(items = [], name, groupedBy) {
     super();
     this.push(...items);
     this._name = name || '-';

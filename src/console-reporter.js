@@ -1,7 +1,13 @@
 import HttpRequestInfo                                                                  from './http-request-info';
 import Collection                                                                       from './collection';
 import { dynamicColors, formatBytes, formatTime, loadScript, poolColors, unloadScript } from './util';
-import { Messages, Colors, HTTP_REQUEST_INFO_DISPLAY_NAMES, CHARTJS_LIB_PATH }          from './constants';
+import {
+  Messages,
+  Colors,
+  HTTP_REQUEST_INFO_DISPLAY_NAMES,
+  CHARTJS_LIB_PATH,
+  CHARTJS_ANNOTATION_PLUGIN_PATH
+} from './constants';
 import './console-snapshot';
 
 /**
@@ -42,14 +48,14 @@ export default class ConsoleReporter {
    * @type {number}
    * @private
    */
-  _chartHeight = 300;
+  _chartHeight = 480;
 
   /**
    * Chart width.
    * @type {number}
    * @private
    */
-  _chartWidth = 500;
+  _chartWidth = 800;
 
   /**
    * Native console object.
@@ -85,7 +91,7 @@ export default class ConsoleReporter {
    * Does initialization stuff.
    * @param {HttpSupervisor} httpSupervisor
    */
-  init(httpSupervisor) {
+  async init(httpSupervisor) {
     this._supervisor = httpSupervisor;
     const { lockConsole, loadChart } = httpSupervisor;
     this._lockConsole = lockConsole;
@@ -96,9 +102,13 @@ export default class ConsoleReporter {
     }
 
     this._iframeEl = document.createElement('iframe');
-    this._iframeEl.style.display = 'none';
+    this._iframeEl.style.width = `${this._chartWidth}px`;
+    this._iframeEl.style.height = `${this._chartHeight}px`;
+    this._hideIframe();
     document.body.appendChild(this._iframeEl);
-    loadScript(CHARTJS_LIB_PATH, this._initChart, this._initChart, 'http-sup-chartjs', this._iframeEl.contentDocument.head);
+    await loadScript(CHARTJS_LIB_PATH, this._iframeEl.contentDocument.head);
+    await loadScript(CHARTJS_ANNOTATION_PLUGIN_PATH, this._iframeEl.contentDocument.head);
+    this._initChart();
   }
 
   /**
@@ -274,100 +284,51 @@ export default class ConsoleReporter {
       type,
       title,
       labels,
-      data,
-      format,
-      dataSetTitle
+      datasets,
+      formatHor,
+      formatVer,
+      lineAt
     } = chartOptions;
 
-    const chartType = this._iframeEl.contentWindow.Chart,
+    const chartCls = this._iframeEl.contentWindow.Chart,
       ctx = this._canvasEl.getContext('2d');
     let myChart;
 
+    this._showIframe();
+
     if (type === 'bar') {
-      myChart = new chartType(ctx, {
+      myChart = new chartCls(ctx, {
         type: type,
         data: {
           labels: labels,
-          datasets: [{
-            data: data,
-            label: dataSetTitle,
-            backgroundColor: dynamicColors(),
-            borderWidth: 1
-          }]
+          datasets: datasets.map(set => ({
+            data: set.data,
+            label: set.title,
+            backgroundColor: set.barColor,
+            borderRadius: 2
+          }))
         },
-        plugins: [
-          {
-            afterDraw: function(chart) {
-              console.log(chart);
-              let lineAt = chart.config.options.lineAt;
-              let ctxPlugin = chart.ctx;
-              let xAxe = chart.scales[chart.config.options.scales.xAxes[0].id];
-              let yAxe = chart.scales[chart.config.options.scales.yAxes[0].id];
-
-              // I'm not good at maths
-              // So I couldn't find a way to make it work ...
-              // ... without having the `min` property set to 0
-              if(yAxe.min !== 0) {
-                return;
-              }
-
-              ctxPlugin.strokeStyle = "red";
-              ctxPlugin.beginPath();
-              lineAt = (lineAt - yAxe.min) * (100 / yAxe.max);
-              lineAt = (100 - lineAt) / 100 * (yAxe.height) + yAxe.top;
-              ctxPlugin.moveTo(xAxe.left, lineAt);
-              ctxPlugin.lineTo(xAxe.right, lineAt);
-              ctxPlugin.stroke();
-            }
-          }
-        ],
         options: {
-          lineAt: 600,
           responsive: false,
           plugins: {
             title: {
               display: true,
               text: title
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function (value) {
-                  return format ? format(value) : value;
+            },
+            autocolors: false,
+            annotation: {
+              annotations: {
+                line1: {
+                  type: 'line',
+                  yMin: lineAt,
+                  yMax: lineAt,
+                  borderColor: 'rgb(255, 99, 132)',
+                  borderWidth: 1,
+                  label: {
+                    content: formatBytes(lineAt),
+                    color: 'rgb(255, 99, 132)'
+                  }
                 }
-              }
-            }
-          }
-        }
-      });
-    } else if (type === 'bubble') {
-      myChart = new chartType(ctx, {
-        type: 'bubble',
-        data: {
-          datasets: [{
-            label: title,
-            data: data
-          }]
-        },
-        options: {
-          responsive: false,
-          aspectRatio: 1,
-          plugins: {
-            legend: false,
-            tooltip: false,
-          },
-          elements: {
-            point: {
-              backgroundColor: this._colorize.bind(this, false),
-              borderWidth: function (context) {
-                return Math.min(Math.max(1, context.datasetIndex + 1), 8);
-              },
-              radius: function (context) {
-                const size = context.chart.width;
-                const base = Math.abs(context.raw.v) / 1000;
-                return (size / 24) * base;
               }
             }
           },
@@ -376,23 +337,89 @@ export default class ConsoleReporter {
               beginAtZero: true,
               ticks: {
                 callback: function (value) {
-                  return format ? format(value) : value;
+                  return formatHor ? formatHor(value) : value;
                 }
               }
             }
           }
         }
       });
-    } else if (type === 'pie') {
-      myChart = new chartType(ctx, {
-        type: 'pie',
+    } else if (type === 'scatter') {
+      myChart = new chartCls(ctx, {
+        type: type,
         data: {
           labels: labels,
-          datasets: [{
-            label: 'Dataset 1',
-            data: data,
-            backgroundColor: poolColors(data.length)
-          }]
+          datasets: datasets.map(set => ({
+            data: set.data,
+            label: set.title,
+            backgroundColor: set.bgColor
+          }))
+        },
+        plugins: [{
+          id: 'quadrants',
+          beforeDraw(chart, args, options) {
+            const {ctx, chartArea: {left, top, right, bottom}, scales: {x, y}} = chart;
+            const width = (right - left) / 2,
+              height = (bottom - top) / 2,
+              midX = left + (right - left) / 2,
+              midY = top + (bottom - top) / 2;
+            ctx.save();
+            ctx.fillStyle = options.topLeft;
+            ctx.fillRect(left, top, width, height);
+            ctx.fillStyle = options.topRight;
+            ctx.fillRect(midX, top, width, height);
+            ctx.fillStyle = options.bottomRight;
+            ctx.fillRect(left, midY, width, height);
+            ctx.fillStyle = options.bottomLeft;
+            ctx.fillRect(midX, midY, width, height);
+            ctx.restore();
+          }
+        }],
+        options: {
+          responsive: false,
+          plugins: {
+            title: {
+              display: true,
+              text: title
+            },
+            autocolors: false,
+            quadrants: {
+              topLeft: Colors.CHART_BG_COLOR_1,
+              topRight: Colors.CHART_BG_COLOR_2,
+              bottomRight: Colors.CHART_BG_COLOR_3,
+              bottomLeft: Colors.CHART_BG_COLOR_4,
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function (value) {
+                  return formatVer ? formatVer(value) : value;
+                }
+              }
+            },
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              ticks: {
+                callback: function (value) {
+                  return formatHor ? formatHor(value) : value;
+                }
+              }
+            }
+          }
+        }
+      });
+    } else if (type === 'doughnut') {
+      myChart = new chartCls(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: datasets.map(set => ({
+            data: set.data,
+            label: set.title,
+            backgroundColor: set.bgColor
+          })),
         },
         options: {
           responsive: false,
@@ -414,9 +441,10 @@ export default class ConsoleReporter {
     }
 
     setTimeout(() => {
-      this._invokeConsole('screenshot', this._canvasEl, 500, 300);
+      this._invokeConsole('screenshot', this._canvasEl, this._chartWidth, this._chartHeight);
       myChart.destroy();
       myChart = null;
+      this._hideIframe();
     }, 500);
   }
 
@@ -597,8 +625,11 @@ export default class ConsoleReporter {
   }
 
   _initChart() {
-    const chartType = this._iframeEl.contentWindow.Chart;
-    chartType && (chartType.defaults.font.size = this._chartFontSize);
+    const chartCls = this._iframeEl.contentWindow.Chart;
+    if (chartCls) {
+      chartCls.defaults.font.size = this._chartFontSize;
+      chartCls.defaults.animation.duration = 0;
+    }
 
     this._canvasEl = document.createElement('canvas');
     this._canvasEl.style.width = `${this._chartWidth}px`;
@@ -607,7 +638,7 @@ export default class ConsoleReporter {
     this._canvasEl.height = this._chartHeight;
     this._canvasEl.style.display = 'none';
 
-    this._iframeEl.contentDocument.head.appendChild(this._canvasEl);
+    this._iframeEl.contentDocument.body.appendChild(this._canvasEl);
   }
 
   _appendTextWithSpaces(title, size, equal = false) {
@@ -722,7 +753,7 @@ export default class ConsoleReporter {
         this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
         this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
         this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
-        this.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1);
+        this.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1 ? 'Yes' : 'No');
         duplicatesCount > 1 && this.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(r => r.id).join(', '));
         this._invokeConsole('groupEnd');
         return;
@@ -800,5 +831,13 @@ export default class ConsoleReporter {
     }
 
     console[method].call(console, ...args);
+  }
+
+  _showIframe() {
+    this._iframeEl.style.display = 'block';
+  }
+
+  _hideIframe() {
+    this._iframeEl.style.display = 'none';
   }
 }

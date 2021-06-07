@@ -1,5 +1,5 @@
 // Polyfill
-import { SEARCH_OPERATOR } from './constants';
+import { Colors, SEARCH_OPERATOR } from './constants';
 
 Array.prototype.has = function (item) {
   return this.indexOf(item) > -1;
@@ -91,15 +91,16 @@ export function isAbsolute(url) {
 /**
  * Load script dynamically in a web page.
  * @param src
- * @param onload
+ * @param headEl
  */
-export function loadScript(src, onload, onerror, id, headEl) {
-  const script = document.createElement('script');
-  script.src = src;
-  id && script.setAttribute('id', id);
-  onload && script.addEventListener('load', onload);
-  onerror && script.addEventListener('error', onerror);
-  (headEl || document.head || document.documentElement).appendChild(script);
+export function loadScript(src, headEl) {
+  return new Promise((res, rej) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.addEventListener('load', res);
+    script.addEventListener('error', rej);
+    (headEl || document.head || document.documentElement).appendChild(script);
+  });
 }
 
 /**
@@ -131,7 +132,7 @@ export function poolColors(a) {
   const pool = [];
 
   for(let i = 0; i < a; i++) {
-    pool.push(dynamicColors());
+    pool.push(Colors[`CHART_COLOR_${i + 1}`] || dynamicColors());
   }
 
   return pool;
@@ -175,7 +176,7 @@ export function matchCriteria(criteria, object) {
       results.push(typeof v === 'string' && !matchesGlob(value, v));
     } else if (operator === SEARCH_OPERATOR.IN) {
       results.push(Array.isArray(value) && value.indexOf(v) > -1);
-    } else if (operator === SEARCH_OPERATOR.NOT_IN) {
+    } else if (operator === SEARCH_OPERATOR.OUT) {
       results.push(Array.isArray(value) && value.indexOf(v) === -1);
     } else if (operator === SEARCH_OPERATOR.INCLUDE) {
       results.push(v instanceof Set && v.has(value));
