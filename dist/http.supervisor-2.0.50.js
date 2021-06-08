@@ -2556,7 +2556,7 @@ var collection_Collection = /*#__PURE__*/function (_Array) {
     }
     /**
      * Returns the group arguments.
-     * @returns {Array}
+     * @returns {Array<string>}
      */
 
   }, {
@@ -3791,23 +3791,33 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Returns the pending requests.
+     * @param {Collection} collection.
      * @returns {Collection}
      */
 
   }, {
     key: "pending",
-    value: function pending() {
-      return this.query('pending', SEARCH_OPERATOR.EQUALS, true);
+    value: function pending(collection) {
+      return collection ? collection.search({
+        field: 'pending',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: true
+      }) : this.query('pending', SEARCH_OPERATOR.EQUALS, true);
     }
     /**
      * Returns the completed requests.
+     * @param {Collection} collection.
      * @returns {Collection}
      */
 
   }, {
     key: "completed",
-    value: function completed() {
-      return this.query('pending', SEARCH_OPERATOR.EQUALS, false);
+    value: function completed(collection) {
+      return collection ? collection.search({
+        field: 'pending',
+        operator: SEARCH_OPERATOR.EQUALS,
+        value: false
+      }) : this.query('pending', SEARCH_OPERATOR.EQUALS, false);
     }
     /**
      * Groups the requests based on the passed fields.
@@ -4304,21 +4314,23 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
     }
     /**
      * Prints the pending requests.
+     * @param {Collection} collection
      */
 
   }, {
     key: "printPending",
-    value: function printPending() {
-      this._reporter.report(this.pending());
+    value: function printPending(collection) {
+      this._reporter.report(this.pending(collection));
     }
     /**
      * Prints the completed requests.
+     * @param {Collection} collection
      */
 
   }, {
     key: "printCompleted",
-    value: function printCompleted() {
-      this._reporter.report(this.completed());
+    value: function printCompleted(collection) {
+      this._reporter.report(this.completed(collection));
     }
     /**
      * Prints duplicate requests.
@@ -4465,7 +4477,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       });
     }
     /**
-     * Displays bubble chart for response size and time.
+     * Displays scatter chart for response size and time.
      * @param {...Collection} collections
      */
 
@@ -4522,7 +4534,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       });
     }
     /**
-     * Displays the response size distribution.
+     * Displays the distribution of the passed field in doughnut chart.
      * @param {string} distributeBy The field name.
      * @param {...Collection} [collections] The collection.
      */

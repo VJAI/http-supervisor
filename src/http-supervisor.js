@@ -922,18 +922,20 @@ export default class HttpSupervisor {
 
   /**
    * Returns the pending requests.
+   * @param {Collection} collection.
    * @returns {Collection}
    */
-  pending() {
-    return this.query('pending', SEARCH_OPERATOR.EQUALS, true);
+  pending(collection) {
+    return collection ? collection.search({ field: 'pending', operator: SEARCH_OPERATOR.EQUALS, value: true }) : this.query('pending', SEARCH_OPERATOR.EQUALS, true);
   }
 
   /**
    * Returns the completed requests.
+   * @param {Collection} collection.
    * @returns {Collection}
    */
-  completed() {
-    return this.query('pending', SEARCH_OPERATOR.EQUALS, false);
+  completed(collection) {
+    return collection ? collection.search({ field: 'pending', operator: SEARCH_OPERATOR.EQUALS, value: false }) : this.query('pending', SEARCH_OPERATOR.EQUALS, false);
   }
 
   /**
@@ -1285,16 +1287,18 @@ export default class HttpSupervisor {
 
   /**
    * Prints the pending requests.
+   * @param {Collection} collection
    */
-  printPending() {
-    this._reporter.report(this.pending());
+  printPending(collection) {
+    this._reporter.report(this.pending(collection));
   }
 
   /**
    * Prints the completed requests.
+   * @param {Collection} collection
    */
-  printCompleted() {
-    this._reporter.report(this.completed());
+  printCompleted(collection) {
+    this._reporter.report(this.completed(collection));
   }
 
   /**
@@ -1406,7 +1410,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Displays bubble chart for response size and time.
+   * Displays scatter chart for response size and time.
    * @param {...Collection} collections
    */
   sizeTimeChart(...collections) {
@@ -1444,7 +1448,7 @@ export default class HttpSupervisor {
   }
 
   /**
-   * Displays the response size distribution.
+   * Displays the distribution of the passed field in doughnut chart.
    * @param {string} distributeBy The field name.
    * @param {...Collection} [collections] The collection.
    */

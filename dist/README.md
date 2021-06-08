@@ -61,6 +61,7 @@ Please feel free to use it and share your feedback.
 - Watching Requests
 - Copying Requests
 - Passing Metadata (label, category) To Urls
+- Stop Watch
 
 
 ## Install
@@ -558,6 +559,23 @@ const groupedByUrlMethodPayload = http.group('url', 'method', 'payload');
 
 The output of the above method is of type `Collection` which is a custom class that extends Array and had methods to do multi-sorting, nested grouping and searching.
 
+The properties and the methods of the `Collection` are listed below.
+
+- `name` (string) - Returns the name of the collection. The default value is "-".
+- `hasItems` (boolean) - Returns `true` if the collection has items.
+- `hasGroups` (boolean) - Returns `true` if the collection has groups.
+- `items` (Array<*>) - Returns the array of items.
+- `groups` (Array<Collection>) - Returns the array of groups, each group is a collection.
+- `count` (number) - Returns the number of items in the collection.
+- `first` (*) - Returns the first item from the collection.
+- `last` (*) - Returns the last item from the collection.
+- `groupBy(...args)` (Collection) - Groups the array based on the passed fields.
+- `ungroup()` (Collection) - Removes the grouping.
+- `sortBy(...args)` (Collection) - Sorts the collection and sub-collections by the passed arguments.
+- `removeSort()` (Collection) - Removes the applied sort.
+- `search(...args)` (Collection) - Search the items based on the passed query.
+- `reset()` (Collection) - Reset the search.
+
 #### `sort(...args)`
 
 Sorts the requests based on the passed arguments.
@@ -643,6 +661,14 @@ Returns true if there are duplicate requests.
 
 Returns the related requests for the passed request.
 
+#### `pending(collection?)`
+
+Returns the pending requests.
+
+#### `completed(collection?)`
+
+Returns the completed requests.
+
 #### `print(...args)`
 
 Prints the requests after searching, grouping and sorting. We can also pass a request or collection to the method and it prints it.
@@ -717,6 +743,14 @@ Prints duplicate requests.
 
 Print related requests for the passed request.
 
+#### `printPending(collection?)`
+
+Prints the pending requests.
+
+#### `printCompleted(collection?)`
+
+Prints the completed requests.
+
 #### `compare(id1, id2)`
 
 Compares two requests and print the differences.
@@ -729,21 +763,21 @@ Sorts the requests based on the passed arguments and print them
 
 Groups the requests based on the passed fields and print them.
 
-#### `sizeChart()`
+#### `sizeChart(...collections)`
 
-Displays the bar chart of responsive size.
+Displays the bar chart of responsive size. You can also pass array of collections and each one is treated as a separate dataset.
 
-#### `timeChart()`
+#### `timeChart(...collections)`
 
-Displays the bar chart of responsive size.
+Displays the bar chart of responsive size. You can also pass array of collections and each one is treated as a separate dataset.
 
-#### `sizeTimeChart()`
+#### `sizeTimeChart(...collections)`
 
-Displays bubble chart for response size and time.
+Displays scatter chart for response size and time. You can also pass array of collections and each one is treated as a separate dataset.
 
-#### `sizeDistributionChart()`
+#### `distributionChart(distributeBy, ...collections)`
 
-Displays the response size distribution.
+Displays the distribution of the passed field in doughnut chart.
 
 #### `import()`
 

@@ -103,7 +103,7 @@ export default class Collection extends Array {
 
   /**
    * Returns the group arguments.
-   * @returns {Array}
+   * @returns {Array<string>}
    */
   get groupArgs() {
     return this._groupArgs;
