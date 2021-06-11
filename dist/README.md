@@ -81,6 +81,11 @@ It's also available as chrome addon. By installing the addon you can enable it f
 You can install the addon from [here](https://chrome.google.com/webstore/detail/http-supervisor/ilfhanegmhjioandehhnopokeoeefonj).
 
 
+## Timing-Allow-Origin Header
+
+> In case of cross-origin requests, please send the [`Timing-Allow-Origin`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Timing-Allow-Origin) header for accurate display of duration and response size.
+
+
 ## Initializing Supervisor
 
 The `init` method helps to configure and initialize the tool. You should call this method to start the audit and it can be called only once.

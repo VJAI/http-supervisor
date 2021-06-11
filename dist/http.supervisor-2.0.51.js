@@ -1696,7 +1696,8 @@ var Messages = {
   ERROR_DESC: 'Error Description',
   EXCEEDS_QUOTA: 'Exceeds Quota?',
   INITIATOR_TYPE: 'Initiator Type',
-  SIZE_BY_PERFORMANCE: 'Accurate Payload Size?',
+  DURATION_WITH_QUEUING: 'Queuing Time Included?',
+  SIZE_BY_PERFORMANCE: 'Accurate Response Size?',
   CHART_NOT_FOUND: 'Chart.js library not found',
   TIME_START: 'Time Start',
   TIME_END: 'Time End',
@@ -1830,7 +1831,7 @@ var HTTP_REQUEST_INFO_DISPLAY_NAMES = {
   error: Messages.IS_ERROR,
   errorDescription: Messages.ERROR_DESC,
   exceedsQuota: Messages.EXCEEDS_QUOTA,
-  payloadByPerformance: Messages.PAYLOAD_SIZE_BY_PERFORMANCE
+  payloadByPerformance: Messages.SIZE_BY_PERFORMANCE
 };
 /**
  * Different HTTP request methods.
@@ -2197,7 +2198,9 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
 
     defineProperty_default()(this, "initiatorType", InitiatorType.XHR);
 
-    defineProperty_default()(this, "payloadByPerformance", true);
+    defineProperty_default()(this, "queuingTimeIncluded", true);
+
+    defineProperty_default()(this, "sizeByPerformance", true);
 
     defineProperty_default()(this, "requestHeaders", new Map());
 
@@ -2216,6 +2219,8 @@ var http_request_info_HttpRequestInfo = /*#__PURE__*/function () {
     defineProperty_default()(this, "tags", new Set());
 
     defineProperty_default()(this, "quota", null);
+
+    defineProperty_default()(this, "performanceEntry", null);
 
     this.id = id;
     this.url = url;
@@ -3847,16 +3852,7 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
         sortArgs[_key2] = arguments[_key2];
       }
 
-      var args = [].concat(sortArgs);
-
-      if (typeof sortArgs[0] === 'string') {
-        args = [{
-          field: sortArgs[0],
-          dir: sortArgs[1]
-        }];
-      }
-
-      return this.query(null, null, args);
+      return this.query(null, null, [].concat(sortArgs));
     }
     /**
      * Search requests based on the passed arguments. Also, sorts and groups.
@@ -3916,7 +3912,17 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
             operator: operator
           });
         });
-        return (_this$query$search$gr = (_this$query$search = (_this$query = this.query()).search.apply(_this$query, toConsumableArray_default()(q || []))).groupBy.apply(_this$query$search, toConsumableArray_default()(groupArgs || []))).sortBy.apply(_this$query$search$gr, toConsumableArray_default()(sortArgs || []));
+
+        var modSortArgs = toConsumableArray_default()(sortArgs || []);
+
+        if (Array.isArray(sortArgs) && typeof sortArgs[0] === 'string') {
+          modSortArgs = [{
+            field: sortArgs[0],
+            dir: sortArgs[1]
+          }];
+        }
+
+        return (_this$query$search$gr = (_this$query$search = (_this$query = this.query()).search.apply(_this$query, toConsumableArray_default()(q || []))).groupBy.apply(_this$query$search, toConsumableArray_default()(groupArgs || []))).sortBy.apply(_this$query$search$gr, toConsumableArray_default()(modSortArgs));
       }
 
       if (typeof_default()(args[0]) === 'object') {
@@ -5536,17 +5542,46 @@ var http_supervisor_HttpSupervisor = /*#__PURE__*/function () {
       var responseSize = byteSize(JSON.stringify(httpRequestInfo.response || ''));
 
       if (performanceEntry) {
-        httpRequestInfo.timeStart = performanceEntry.startTime;
-        httpRequestInfo.timeEnd = performanceEntry.responseEnd;
-        httpRequestInfo.payloadByPerformance = !!performanceEntry.transferSize;
-        httpRequestInfo.responseSize = httpRequestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
+        (function () {
+          var obj = {};
+
+          var _loop = function _loop(p) {
+            if (typeof performanceEntry[p] !== 'function') {
+              if (p === 'serverTiming') {
+                obj[p] = {};
+                performanceEntry[p].forEach(function (entry) {
+                  return obj[p][entry.name] = entry;
+                });
+              } else {
+                obj[p] = performanceEntry[p];
+              }
+            }
+          };
+
+          for (var p in performanceEntry) {
+            _loop(p);
+          }
+
+          httpRequestInfo.performance = obj;
+
+          if (performanceEntry.requestStart > 0) {
+            httpRequestInfo.queuingTimeIncluded = false;
+            httpRequestInfo.timeStart = performanceEntry.requestStart;
+          } else {
+            httpRequestInfo.timeStart = performanceEntry.startTime;
+          }
+
+          httpRequestInfo.timeEnd = performanceEntry.responseEnd;
+          httpRequestInfo.payloadByPerformance = !!performanceEntry.transferSize;
+          httpRequestInfo.responseSize = httpRequestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
+        })();
       } else {
         httpRequestInfo.payloadByPerformance = false;
         httpRequestInfo.timeEnd = performance.now();
         httpRequestInfo.responseSize = responseSize;
       }
 
-      httpRequestInfo.duration = Math.round(httpRequestInfo.timeEnd - httpRequestInfo.timeStart);
+      httpRequestInfo.duration = httpRequestInfo.timeEnd - httpRequestInfo.timeStart;
       httpRequestInfo.exceedsQuota = this._isExceededQuota(httpRequestInfo);
       httpRequestInfo.pending = false;
       httpRequestInfo.error && this._triggerEvent(SupervisorEvents.REQUEST_ERROR, httpRequestInfo, xhrOrResponse);
@@ -7711,7 +7746,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
               case 0:
                 code = /*#__PURE__*/function () {
                   var _ref4 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee3() {
-                    var id, pending, error, url, label, labelPending, errorLabel, category, tags, path, query, pathQuery, method, payload, payloadSize, duration, response, responseSize, responseStatus, errorDescription, initiatorType, payloadByPerformance, exceedsQuota, borderColor, requestLabel, displayUrl, duplicates, duplicatesCount, exceededParameters, statusTextColor, payloadColor, responseColor, durationColor, _iterator, _step, group, name, groupedBy, count, groupName, _iterator2, _step2, item;
+                    var id, pending, error, url, label, labelPending, errorLabel, category, tags, path, query, pathQuery, method, payload, payloadSize, duration, response, responseSize, responseStatus, errorDescription, initiatorType, queuingTimeIncluded, sizeByPerformance, exceedsQuota, borderColor, requestLabel, displayUrl, duplicates, duplicatesCount, exceededParameters, statusTextColor, payloadColor, responseColor, durationColor, _iterator, _step, group, name, groupedBy, count, groupName, _iterator2, _step2, item;
 
                     return regenerator_default.a.wrap(function _callee3$(_context3) {
                       while (1) {
@@ -7728,11 +7763,11 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                           case 3:
                             if (!(requestOrCollection instanceof http_request_info_HttpRequestInfo)) {
-                              _context3.next = 37;
+                              _context3.next = 38;
                               break;
                             }
 
-                            id = requestOrCollection.id, pending = requestOrCollection.pending, error = requestOrCollection.error, url = requestOrCollection.url, label = requestOrCollection.label, labelPending = requestOrCollection.labelPending, errorLabel = requestOrCollection.errorLabel, category = requestOrCollection.category, tags = requestOrCollection.tags, path = requestOrCollection.path, query = requestOrCollection.query, pathQuery = requestOrCollection.pathQuery, method = requestOrCollection.method, payload = requestOrCollection.payload, payloadSize = requestOrCollection.payloadSize, duration = requestOrCollection.duration, response = requestOrCollection.response, responseSize = requestOrCollection.responseSize, responseStatus = requestOrCollection.responseStatus, errorDescription = requestOrCollection.errorDescription, initiatorType = requestOrCollection.initiatorType, payloadByPerformance = requestOrCollection.sizeByPerformance, exceedsQuota = requestOrCollection.exceedsQuota;
+                            id = requestOrCollection.id, pending = requestOrCollection.pending, error = requestOrCollection.error, url = requestOrCollection.url, label = requestOrCollection.label, labelPending = requestOrCollection.labelPending, errorLabel = requestOrCollection.errorLabel, category = requestOrCollection.category, tags = requestOrCollection.tags, path = requestOrCollection.path, query = requestOrCollection.query, pathQuery = requestOrCollection.pathQuery, method = requestOrCollection.method, payload = requestOrCollection.payload, payloadSize = requestOrCollection.payloadSize, duration = requestOrCollection.duration, response = requestOrCollection.response, responseSize = requestOrCollection.responseSize, responseStatus = requestOrCollection.responseStatus, errorDescription = requestOrCollection.errorDescription, initiatorType = requestOrCollection.initiatorType, queuingTimeIncluded = requestOrCollection.queuingTimeIncluded, sizeByPerformance = requestOrCollection.sizeByPerformance, exceedsQuota = requestOrCollection.exceedsQuota;
                             borderColor = Colors.GRAY;
 
                             if (pending) {
@@ -7762,7 +7797,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                             }
 
                             duplicates = toConsumableArray_default()(_this3._supervisor.duplicates(id)), duplicatesCount = duplicates.length + 1, exceededParameters = _this3._supervisor.exceededParameters(requestOrCollection);
-                            statusTextColor = Colors.LIGHT_GRAY;
+                            statusTextColor = 'inherit';
 
                             if (!pending) {
                               statusTextColor = error ? Colors.ERROR : Colors.SUCCESS;
@@ -7805,7 +7840,9 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                             _this3.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
 
-                            _this3.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
+                            _this3.printKeyValue(Messages.DURATION_WITH_QUEUING, pending ? '-' : queuingTimeIncluded ? 'Yes' : 'No');
+
+                            _this3.printKeyValue(Messages.SIZE_BY_PERFORMANCE, pending ? '-' : sizeByPerformance ? 'Yes' : 'No');
 
                             _this3.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1 ? 'Yes' : 'No');
 
@@ -7817,28 +7854,28 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                             return _context3.abrupt("return");
 
-                          case 37:
+                          case 38:
                             if (!(!requestOrCollection.hasItems && !requestOrCollection.hasGroups)) {
-                              _context3.next = 39;
+                              _context3.next = 40;
                               break;
                             }
 
                             return _context3.abrupt("return");
 
-                          case 39:
+                          case 40:
                             if (!requestOrCollection.hasGroups) {
-                              _context3.next = 61;
+                              _context3.next = 62;
                               break;
                             }
 
                             _iterator = _createForOfIteratorHelper(requestOrCollection.groups);
-                            _context3.prev = 41;
+                            _context3.prev = 42;
 
                             _iterator.s();
 
-                          case 43:
+                          case 44:
                             if ((_step = _iterator.n()).done) {
-                              _context3.next = 52;
+                              _context3.next = 53;
                               break;
                             }
 
@@ -7863,79 +7900,79 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                               _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
                             }
 
-                            _context3.next = 49;
+                            _context3.next = 50;
                             return _this3._reportObject(group);
 
-                          case 49:
+                          case 50:
                             _this3.groupEnd();
 
-                          case 50:
-                            _context3.next = 43;
+                          case 51:
+                            _context3.next = 44;
                             break;
 
-                          case 52:
-                            _context3.next = 57;
+                          case 53:
+                            _context3.next = 58;
                             break;
 
-                          case 54:
-                            _context3.prev = 54;
-                            _context3.t0 = _context3["catch"](41);
+                          case 55:
+                            _context3.prev = 55;
+                            _context3.t0 = _context3["catch"](42);
 
                             _iterator.e(_context3.t0);
 
-                          case 57:
-                            _context3.prev = 57;
+                          case 58:
+                            _context3.prev = 58;
 
                             _iterator.f();
 
-                            return _context3.finish(57);
-
-                          case 60:
-                            return _context3.abrupt("return");
+                            return _context3.finish(58);
 
                           case 61:
+                            return _context3.abrupt("return");
+
+                          case 62:
                             _iterator2 = _createForOfIteratorHelper(requestOrCollection.items);
-                            _context3.prev = 62;
+                            _context3.prev = 63;
 
                             _iterator2.s();
 
-                          case 64:
+                          case 65:
                             if ((_step2 = _iterator2.n()).done) {
-                              _context3.next = 70;
+                              _context3.next = 71;
                               break;
                             }
 
                             item = _step2.value;
-                            _context3.next = 68;
+                            _context3.next = 69;
                             return _this3._reportObject(item);
 
-                          case 68:
-                            _context3.next = 64;
+                          case 69:
+                            _context3.next = 65;
                             break;
 
-                          case 70:
-                            _context3.next = 75;
+                          case 71:
+                            _context3.next = 76;
                             break;
 
-                          case 72:
-                            _context3.prev = 72;
-                            _context3.t1 = _context3["catch"](62);
+                          case 73:
+                            _context3.prev = 73;
+                            _context3.t1 = _context3["catch"](63);
 
                             _iterator2.e(_context3.t1);
 
-                          case 75:
-                            _context3.prev = 75;
+                          case 76:
+                            _context3.prev = 76;
 
                             _iterator2.f();
 
-                            return _context3.finish(75);
+                            return _context3.finish(76);
 
-                          case 78:
+                          case 79:
                           case "end":
                             return _context3.stop();
                         }
                       }
-                    }, _callee3, null, [[41, 54, 57, 60], [62, 72, 75, 78]]);
+                    }, _callee3, null, [[42, 55, 58, 61], [63, 73, 76, 79]]);
                   }));
 
                   return function code() {
