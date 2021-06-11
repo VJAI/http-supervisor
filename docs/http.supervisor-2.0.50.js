@@ -1696,7 +1696,7 @@ var Messages = {
   ERROR_DESC: 'Error Description',
   EXCEEDS_QUOTA: 'Exceeds Quota?',
   INITIATOR_TYPE: 'Initiator Type',
-  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size?',
+  SIZE_BY_PERFORMANCE: 'Accurate Payload Size?',
   CHART_NOT_FOUND: 'Chart.js library not found',
   TIME_START: 'Time Start',
   TIME_END: 'Time End',
@@ -7732,7 +7732,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                               break;
                             }
 
-                            id = requestOrCollection.id, pending = requestOrCollection.pending, error = requestOrCollection.error, url = requestOrCollection.url, label = requestOrCollection.label, labelPending = requestOrCollection.labelPending, errorLabel = requestOrCollection.errorLabel, category = requestOrCollection.category, tags = requestOrCollection.tags, path = requestOrCollection.path, query = requestOrCollection.query, pathQuery = requestOrCollection.pathQuery, method = requestOrCollection.method, payload = requestOrCollection.payload, payloadSize = requestOrCollection.payloadSize, duration = requestOrCollection.duration, response = requestOrCollection.response, responseSize = requestOrCollection.responseSize, responseStatus = requestOrCollection.responseStatus, errorDescription = requestOrCollection.errorDescription, initiatorType = requestOrCollection.initiatorType, payloadByPerformance = requestOrCollection.payloadByPerformance, exceedsQuota = requestOrCollection.exceedsQuota;
+                            id = requestOrCollection.id, pending = requestOrCollection.pending, error = requestOrCollection.error, url = requestOrCollection.url, label = requestOrCollection.label, labelPending = requestOrCollection.labelPending, errorLabel = requestOrCollection.errorLabel, category = requestOrCollection.category, tags = requestOrCollection.tags, path = requestOrCollection.path, query = requestOrCollection.query, pathQuery = requestOrCollection.pathQuery, method = requestOrCollection.method, payload = requestOrCollection.payload, payloadSize = requestOrCollection.payloadSize, duration = requestOrCollection.duration, response = requestOrCollection.response, responseSize = requestOrCollection.responseSize, responseStatus = requestOrCollection.responseStatus, errorDescription = requestOrCollection.errorDescription, initiatorType = requestOrCollection.initiatorType, payloadByPerformance = requestOrCollection.sizeByPerformance, exceedsQuota = requestOrCollection.exceedsQuota;
                             borderColor = Colors.GRAY;
 
                             if (pending) {

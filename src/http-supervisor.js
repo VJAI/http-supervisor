@@ -953,14 +953,7 @@ export default class HttpSupervisor {
    * @returns {Collection}
    */
   sort(...sortArgs) {
-    let args = [...sortArgs];
-
-    if (typeof sortArgs[0] === 'string') {
-      args = [{ field: sortArgs[0], dir: sortArgs[1] }];
-    }
-
-
-    return this.query(null, null, args);
+    return this.query(null, null, [...sortArgs]);
   }
 
   /**
@@ -1004,7 +997,13 @@ export default class HttpSupervisor {
 
         q.push({ field, value, operator });
       });
-      return this.query().search(...(q || [])).groupBy(...(groupArgs || [])).sortBy(...(sortArgs || []));
+
+
+      let modSortArgs = [...(sortArgs || [])];
+      if (Array.isArray(sortArgs) && typeof sortArgs[0] === 'string') {
+        modSortArgs = [{ field: sortArgs[0], dir: sortArgs[1] }];
+      }
+      return this.query().search(...(q || [])).groupBy(...(groupArgs || [])).sortBy(...modSortArgs);
     }
 
     if (typeof args[0] === 'object') {
@@ -2155,7 +2154,27 @@ export default class HttpSupervisor {
     const responseSize = byteSize(JSON.stringify(httpRequestInfo.response || ''));
 
     if (performanceEntry) {
-      httpRequestInfo.timeStart = performanceEntry.startTime;
+      const obj = {};
+
+      for (let p in performanceEntry) {
+        if (typeof performanceEntry[p] !== 'function') {
+          if (p === 'serverTiming') {
+            obj[p] = {};
+            performanceEntry[p].forEach(entry => obj[p][entry.name] = entry);
+          } else {
+            obj[p] = performanceEntry[p];
+          }
+        }
+      }
+
+      httpRequestInfo.performance = obj;
+      if (performanceEntry.requestStart > 0) {
+        httpRequestInfo.queuingTimeIncluded = false;
+        httpRequestInfo.timeStart = performanceEntry.requestStart;
+      } else {
+        httpRequestInfo.timeStart = performanceEntry.startTime;
+      }
+
       httpRequestInfo.timeEnd = performanceEntry.responseEnd;
       httpRequestInfo.payloadByPerformance = !!performanceEntry.transferSize;
       httpRequestInfo.responseSize = httpRequestInfo.payloadByPerformance ? performanceEntry.transferSize : responseSize;
@@ -2165,7 +2184,7 @@ export default class HttpSupervisor {
       httpRequestInfo.responseSize = responseSize;
     }
 
-    httpRequestInfo.duration = Math.round(httpRequestInfo.timeEnd - httpRequestInfo.timeStart);
+    httpRequestInfo.duration = httpRequestInfo.timeEnd - httpRequestInfo.timeStart;
     httpRequestInfo.exceedsQuota = this._isExceededQuota(httpRequestInfo);
     httpRequestInfo.pending = false;
 

@@ -44,7 +44,8 @@ export const Messages = {
   ERROR_DESC: 'Error Description',
   EXCEEDS_QUOTA: 'Exceeds Quota?',
   INITIATOR_TYPE: 'Initiator Type',
-  PAYLOAD_SIZE_BY_PERFORMANCE: 'Accurate Payload Size?',
+  DURATION_WITH_QUEUING: 'Queuing Time Included?',
+  SIZE_BY_PERFORMANCE: 'Accurate Response Size?',
   CHART_NOT_FOUND: 'Chart.js library not found',
   TIME_START: 'Time Start',
   TIME_END: 'Time End',
@@ -175,7 +176,7 @@ export const HTTP_REQUEST_INFO_DISPLAY_NAMES = {
   error: Messages.IS_ERROR,
   errorDescription: Messages.ERROR_DESC,
   exceedsQuota: Messages.EXCEEDS_QUOTA,
-  payloadByPerformance: Messages.PAYLOAD_SIZE_BY_PERFORMANCE
+  payloadByPerformance: Messages.SIZE_BY_PERFORMANCE
 };
 
 /**

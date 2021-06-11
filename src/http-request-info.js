@@ -174,10 +174,16 @@ export default class HttpRequestInfo {
   initiatorType = InitiatorType.XHR;
 
   /**
-   * True if the payload size is determined using performance api.
+   * True if the request queueing time included in duration.
    * @type {boolean}
    */
-  payloadByPerformance = true;
+  queuingTimeIncluded = true;
+
+  /**
+   * True if the response size is determined using performance api.
+   * @type {boolean}
+   */
+  sizeByPerformance = true;
 
   /**
    * Request Headers.
@@ -232,6 +238,12 @@ export default class HttpRequestInfo {
    * @type {object}
    */
   quota = null;
+
+  /**
+   * Performance entry object.
+   * @type {PerformanceEntry}
+   */
+  performanceEntry = null;
 
   /**
    * Constructor.

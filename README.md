@@ -94,6 +94,9 @@ http.init({
 
 You can pass a bunch of parameters to the `init` method to configure the tool which you can see at the API section.
 
+> Timing-Allow-Origin Header
+> In case of cross-origin requests, please send the [`Timing-Allow-Origin`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Timing-Allow-Origin) header for accurate display of duration and response size.
+
 
 ## Starting Audit
 

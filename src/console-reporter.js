@@ -677,7 +677,8 @@ export default class ConsoleReporter {
           responseStatus,
           errorDescription,
           initiatorType,
-          payloadByPerformance,
+          queuingTimeIncluded,
+          sizeByPerformance,
           exceedsQuota
         } = requestOrCollection;
 
@@ -714,7 +715,7 @@ export default class ConsoleReporter {
           duplicatesCount = duplicates.length + 1,
           exceededParameters = this._supervisor.exceededParameters(requestOrCollection);
 
-        let statusTextColor = Colors.LIGHT_GRAY;
+        let statusTextColor = 'inherit';
         if (!pending) {
           statusTextColor = error ? Colors.ERROR : Colors.SUCCESS;
         }
@@ -752,7 +753,8 @@ export default class ConsoleReporter {
         this.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
         this.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
         this.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
-        this.printKeyValue(Messages.PAYLOAD_SIZE_BY_PERFORMANCE, pending ? '-' : payloadByPerformance ? 'Yes' : 'No');
+        this.printKeyValue(Messages.DURATION_WITH_QUEUING, pending ? '-' : queuingTimeIncluded ? 'Yes' : 'No');
+        this.printKeyValue(Messages.SIZE_BY_PERFORMANCE, pending ? '-' : sizeByPerformance ? 'Yes' : 'No');
         this.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1 ? 'Yes' : 'No');
         duplicatesCount > 1 && this.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(r => r.id).join(', '));
         this._invokeConsole('groupEnd');
