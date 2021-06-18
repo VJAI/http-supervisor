@@ -1093,10 +1093,10 @@ export default class HttpSupervisor {
 
     let requestIds;
     if (collection) {
-      requestIds = collection.items.filter(item => item.url === url && item.method === method && item.payload === payload)
+      requestIds = collection.items.filter(item => item.url === url && item.method === method && JSON.stringify(item.payload) === JSON.stringify(payload))
     } else {
-      const reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && r.payload === payload);
-      requestIds = [...reqSummary.requests];
+      const reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && JSON.stringify(r.payload) === JSON.stringify(payload));
+      requestIds = reqSummary ? [...reqSummary.requests] : [];
     }
 
     requestIds.splice(requestIds.indexOf(request), 1);
@@ -2304,7 +2304,7 @@ export default class HttpSupervisor {
    */
   _addToCallsSummary(request) {
     const { url, method, payload } = request,
-      reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && r.payload === payload);
+      reqSummary = this._callsSummary.find(r => r.url === url && r.method === method && JSON.stringify(r.payload) === JSON.stringify(payload));
 
     if (reqSummary) {
       reqSummary.count += 1;

@@ -234,6 +234,12 @@ export default class ConsoleReporter {
     this.printKeyValue('Same', req1.url === req2.url ? 'Yes' : 'No');
     this.break();
 
+    this.printKeyValue('Property', 'Method');
+    this.printKeyValue('Request 1', req1.url);
+    this.printKeyValue('Request 2', req2.url);
+    this.printKeyValue('Same', req1.method === req2.method ? 'Yes' : 'No');
+    this.break();
+
     this.printKeyValue('Property', 'Payload');
     this.printKeyValue('Request 1', req1.payload || '-');
     this.printKeyValue('Request 2', req2.payload || '-');
@@ -241,8 +247,8 @@ export default class ConsoleReporter {
     this.break();
 
     this.printKeyValue('Property', 'Payload Size');
-    this.printKeyValue('Request 1', req1.payloadSize || '-');
-    this.printKeyValue('Request 2', req2.payloadSize || '-');
+    this.printKeyValue('Request 1', req1.payloadSize || '0');
+    this.printKeyValue('Request 2', req2.payloadSize || '0');
     this.printKeyValue('Same', req1.payloadSize === req2.payloadSize ? 'Yes' : 'No');
     this.break();
 
@@ -253,20 +259,20 @@ export default class ConsoleReporter {
     this.break();
 
     this.printKeyValue('Property', 'Response Size');
-    this.printKeyValue('Request 1', req1.responseSize || '-');
-    this.printKeyValue('Request 2', req2.responseSize || '-');
+    this.printKeyValue('Request 1', req1.pending ? '-' : req1.responseSize || '-');
+    this.printKeyValue('Request 2', req2.pending ? '-' : req2.responseSize || '-');
     this.printKeyValue('Same', req1.responseSize === req2.responseSize ? 'Yes' : 'No');
     this.break();
 
     this.printKeyValue('Property', 'Status');
-    this.printKeyValue('Request 1', req1.responseStatus);
-    this.printKeyValue('Request 2', req2.responseStatus);
+    this.printKeyValue('Request 1', req1.pending ? '-' : req1.responseStatus);
+    this.printKeyValue('Request 2', req2.pending ? '-' : req2.responseStatus);
     this.printKeyValue('Same', req1.responseStatus === req2.responseStatus ? 'Yes' : 'No');
     this.break();
 
     this.printKeyValue('Property', 'Duration');
-    this.printKeyValue('Request 1', req1.duration);
-    this.printKeyValue('Request 2', req2.duration);
+    this.printKeyValue('Request 1', req1.pending ? '-' : req1.duration || '-');
+    this.printKeyValue('Request 2', req2.pending ? '-' : req2.duration || '-');
     this.printKeyValue('Same', req1.duration === req2.duration ? 'Yes' : 'No');
   }
 

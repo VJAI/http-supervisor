@@ -298,7 +298,7 @@ export default class Collection extends Array {
         hasGroup = rv.has(groupName);
       } else {
         groupKey = [...rv.keys()].find(k => JSON.stringify(k) === JSON.stringify(groupName));
-        hasGroup = !!groupKey;
+        hasGroup = typeof groupKey !== 'undefined';
         groupKey = groupKey || groupName;
       }
 

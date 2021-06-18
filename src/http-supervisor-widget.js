@@ -17,6 +17,7 @@ template.innerHTML = `
     --index: 20000;
     --popover-width: 350px;
     --box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+    --popover-pointer-position: 0;
     color: var(--color);
     font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   }
@@ -87,17 +88,21 @@ template.innerHTML = `
   .popover-content {
     position: fixed;
     top: 38px;
-    width: var(--popover-width);
     background-color: var(--bg-color);
-    right: calc(50% - 216px);
+    right: calc(50% - 195px);
     border-radius: 6px;
-    padding: 20px;
     font-size: var(--font-size);
     box-shadow: var(--box-shadow);
     z-index: var(--index);
     display: none;
+    --position: 0;
+  }
+  
+  .popover-content > div {
+    width: var(--popover-width);
     max-height: calc(100vh - 78px);
     overflow-y: scroll;
+    padding: 20px;
   }
 
   .popover-content .popover-close {
@@ -114,7 +119,7 @@ template.innerHTML = `
     position: absolute;
     z-index: -1;
     content: "";
-    right: calc(50% - 65px);
+    left: var(--position);
     top: -10px;
     border-style: solid;
     border-width: 0 10px 10px 10px;
@@ -395,146 +400,148 @@ template.innerHTML = `
 <div class="popover">
   <div class="popover-overlay"></div>
   <div class="popover-content">
-    <a href="#" class="popover-close">
-      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#ccc" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
-      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
-    </svg>
-    </a>
-    <form>
-      <h4>Options</h4>
-      <fieldset class="first">
-        <div>
-          <label>Silent:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Trace Request:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Alert Error:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Alert Quota Exceed:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Alert Request Start:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Lock Console:</label>
-          <input type="checkbox" />
-        </div>
-      </fieldset>
-
-      <h4>Quota</h4>
-      <fieldset class="second">
-        <div>
-          <label>Payload:</label>
-          <input type="number" min="1" />
-        </div>
-        <div>
-          <label>Response:</label>
-          <input type="number" min="1" />
-        </div>
-        <div>
-          <label>Duration:</label>
-          <input type="number" min="1" />
-        </div>
-      </fieldset>
-
-      <h4>Visualization</h4>
-      <fieldset class="third">
-        <button title="Response Size Chart">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-            </svg>
-        </button>
-        <button title="Response Duration Chart">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-            </svg>
-        </button>
-        <button title="Response Size And Duration Chart">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
-              <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-            </svg>
-        </button>
-        <button title="Response Size Distribution">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pie-chart-fill" viewBox="0 0 16 16">
-              <path d="M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z"/>
-            </svg>
-        </button>
-      </fieldset>
-
-      <div class="advanced-container">
-        <h4>Advanced</h4>
-        <svg style="cursor:pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-down expand" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-          <path fill-rule="evenodd" d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
-        </svg>
-        <svg style="cursor:pointer; display: none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-up collapse" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z"/>
-          <path fill-rule="evenodd" d="M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
-        </svg>
-      </div>
-
-      <fieldset class="fourth">
-        <div class="span2">
-          <label>Include:</label>
-          <input type="text" style="flex-grow: 1" />
-        </div>
-        <div class="span2">
-          <label>Exclude:</label>
-          <input type="text" style="flex-grow: 1" />
-        </div>
-        <div>
-          <label>Keyboard Events:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Persist Config:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>Use Performance:</label>
-          <input type="checkbox" />
-        </div>
-        <div>
-          <label>StopWatch:</label>
-          <input type="checkbox" />
-        </div>
-        <div style="grid-column: span 2;">
-          <button title="Import Configuration" style="margin-right: 5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-down" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z"/>
-              <path fill-rule="evenodd" d="M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z"/>
-            </svg>
+    <div>
+      <a href="#" class="popover-close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="#ccc" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
+        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293 5.354 4.646z"/>
+      </svg>
+      </a>
+      <form>
+        <h4>Options</h4>
+        <fieldset class="first">
+          <div>
+            <label>Silent:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Trace Request:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Alert Error:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Alert Quota Exceed:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Alert Request Start:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Lock Console:</label>
+            <input type="checkbox" />
+          </div>
+        </fieldset>
+  
+        <h4>Quota</h4>
+        <fieldset class="second">
+          <div>
+            <label>Payload:</label>
+            <input type="number" min="1" />
+          </div>
+          <div>
+            <label>Response:</label>
+            <input type="number" min="1" />
+          </div>
+          <div>
+            <label>Duration:</label>
+            <input type="number" min="1" />
+          </div>
+        </fieldset>
+  
+        <h4>Visualization</h4>
+        <fieldset class="third">
+          <button title="Response Size Chart">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+                <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+              </svg>
           </button>
-          <button title="Export Configuration" style="margin-right: 5px;">
-             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z"/>
-              <path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z"/>
-            </svg>
+          <button title="Response Duration Chart">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+                <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+              </svg>
           </button>
-          <button title="Apply Changes" style="margin-right: 5px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
-              <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
-            </svg>
+          <button title="Response Size And Duration Chart">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart-fill" viewBox="0 0 16 16">
+                <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
+              </svg>
           </button>
-          <button title="Reset Changes">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
-              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-            </svg>
+          <button title="Response Size Distribution">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pie-chart-fill" viewBox="0 0 16 16">
+                <path d="M15.985 8.5H8.207l-5.5 5.5a8 8 0 0 0 13.277-5.5zM2 13.292A8 8 0 0 1 7.5.015v7.778l-5.5 5.5zM8.5.015V7.5h7.485A8.001 8.001 0 0 0 8.5.015z"/>
+              </svg>
           </button>
+        </fieldset>
+  
+        <div class="advanced-container">
+          <h4>Advanced</h4>
+          <svg style="cursor:pointer" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-down expand" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+            <path fill-rule="evenodd" d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+          </svg>
+          <svg style="cursor:pointer; display: none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-up collapse" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M7.646 2.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 3.707 2.354 9.354a.5.5 0 1 1-.708-.708l6-6z"/>
+            <path fill-rule="evenodd" d="M7.646 6.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 7.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+          </svg>
         </div>
-        <div style="grid-column: span 2;">
-          <textarea rows="10" style="width: 100%;resize: vertical; font-size: 0.7rem;border-radius: 5px;"></textarea>
-        </div>
-      </fieldset>
-    </form>
+  
+        <fieldset class="fourth">
+          <div class="span2">
+            <label>Include:</label>
+            <input type="text" style="flex-grow: 1" />
+          </div>
+          <div class="span2">
+            <label>Exclude:</label>
+            <input type="text" style="flex-grow: 1" />
+          </div>
+          <div>
+            <label>Keyboard Events:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Persist Config:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>Use Performance:</label>
+            <input type="checkbox" />
+          </div>
+          <div>
+            <label>StopWatch:</label>
+            <input type="checkbox" />
+          </div>
+          <div style="grid-column: span 2;">
+            <button title="Import Configuration" style="margin-right: 5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-down" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M3.5 10a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 0 0 1h2A1.5 1.5 0 0 0 14 9.5v-8A1.5 1.5 0 0 0 12.5 0h-9A1.5 1.5 0 0 0 2 1.5v8A1.5 1.5 0 0 0 3.5 11h2a.5.5 0 0 0 0-1h-2z"/>
+                <path fill-rule="evenodd" d="M7.646 15.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 14.293V5.5a.5.5 0 0 0-1 0v8.793l-2.146-2.147a.5.5 0 0 0-.708.708l3 3z"/>
+              </svg>
+            </button>
+            <button title="Export Configuration" style="margin-right: 5px;">
+               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" class="bi bi-box-arrow-up" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z"/>
+                <path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z"/>
+              </svg>
+            </button>
+            <button title="Apply Changes" style="margin-right: 5px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check2" viewBox="0 0 16 16">
+                <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+            </button>
+            <button title="Reset Changes">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+          </div>
+          <div style="grid-column: span 2;">
+            <textarea rows="10" style="width: 100%;resize: vertical; font-size: 0.7rem;border-radius: 5px;"></textarea>
+          </div>
+        </fieldset>
+      </form>
+    </div>
   </div>
 </div>
 `;
@@ -1072,10 +1079,20 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
 
   _showPopover() {
     [this._popover, this._overlay].forEach(el => el.classList.add('active'));
+    this._positionPopover();
   }
 
   _hidePopover() {
     [this._popover, this._overlay].forEach(el => el.classList.remove('active'));
+  }
+
+  _positionPopover() {
+    const { width: popoverWidth, left: popoverLeft } = this._popover.getBoundingClientRect(),
+      { width: containerWidth } = this._container.getBoundingClientRect(),
+      { width: mBWidth, left: mBLeft } = this._moreButton.getBoundingClientRect();
+
+    this._popover.style.right = `calc(50% - ${popoverWidth / 2}px)`;
+    this._popover.style.setProperty('--position', `${mBLeft - popoverLeft + 4}px`);
   }
 
   _listenToKeyPressEvent() {
@@ -1124,7 +1141,16 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
 
   _handleStopWatchChange(ctrl) {
     this._stopWatchContainer.style.display = this._stopWatchCheckbox.checked ? 'flex' : 'none';
-    this._container.style.right = `calc(50% - ${this._stopWatchCheckbox.checked ? 150 : 100}px)`;
+
+    const setWidth = () => {
+      const { width } = this._container.getBoundingClientRect();
+      this._container.style.right = `calc(50% - ${width / 2}px)`;
+    };
+
+    setWidth();
+
+    setTimeout(() => setWidth(), 0);
+    this._positionPopover();
   }
 }
 
