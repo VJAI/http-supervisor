@@ -1,6 +1,6 @@
 import http from './src';
 
-/*function makeAjaxCalls() {
+function makeAjaxCalls() {
   sendCall1();
 
   setTimeout(() => {
@@ -122,6 +122,6 @@ http.init({
   }
 });
 makeAjaxCalls();
-setTimeout(makeAjaxCalls, 100);*/
-window.http = http;
-http.init();
+setTimeout(makeAjaxCalls, 100);
+/*window.http = http;
+http.init();*/
