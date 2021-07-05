@@ -1087,12 +1087,11 @@ class HtmlSupervisorWidgetElement extends HTMLElement {
   }
 
   _positionPopover() {
-    const { width: popoverWidth, left: popoverLeft } = this._popover.getBoundingClientRect(),
-      { width: containerWidth } = this._container.getBoundingClientRect(),
-      { width: mBWidth, left: mBLeft } = this._moreButton.getBoundingClientRect();
+    const { width: popoverWidth } = this._popover.getBoundingClientRect(),
+      { left: mBLeft } = this._moreButton.getBoundingClientRect();
 
     this._popover.style.right = `calc(50% - ${popoverWidth / 2}px)`;
-    this._popover.style.setProperty('--position', `${mBLeft - popoverLeft + 4}px`);
+    this._popover.style.setProperty('--position', `${mBLeft - this._popover.getBoundingClientRect().left + 4}px`);
   }
 
   _listenToKeyPressEvent() {

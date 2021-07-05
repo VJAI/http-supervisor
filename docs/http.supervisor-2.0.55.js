@@ -6819,16 +6819,12 @@ var http_supervisor_widget_HtmlSupervisorWidgetElement = /*#__PURE__*/function (
     value: function _positionPopover() {
       var _this$_popover$getBou = this._popover.getBoundingClientRect(),
           popoverWidth = _this$_popover$getBou.width,
-          popoverLeft = _this$_popover$getBou.left,
-          _this$_container$getB = this._container.getBoundingClientRect(),
-          containerWidth = _this$_container$getB.width,
           _this$_moreButton$get = this._moreButton.getBoundingClientRect(),
-          mBWidth = _this$_moreButton$get.width,
           mBLeft = _this$_moreButton$get.left;
 
       this._popover.style.right = "calc(50% - ".concat(popoverWidth / 2, "px)");
 
-      this._popover.style.setProperty('--position', "".concat(mBLeft - popoverLeft + 4, "px"));
+      this._popover.style.setProperty('--position', "".concat(mBLeft - this._popover.getBoundingClientRect().left + 4, "px"));
     }
   }, {
     key: "_listenToKeyPressEvent",
