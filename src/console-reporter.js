@@ -101,14 +101,23 @@ export default class ConsoleReporter {
       return;
     }
 
-    this._iframeEl = document.createElement('iframe');
-    this._iframeEl.style.width = `${this._chartWidth}px`;
-    this._iframeEl.style.height = `${this._chartHeight}px`;
-    this._hideIframe();
-    document.body.appendChild(this._iframeEl);
-    await loadScript(CHARTJS_LIB_PATH, this._iframeEl.contentDocument.head);
-    await loadScript(CHARTJS_ANNOTATION_PLUGIN_PATH, this._iframeEl.contentDocument.head);
-    this._initChart();
+    const renderIframe = async () => {
+      this._iframeEl = document.createElement('iframe');
+      this._iframeEl.style.width = `${this._chartWidth}px`;
+      this._iframeEl.style.height = `${this._chartHeight}px`;
+      this._hideIframe();
+      document.body.appendChild(this._iframeEl);
+      await loadScript(CHARTJS_LIB_PATH, this._iframeEl.contentDocument.head);
+      await loadScript(CHARTJS_ANNOTATION_PLUGIN_PATH, this._iframeEl.contentDocument.head);
+      this._initChart();
+    };
+
+    if (!document.body) {
+      window.addEventListener('DOMContentLoaded', renderIframe);
+      return;
+    }
+
+    renderIframe();
   }
 
   /**

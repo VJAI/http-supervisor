@@ -7022,11 +7022,13 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   createClass_default()(ConsoleReporter, [{
     key: "init",
     value: function () {
-      var _init = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee(httpSupervisor) {
-        var lockConsole, loadChart;
-        return regenerator_default.a.wrap(function _callee$(_context) {
+      var _init = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee2(httpSupervisor) {
+        var _this = this;
+
+        var lockConsole, loadChart, renderIframe;
+        return regenerator_default.a.wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context.prev = _context.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 this._supervisor = httpSupervisor;
                 lockConsole = httpSupervisor.lockConsole, loadChart = httpSupervisor.loadChart;
@@ -7034,36 +7036,66 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                 this._lockConsole && this.acquireLock();
 
                 if (loadChart) {
-                  _context.next = 6;
+                  _context2.next = 6;
                   break;
                 }
 
-                return _context.abrupt("return");
+                return _context2.abrupt("return");
 
               case 6:
-                this._iframeEl = document.createElement('iframe');
-                this._iframeEl.style.width = "".concat(this._chartWidth, "px");
-                this._iframeEl.style.height = "".concat(this._chartHeight, "px");
+                renderIframe = /*#__PURE__*/function () {
+                  var _ref = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee() {
+                    return regenerator_default.a.wrap(function _callee$(_context) {
+                      while (1) {
+                        switch (_context.prev = _context.next) {
+                          case 0:
+                            _this._iframeEl = document.createElement('iframe');
+                            _this._iframeEl.style.width = "".concat(_this._chartWidth, "px");
+                            _this._iframeEl.style.height = "".concat(_this._chartHeight, "px");
 
-                this._hideIframe();
+                            _this._hideIframe();
 
-                document.body.appendChild(this._iframeEl);
-                _context.next = 13;
-                return loadScript(CHARTJS_LIB_PATH, this._iframeEl.contentDocument.head);
+                            document.body.appendChild(_this._iframeEl);
+                            _context.next = 7;
+                            return loadScript(CHARTJS_LIB_PATH, _this._iframeEl.contentDocument.head);
 
-              case 13:
-                _context.next = 15;
-                return loadScript(CHARTJS_ANNOTATION_PLUGIN_PATH, this._iframeEl.contentDocument.head);
+                          case 7:
+                            _context.next = 9;
+                            return loadScript(CHARTJS_ANNOTATION_PLUGIN_PATH, _this._iframeEl.contentDocument.head);
 
-              case 15:
-                this._initChart();
+                          case 9:
+                            _this._initChart();
 
-              case 16:
+                          case 10:
+                          case "end":
+                            return _context.stop();
+                        }
+                      }
+                    }, _callee);
+                  }));
+
+                  return function renderIframe() {
+                    return _ref.apply(this, arguments);
+                  };
+                }();
+
+                if (document.body) {
+                  _context2.next = 10;
+                  break;
+                }
+
+                window.addEventListener('DOMContentLoaded', renderIframe);
+                return _context2.abrupt("return");
+
+              case 10:
+                renderIframe();
+
+              case 11:
               case "end":
-                return _context.stop();
+                return _context2.stop();
             }
           }
-        }, _callee, this);
+        }, _callee2, this);
       }));
 
       function init(_x) {
@@ -7091,97 +7123,97 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "report",
     value: function () {
-      var _report = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee2(arg1, arg2) {
-        var _args2 = arguments;
-        return regenerator_default.a.wrap(function _callee2$(_context2) {
+      var _report = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee3(arg1, arg2) {
+        var _args3 = arguments;
+        return regenerator_default.a.wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
-                if (!(_args2.length === 1)) {
-                  _context2.next = 16;
+                if (!(_args3.length === 1)) {
+                  _context3.next = 16;
                   break;
                 }
 
                 if (arg1) {
-                  _context2.next = 6;
+                  _context3.next = 6;
                   break;
                 }
 
                 this.print(Messages.NO_REQUEST, 'inherit', true);
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 6:
                 if (!(arg1 instanceof http_request_info_HttpRequestInfo || arg1 instanceof collection_Collection)) {
-                  _context2.next = 14;
+                  _context3.next = 14;
                   break;
                 }
 
                 if (!(arg1 instanceof collection_Collection && !arg1.hasGroups && !arg1.hasItems)) {
-                  _context2.next = 10;
+                  _context3.next = 10;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 10:
-                _context2.next = 12;
+                _context3.next = 12;
                 return this._reportObject(arg1.clone());
 
               case 12:
-                _context2.next = 15;
+                _context3.next = 15;
                 break;
 
               case 14:
                 this.reportStats(arg1);
 
               case 15:
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 16:
-                if (!(_args2.length === 2 && arg1 instanceof collection_Collection)) {
-                  _context2.next = 24;
+                if (!(_args3.length === 2 && arg1 instanceof collection_Collection)) {
+                  _context3.next = 24;
                   break;
                 }
 
                 if (!(!arg1.hasGroups && !arg1.hasItems)) {
-                  _context2.next = 20;
+                  _context3.next = 20;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 20:
                 this.printTitle(Messages.REQUESTS_INFO);
-                _context2.next = 23;
+                _context3.next = 23;
                 return this._reportObject(arg1.clone());
 
               case 23:
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 24:
                 if (!(!arg2.hasGroups && !arg2.hasItems)) {
-                  _context2.next = 27;
+                  _context3.next = 27;
                   break;
                 }
 
                 this.print(Messages.NO_REQUESTS, 'inherit', true);
-                return _context2.abrupt("return");
+                return _context3.abrupt("return");
 
               case 27:
                 this.reportStats(arg1);
                 this["break"]();
                 this.printTitle(Messages.REQUESTS_INFO);
-                _context2.next = 32;
+                _context3.next = 32;
                 return this._reportObject(arg2.clone());
 
               case 32:
               case "end":
-                return _context2.stop();
+                return _context3.stop();
             }
           }
-        }, _callee2, this);
+        }, _callee3, this);
       }));
 
       function report(_x2, _x3) {
@@ -7192,26 +7224,26 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
     }()
   }, {
     key: "reportStats",
-    value: function reportStats(_ref) {
+    value: function reportStats(_ref2) {
       var _this$printKeyValueMa;
 
-      var allRequests = _ref.allRequests,
-          totalRequests = _ref.totalRequests,
-          getRequestsCount = _ref.getRequestsCount,
-          postRequestsCount = _ref.postRequestsCount,
-          putRequestsCount = _ref.putRequestsCount,
-          deleteRequestsCount = _ref.deleteRequestsCount,
-          failedRequests = _ref.failedRequests,
-          requestsExceededQuota = _ref.requestsExceededQuota,
-          maxPayloadSize = _ref.maxPayloadSize,
-          maxResponseSize = _ref.maxResponseSize,
-          maxDuration = _ref.maxDuration,
-          totalPayloadSize = _ref.totalPayloadSize,
-          totalResponseSize = _ref.totalResponseSize,
-          maxPayloadRequest = _ref.maxPayloadRequest,
-          maxResponseRequest = _ref.maxResponseRequest,
-          maxDurationRequest = _ref.maxDurationRequest,
-          duplicates = _ref.duplicates;
+      var allRequests = _ref2.allRequests,
+          totalRequests = _ref2.totalRequests,
+          getRequestsCount = _ref2.getRequestsCount,
+          postRequestsCount = _ref2.postRequestsCount,
+          putRequestsCount = _ref2.putRequestsCount,
+          deleteRequestsCount = _ref2.deleteRequestsCount,
+          failedRequests = _ref2.failedRequests,
+          requestsExceededQuota = _ref2.requestsExceededQuota,
+          maxPayloadSize = _ref2.maxPayloadSize,
+          maxResponseSize = _ref2.maxResponseSize,
+          maxDuration = _ref2.maxDuration,
+          totalPayloadSize = _ref2.totalPayloadSize,
+          totalResponseSize = _ref2.totalResponseSize,
+          maxPayloadRequest = _ref2.maxPayloadRequest,
+          maxResponseRequest = _ref2.maxResponseRequest,
+          maxDurationRequest = _ref2.maxDurationRequest,
+          duplicates = _ref2.duplicates;
 
       if (allRequests.count === 0) {
         this.printTitle(Messages.NO_REQUESTS);
@@ -7310,7 +7342,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "visualize",
     value: function visualize(chartOptions) {
-      var _this = this;
+      var _this2 = this;
 
       if (!this._iframeEl || !this._iframeEl.contentWindow.Chart) {
         this.print(Messages.CHART_NOT_FOUND, Colors.ERROR, true);
@@ -7491,12 +7523,12 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
       }
 
       setTimeout(function () {
-        _this._invokeConsole('screenshot', _this._canvasEl, _this._chartWidth, _this._chartHeight);
+        _this2._invokeConsole('screenshot', _this2._canvasEl, _this2._chartWidth, _this2._chartHeight);
 
         myChart.destroy();
         myChart = null;
 
-        _this._hideIframe();
+        _this2._hideIframe();
       }, 500);
     }
     /**
@@ -7612,17 +7644,17 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "printKeyValueMany",
     value: function printKeyValueMany(obj) {
-      var _this2 = this;
+      var _this3 = this;
 
       var titleWidth = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 30;
       var msgs = [];
       var styles = [];
-      Object.entries(obj).forEach(function (_ref2, index) {
-        var _ref3 = slicedToArray_default()(_ref2, 2),
-            title = _ref3[0],
-            value = _ref3[1];
+      Object.entries(obj).forEach(function (_ref3, index) {
+        var _ref4 = slicedToArray_default()(_ref3, 2),
+            title = _ref4[0],
+            value = _ref4[1];
 
-        msgs.push("%c".concat(index === 0 ? _this2._appendTextWithSpaces(title, titleWidth) : title, ": %c").concat(value));
+        msgs.push("%c".concat(index === 0 ? _this3._appendTextWithSpaces(title, titleWidth) : title, ": %c").concat(value));
         styles.push("font-weight: bold; color: inherit", "color: inherit;");
         index < Object.keys(obj).length - 1 && styles.push("color: ".concat(Colors.MEDIUM_GRAY));
       });
@@ -7770,34 +7802,34 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
   }, {
     key: "_reportObject",
     value: function () {
-      var _reportObject2 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee5(requestOrCollection) {
-        var _this3 = this;
+      var _reportObject2 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee6(requestOrCollection) {
+        var _this4 = this;
 
         var code;
-        return regenerator_default.a.wrap(function _callee5$(_context5) {
+        return regenerator_default.a.wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
                 code = /*#__PURE__*/function () {
-                  var _ref4 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee3() {
+                  var _ref5 = asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee4() {
                     var id, pending, error, url, label, labelPending, errorLabel, category, tags, path, query, pathQuery, method, payload, payloadSize, duration, response, responseSize, responseStatus, errorDescription, initiatorType, queuingTimeIncluded, sizeByPerformance, exceedsQuota, borderColor, requestLabel, displayUrl, duplicates, duplicatesCount, exceededParameters, statusTextColor, payloadColor, responseColor, durationColor, _iterator, _step, group, name, groupedBy, count, groupName, _iterator2, _step2, item;
 
-                    return regenerator_default.a.wrap(function _callee3$(_context3) {
+                    return regenerator_default.a.wrap(function _callee4$(_context4) {
                       while (1) {
-                        switch (_context3.prev = _context3.next) {
+                        switch (_context4.prev = _context4.next) {
                           case 0:
                             if (!(requestOrCollection === null)) {
-                              _context3.next = 3;
+                              _context4.next = 3;
                               break;
                             }
 
-                            _this3.print(Messages.NO_REQUEST, 'inherit', true);
+                            _this4.print(Messages.NO_REQUEST, 'inherit', true);
 
-                            return _context3.abrupt("return");
+                            return _context4.abrupt("return");
 
                           case 3:
                             if (!(requestOrCollection instanceof http_request_info_HttpRequestInfo)) {
-                              _context3.next = 38;
+                              _context4.next = 38;
                               break;
                             }
 
@@ -7821,7 +7853,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                             requestLabel = requestLabel && category ? "".concat(category.toUpperCase(), ": ").concat(requestLabel) : requestLabel;
 
                             if (requestLabel) {
-                              displayUrl = requestLabel.length < 75 ? _this3._appendTextWithSpaces(requestLabel, 75) : "".concat(requestLabel.substring(0, 72), "...");
+                              displayUrl = requestLabel.length < 75 ? _this4._appendTextWithSpaces(requestLabel, 75) : "".concat(requestLabel.substring(0, 72), "...");
                             } else {
                               if (pathQuery.length <= 75) {
                                 displayUrl = pathQuery;
@@ -7830,7 +7862,7 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                               }
                             }
 
-                            duplicates = toConsumableArray_default()(_this3._supervisor.duplicates(id)), duplicatesCount = duplicates.length + 1, exceededParameters = _this3._supervisor.exceededParameters(requestOrCollection);
+                            duplicates = toConsumableArray_default()(_this4._supervisor.duplicates(id)), duplicatesCount = duplicates.length + 1, exceededParameters = _this4._supervisor.exceededParameters(requestOrCollection);
                             statusTextColor = 'inherit';
 
                             if (!pending) {
@@ -7839,77 +7871,77 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                             payloadColor = exceededParameters.payload === true ? Colors.WARN_DARK : 'inherit', responseColor = exceededParameters.response === true ? Colors.WARN_DARK : 'inherit', durationColor = exceededParameters.duration === true ? Colors.WARN_DARK : 'inherit';
 
-                            _this3._invokeConsole('groupCollapsed', "%c#".concat(_this3._appendTextWithSpaces(id, 3), " %c").concat(_this3._appendTextWithSpaces(method + ' %c', 9, true), "  %c").concat(_this3._appendTextWithSpaces(displayUrl, 80), " %c").concat(_this3._appendTextWithSpaces(pending ? '-' : responseStatus, 5), " %c").concat(_this3._appendTextWithSpaces(pending ? '-' : formatBytes(responseSize), 10), " %c").concat(_this3._appendTextWithSpaces(pending ? '-' : formatTime(duration), 10), " ").concat(duplicatesCount > 1 ? '%c' + duplicatesCount + '' : '%c'), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.WHITE, ";background-color: ").concat(pending ? Colors.LIGHT_BLUE : Colors.DARK_BLUE, ";padding: 3px 10px;border-radius:3px;"), "", "color: inherit;", "color: ".concat(statusTextColor), "color: ".concat(responseColor), "color: ".concat(durationColor), "background-color:".concat(Colors.YELLOW, ";color: #666;font-size:0.6rem;padding: 3px;"));
+                            _this4._invokeConsole('groupCollapsed', "%c#".concat(_this4._appendTextWithSpaces(id, 3), " %c").concat(_this4._appendTextWithSpaces(method + ' %c', 9, true), "  %c").concat(_this4._appendTextWithSpaces(displayUrl, 80), " %c").concat(_this4._appendTextWithSpaces(pending ? '-' : responseStatus, 5), " %c").concat(_this4._appendTextWithSpaces(pending ? '-' : formatBytes(responseSize), 10), " %c").concat(_this4._appendTextWithSpaces(pending ? '-' : formatTime(duration), 10), " ").concat(duplicatesCount > 1 ? '%c' + duplicatesCount + '' : '%c'), "color: ".concat(Colors.GRAY, "; padding: 5px; border-left: solid 4px ").concat(borderColor, "; font-size: 0.6rem;"), "color: ".concat(Colors.WHITE, ";background-color: ").concat(pending ? Colors.LIGHT_BLUE : Colors.DARK_BLUE, ";padding: 3px 10px;border-radius:3px;"), "", "color: inherit;", "color: ".concat(statusTextColor), "color: ".concat(responseColor), "color: ".concat(durationColor), "background-color:".concat(Colors.YELLOW, ";color: #666;font-size:0.6rem;padding: 3px;"));
 
-                            _this3.printKeyValue(Messages.REQUEST_NO, id);
+                            _this4.printKeyValue(Messages.REQUEST_NO, id);
 
-                            category && _this3.printKeyValue(Messages.CATEGORY, category);
-                            tags.size > 0 && _this3.printKeyValue(Messages.TAGS, toConsumableArray_default()(tags).join(', '));
+                            category && _this4.printKeyValue(Messages.CATEGORY, category);
+                            tags.size > 0 && _this4.printKeyValue(Messages.TAGS, toConsumableArray_default()(tags).join(', '));
 
-                            _this3.printKeyValue(Messages.URL, url);
+                            _this4.printKeyValue(Messages.URL, url);
 
-                            _this3.printKeyValue(Messages.PATH, path);
+                            _this4.printKeyValue(Messages.PATH, path);
 
-                            _this3.printKeyValue(Messages.QUERY, query || '-');
+                            _this4.printKeyValue(Messages.QUERY, query || '-');
 
-                            _this3.printKeyValue(Messages.METHOD, method);
+                            _this4.printKeyValue(Messages.METHOD, method);
 
-                            _this3.printKeyValue(Messages.PAYLOAD, payload || '-');
+                            _this4.printKeyValue(Messages.PAYLOAD, payload || '-');
 
-                            _this3.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize), 30, payloadColor);
+                            _this4.printKeyValue(Messages.PAYLOAD_SIZE, formatBytes(payloadSize), 30, payloadColor);
 
-                            _this3.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration), 30, durationColor);
+                            _this4.printKeyValue(Messages.DURATION, pending ? '-' : formatTime(duration), 30, durationColor);
 
-                            _this3.printKeyValue(Messages.RESPONSE, response || '-');
+                            _this4.printKeyValue(Messages.RESPONSE, response || '-');
 
-                            _this3.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize), 30, responseColor);
+                            _this4.printKeyValue(Messages.RESPONSE_SIZE, pending ? '-' : formatBytes(responseSize), 30, responseColor);
 
-                            _this3.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus, 30, statusTextColor);
+                            _this4.printKeyValue(Messages.RESPONSE_STATUS, pending ? '-' : responseStatus, 30, statusTextColor);
 
-                            _this3.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
+                            _this4.printKeyValue(Messages.IS_ERROR, pending ? '-' : error ? 'Yes' : 'No');
 
-                            _this3.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
+                            _this4.printKeyValue(Messages.ERROR_DESC, errorDescription || '-');
 
-                            _this3.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
+                            _this4.printKeyValue(Messages.EXCEEDS_QUOTA, pending ? '-' : exceedsQuota ? 'Yes' : 'No');
 
-                            _this3.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
+                            _this4.printKeyValue(Messages.INITIATOR_TYPE, initiatorType);
 
-                            _this3.printKeyValue(Messages.DURATION_WITH_QUEUING, pending ? '-' : queuingTimeIncluded ? 'Yes' : 'No');
+                            _this4.printKeyValue(Messages.DURATION_WITH_QUEUING, pending ? '-' : queuingTimeIncluded ? 'Yes' : 'No');
 
-                            _this3.printKeyValue(Messages.SIZE_BY_PERFORMANCE, pending ? '-' : sizeByPerformance ? 'Yes' : 'No');
+                            _this4.printKeyValue(Messages.SIZE_BY_PERFORMANCE, pending ? '-' : sizeByPerformance ? 'Yes' : 'No');
 
-                            _this3.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1 ? 'Yes' : 'No');
+                            _this4.printKeyValue(Messages.HAS_DUPLICATES, duplicatesCount > 1 ? 'Yes' : 'No');
 
-                            duplicatesCount > 1 && _this3.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(function (r) {
+                            duplicatesCount > 1 && _this4.printKeyValue(Messages.DUPLICATE_REQUESTS, duplicates.map(function (r) {
                               return r.id;
                             }).join(', '));
 
-                            _this3._invokeConsole('groupEnd');
+                            _this4._invokeConsole('groupEnd');
 
-                            return _context3.abrupt("return");
+                            return _context4.abrupt("return");
 
                           case 38:
                             if (!(!requestOrCollection.hasItems && !requestOrCollection.hasGroups)) {
-                              _context3.next = 40;
+                              _context4.next = 40;
                               break;
                             }
 
-                            return _context3.abrupt("return");
+                            return _context4.abrupt("return");
 
                           case 40:
                             if (!requestOrCollection.hasGroups) {
-                              _context3.next = 62;
+                              _context4.next = 62;
                               break;
                             }
 
                             _iterator = _createForOfIteratorHelper(requestOrCollection.groups);
-                            _context3.prev = 42;
+                            _context4.prev = 42;
 
                             _iterator.s();
 
                           case 44:
                             if ((_step = _iterator.n()).done) {
-                              _context3.next = 53;
+                              _context4.next = 53;
                               break;
                             }
 
@@ -7917,9 +7949,9 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                             name = group.name, groupedBy = group.groupedBy, count = group.count;
 
                             if (typeof name === 'undefined') {
-                              _this3.groupStart("- %c[".concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
+                              _this4.groupStart("- %c[".concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
                             } else if (name !== null && typeof_default()(name) === 'object') {
-                              _this3.groupStart("".concat(groupedBy, ": %c[").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"), name);
+                              _this4.groupStart("".concat(groupedBy, ": %c[").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"), name);
                             } else {
                               groupName = name;
 
@@ -7931,104 +7963,104 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                                 }
                               }
 
-                              _this3.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
+                              _this4.groupStart("".concat(groupName, " %c- [").concat(count, "]"), "font-size: 0.6rem; color: ".concat(Colors.GRAY, ";"));
                             }
 
-                            _context3.next = 50;
-                            return _this3._reportObject(group);
+                            _context4.next = 50;
+                            return _this4._reportObject(group);
 
                           case 50:
-                            _this3.groupEnd();
+                            _this4.groupEnd();
 
                           case 51:
-                            _context3.next = 44;
+                            _context4.next = 44;
                             break;
 
                           case 53:
-                            _context3.next = 58;
+                            _context4.next = 58;
                             break;
 
                           case 55:
-                            _context3.prev = 55;
-                            _context3.t0 = _context3["catch"](42);
+                            _context4.prev = 55;
+                            _context4.t0 = _context4["catch"](42);
 
-                            _iterator.e(_context3.t0);
+                            _iterator.e(_context4.t0);
 
                           case 58:
-                            _context3.prev = 58;
+                            _context4.prev = 58;
 
                             _iterator.f();
 
-                            return _context3.finish(58);
+                            return _context4.finish(58);
 
                           case 61:
-                            return _context3.abrupt("return");
+                            return _context4.abrupt("return");
 
                           case 62:
                             _iterator2 = _createForOfIteratorHelper(requestOrCollection.items);
-                            _context3.prev = 63;
+                            _context4.prev = 63;
 
                             _iterator2.s();
 
                           case 65:
                             if ((_step2 = _iterator2.n()).done) {
-                              _context3.next = 71;
+                              _context4.next = 71;
                               break;
                             }
 
                             item = _step2.value;
-                            _context3.next = 69;
-                            return _this3._reportObject(item);
+                            _context4.next = 69;
+                            return _this4._reportObject(item);
 
                           case 69:
-                            _context3.next = 65;
+                            _context4.next = 65;
                             break;
 
                           case 71:
-                            _context3.next = 76;
+                            _context4.next = 76;
                             break;
 
                           case 73:
-                            _context3.prev = 73;
-                            _context3.t1 = _context3["catch"](63);
+                            _context4.prev = 73;
+                            _context4.t1 = _context4["catch"](63);
 
-                            _iterator2.e(_context3.t1);
+                            _iterator2.e(_context4.t1);
 
                           case 76:
-                            _context3.prev = 76;
+                            _context4.prev = 76;
 
                             _iterator2.f();
 
-                            return _context3.finish(76);
+                            return _context4.finish(76);
 
                           case 79:
                           case "end":
-                            return _context3.stop();
+                            return _context4.stop();
                         }
                       }
-                    }, _callee3, null, [[42, 55, 58, 61], [63, 73, 76, 79]]);
+                    }, _callee4, null, [[42, 55, 58, 61], [63, 73, 76, 79]]);
                   }));
 
                   return function code() {
-                    return _ref4.apply(this, arguments);
+                    return _ref5.apply(this, arguments);
                   };
                 }();
 
                 if (this._delayWrite) {
-                  _context5.next = 3;
+                  _context6.next = 3;
                   break;
                 }
 
-                return _context5.abrupt("return", code());
+                return _context6.abrupt("return", code());
 
               case 3:
-                return _context5.abrupt("return", new Promise(function (res) {
-                  setTimeout( /*#__PURE__*/asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee4() {
-                    return regenerator_default.a.wrap(function _callee4$(_context4) {
+                return _context6.abrupt("return", new Promise(function (res) {
+                  setTimeout( /*#__PURE__*/asyncToGenerator_default()( /*#__PURE__*/regenerator_default.a.mark(function _callee5() {
+                    return regenerator_default.a.wrap(function _callee5$(_context5) {
                       while (1) {
-                        switch (_context4.prev = _context4.next) {
+                        switch (_context5.prev = _context5.next) {
                           case 0:
-                            _context4.next = 2;
+                            _context5.next = 2;
                             return code();
 
                           case 2:
@@ -8036,19 +8068,19 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
 
                           case 3:
                           case "end":
-                            return _context4.stop();
+                            return _context5.stop();
                         }
                       }
-                    }, _callee4);
-                  })), _this3._writeDelay);
+                    }, _callee5);
+                  })), _this4._writeDelay);
                 }));
 
               case 4:
               case "end":
-                return _context5.stop();
+                return _context6.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee6, this);
       }));
 
       function _reportObject(_x4) {
