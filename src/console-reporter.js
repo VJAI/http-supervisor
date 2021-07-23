@@ -117,7 +117,7 @@ export default class ConsoleReporter {
       return;
     }
 
-    renderIframe();
+    await renderIframe();
   }
 
   /**

@@ -7088,9 +7088,10 @@ var console_reporter_ConsoleReporter = /*#__PURE__*/function () {
                 return _context2.abrupt("return");
 
               case 10:
-                renderIframe();
+                _context2.next = 12;
+                return renderIframe();
 
-              case 11:
+              case 12:
               case "end":
                 return _context2.stop();
             }
